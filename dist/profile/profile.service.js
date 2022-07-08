@@ -38,6 +38,7 @@ let ProfileService = class ProfileService {
             .where('users.id = :id', { id: id })
             .getOne();
         const updated = Object.assign(profile, profileData);
+        delete updated.code;
         return await this.usersRepository.save(updated);
     }
 };

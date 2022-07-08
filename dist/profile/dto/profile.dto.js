@@ -23,7 +23,7 @@ __decorate([
     (0, class_validator_1.IsString)(),
     (0, swagger_1.ApiProperty)(),
     __metadata("design:type", String)
-], ProfileDTO.prototype, "login", void 0);
+], ProfileDTO.prototype, "nickname", void 0);
 __decorate([
     (0, class_validator_1.IsEmail)(),
     (0, swagger_1.ApiProperty)(),
@@ -34,6 +34,11 @@ __decorate([
     (0, swagger_1.ApiProperty)(),
     __metadata("design:type", String)
 ], ProfileDTO.prototype, "birth", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, swagger_1.ApiProperty)(),
+    __metadata("design:type", String)
+], ProfileDTO.prototype, "avatar", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, swagger_1.ApiProperty)(),

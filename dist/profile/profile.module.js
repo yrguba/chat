@@ -12,11 +12,12 @@ const profile_controller_1 = require("./profile.controller");
 const profile_service_1 = require("./profile.service");
 const typeorm_1 = require("@nestjs/typeorm");
 const user_entity_1 = require("../database/entities/user.entity");
+const jwt_1 = require("@nestjs/jwt");
 let ProfileModule = class ProfileModule {
 };
 ProfileModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([user_entity_1.UserEntity])],
+        imports: [typeorm_1.TypeOrmModule.forFeature([user_entity_1.UserEntity]), jwt_1.JwtModule],
         providers: [profile_service_1.ProfileService],
         controllers: [profile_controller_1.ProfileController],
         exports: [profile_service_1.ProfileService],

@@ -60,7 +60,7 @@ export class AuthService {
           message: {
             access_token: this.jwtService.sign({
               phone: user.phone,
-              sub: userDetails.id,
+              id: userDetails.id,
             }),
             ...userDetails,
           },

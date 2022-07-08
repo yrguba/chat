@@ -58,7 +58,7 @@ let AuthService = class AuthService {
                     status: 200,
                     message: Object.assign({ access_token: this.jwtService.sign({
                             phone: user.phone,
-                            sub: userDetails.id,
+                            id: userDetails.id,
                         }) }, userDetails),
                 };
             }

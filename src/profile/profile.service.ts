@@ -12,7 +12,6 @@ export class ProfileService {
   ) {}
 
   async getProfile(id: number): Promise<UserEntity> {
-    // Get user information by id
     const profile = await this.usersRepository
       .createQueryBuilder('users')
       .where('users.id = :id', { id: id })
@@ -31,6 +30,7 @@ export class ProfileService {
       .where('users.id = :id', { id: id })
       .getOne();
     const updated = Object.assign(profile, profileData);
+    delete updated.code;
     return await this.usersRepository.save(updated);
   }
 }

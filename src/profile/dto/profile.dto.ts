@@ -7,13 +7,16 @@ export class ProfileDTO {
   name: string;
   @IsString()
   @ApiProperty()
-  login: string;
+  nickname: string;
   @IsEmail()
   @ApiProperty()
   email: string;
   @IsString()
   @ApiProperty()
   birth: string;
+  @IsString()
+  @ApiProperty()
+  avatar: string;
   @IsString()
   @ApiProperty()
   player_id: string;
