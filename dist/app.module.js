@@ -15,7 +15,12 @@ const configuration_1 = require("./config/configuration");
 const typeorm_1 = require("@nestjs/typeorm");
 const auth_module_1 = require("./auth/auth.module");
 const profile_module_1 = require("./profile/profile.module");
+const chats_module_1 = require("./chats/chats.module");
 const user_entity_1 = require("./database/entities/user.entity");
+const chats_entity_1 = require("./database/entities/chats.entity");
+const message_entity_1 = require("./database/entities/message.entity");
+const app_gateway_1 = require("./app.gateway");
+const chat_gateway_1 = require("./chat.gateway");
 let AppModule = class AppModule {
 };
 AppModule = __decorate([
@@ -28,14 +33,15 @@ AppModule = __decorate([
             typeorm_1.TypeOrmModule.forRoot({
                 type: 'postgres',
                 url: process.env.DATABASE_URI,
-                entities: [user_entity_1.UserEntity],
+                entities: [user_entity_1.UserEntity, chats_entity_1.ChatsEntity, message_entity_1.MessageEntity],
                 synchronize: true,
             }),
             auth_module_1.AuthModule,
             profile_module_1.ProfileModule,
+            chats_module_1.ChatsModule
         ],
         controllers: [app_controller_1.AppController],
-        providers: [app_service_1.AppService],
+        providers: [app_service_1.AppService, app_gateway_1.AppGateway, chat_gateway_1.ChatGateway],
     })
 ], AppModule);
 exports.AppModule = AppModule;

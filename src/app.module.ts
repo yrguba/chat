@@ -6,7 +6,12 @@ import configuration from './config/configuration';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { ProfileModule } from './profile/profile.module';
+import { ChatsModule } from "./chats/chats.module";
 import { UserEntity } from './database/entities/user.entity';
+import { ChatsEntity } from "./database/entities/chats.entity";
+import { MessageEntity } from "./database/entities/message.entity";
+import { AppGateway } from './app.gateway';
+import { ChatGateway } from './chat.gateway';
 
 @Module({
   imports: [
@@ -17,13 +22,14 @@ import { UserEntity } from './database/entities/user.entity';
     TypeOrmModule.forRoot({
       type: 'postgres',
       url: process.env.DATABASE_URI,
-      entities: [UserEntity],
+      entities: [UserEntity, ChatsEntity, MessageEntity],
       synchronize: true,
     }),
     AuthModule,
     ProfileModule,
+    ChatsModule
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, AppGateway, ChatGateway],
 })
 export class AppModule {}

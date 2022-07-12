@@ -5,6 +5,7 @@ const common_1 = require("@nestjs/common");
 const app_module_1 = require("./app.module");
 const auth_module_1 = require("./auth/auth.module");
 const profile_module_1 = require("./profile/profile.module");
+const chats_module_1 = require("./chats/chats.module");
 const swagger_1 = require("@nestjs/swagger");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
@@ -26,7 +27,7 @@ async function bootstrap() {
         .addSecurityRequirements('Bearer')
         .build();
     const document = swagger_1.SwaggerModule.createDocument(app, config, {
-        include: [auth_module_1.AuthModule, profile_module_1.ProfileModule],
+        include: [auth_module_1.AuthModule, profile_module_1.ProfileModule, chats_module_1.ChatsModule],
     });
     swagger_1.SwaggerModule.setup('swagger/v1', app, document);
     app.enableCors();
