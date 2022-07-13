@@ -29,7 +29,8 @@ export class ChatsService {
     async getChats(user_id: number): Promise<ChatsEntity[]> {
         return await this.chatsRepository.createQueryBuilder('chats')
             .leftJoinAndSelect('chats.message', 'message')
-            .limit(5)
+            .orderBy('message.created_at', 'DESC')
+            .limit(1)
             .where('chats.users @> :users', {users: [user_id]})
             .getMany();
     }
