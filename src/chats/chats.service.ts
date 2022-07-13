@@ -29,6 +29,7 @@ export class ChatsService {
     async getChats(user_id: number): Promise<ChatsEntity[]> {
         return await this.chatsRepository.createQueryBuilder('chats')
             .leftJoinAndSelect('chats.message', 'message')
+            .limit(5)
             .where('chats.users @> :users', {users: [user_id]})
             .getMany();
     }
@@ -47,7 +48,7 @@ export class ChatsService {
         return await this.chatsRepository.save(updated);
     }
 
-    async createMessage(chat_id: number, user_id: number, data:MessageDTO): Promise<MessageEntity> {
+    async createMessage(chat_id: number, user_id: number, data:any): Promise<MessageEntity> {
         data.initiator_id = Number(user_id);
         const message = await this.messageRepository.save(data);
 

@@ -8,6 +8,4 @@ export class MessageDTO {
     @ApiProperty()
     @IsString()
     message_type: string;
-    @IsNumber()
-    initiator_id: number
 }
