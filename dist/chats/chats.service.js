@@ -22,6 +22,7 @@ let ChatsService = class ChatsService {
     constructor(chatsRepository, messageRepository) {
         this.chatsRepository = chatsRepository;
         this.messageRepository = messageRepository;
+        this.socket = null;
     }
     async createChat(data) {
         return await this.chatsRepository.save(data);

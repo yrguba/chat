@@ -10,7 +10,6 @@ import { JwtService } from "@nestjs/jwt";
 import { Socket, Server } from 'socket.io';
 import { ChatsService } from "./chats.service";
 import { UsersService } from "../users/users.service";
-import {log} from "util";
 
 @WebSocketGateway({
     cors: {
@@ -19,9 +18,6 @@ import {log} from "util";
 })
 
 export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
-    @WebSocketServer() server: Server;
-    private usersPool: any[];
-
     constructor(
         private chatsService: ChatsService,
         private usersService: UsersService,
@@ -29,6 +25,22 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     ) {
         this.usersPool = [];
     }
+
+    @WebSocketServer() server: Server;
+    private usersPool: any[];
+
+    handleEmit (data) {
+        data?.users.map((userId) => {
+            const client = this.usersPool.find(user => user.user_id === userId);
+            if (client) {
+                client?.socket?.emit('receiveMessage', {
+                    message: data?.message,
+                });
+            } else {
+                //send push
+            }
+        });
+    };
 
     @SubscribeMessage('sendMessage')
     handleMessage(client: any, payload: any): string {
@@ -43,7 +55,6 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                 data?.users.map((userId) => {
                     const client = this.usersPool.find(user => user.user_id === userId);
                     if (client) {
-                        console.log(client);
                         client?.socket?.emit('receiveMessage', {
                             message: data.message,
                         });
@@ -57,7 +68,7 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     }
 
     afterInit(server: Server) {
-        console.log(server);
+        this.chatsService.socket = server;
         //Do stuffs
     }
 

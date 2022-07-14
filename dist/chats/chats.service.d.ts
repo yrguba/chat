@@ -1,3 +1,4 @@
+import { Server } from 'socket.io';
 import { Repository } from 'typeorm';
 import { ChatsEntity } from "../database/entities/chats.entity";
 import { MessageEntity } from "../database/entities/message.entity";
@@ -6,6 +7,7 @@ export declare class ChatsService {
     private chatsRepository;
     private messageRepository;
     constructor(chatsRepository: Repository<ChatsEntity>, messageRepository: Repository<MessageEntity>);
+    socket: Server;
     createChat(data: ChatDTO): Promise<ChatsEntity>;
     getChat(chat_id: number): Promise<ChatsEntity>;
     getChats(user_id: number): Promise<ChatsEntity[]>;

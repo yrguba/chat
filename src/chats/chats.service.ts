@@ -1,4 +1,5 @@
 import {Injectable} from '@nestjs/common';
+import { Server } from 'socket.io';
 import {InjectRepository} from '@nestjs/typeorm';
 import {Repository} from 'typeorm';
 import {ChatsEntity} from "../database/entities/chats.entity";
@@ -14,6 +15,8 @@ export class ChatsService {
         @InjectRepository(MessageEntity)
         private messageRepository: Repository<MessageEntity>
     ) {}
+
+    public socket: Server = null;
 
     async createChat(data: ChatDTO): Promise<ChatsEntity> {
         return await this.chatsRepository.save(data);
