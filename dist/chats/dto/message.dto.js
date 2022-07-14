@@ -24,9 +24,5 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], MessageDTO.prototype, "message_type", void 0);
-__decorate([
-    (0, class_validator_1.IsNumber)(),
-    __metadata("design:type", Number)
-], MessageDTO.prototype, "initiator_id", void 0);
 exports.MessageDTO = MessageDTO;
 //# sourceMappingURL=message.dto.js.map

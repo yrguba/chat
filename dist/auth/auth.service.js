@@ -49,9 +49,7 @@ let AuthService = class AuthService {
             if (userDetails == null) {
                 return { status: 401, message: { message: 'Invalid credentials' } };
             }
-            console.log(user.code, userDetails.code);
             const isValid = bcrypt.compareSync(user.code, userDetails.code);
-            console.log(isValid);
             if (isValid) {
                 delete userDetails.code;
                 return {

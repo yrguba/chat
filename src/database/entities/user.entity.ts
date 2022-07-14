@@ -19,4 +19,6 @@ export class UserEntity {
   birth: string;
   @Column({ nullable: true })
   player_id: string;
+  @Column({ nullable: true })
+  socket_id: string;
 }

@@ -45,6 +45,10 @@ __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], UserEntity.prototype, "player_id", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], UserEntity.prototype, "socket_id", void 0);
 UserEntity = __decorate([
     (0, typeorm_1.Entity)()
 ], UserEntity);

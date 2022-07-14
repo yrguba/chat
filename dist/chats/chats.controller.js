@@ -17,7 +17,6 @@ const common_1 = require("@nestjs/common");
 const chats_service_1 = require("./chats.service");
 const swagger_1 = require("@nestjs/swagger");
 const chat_dto_1 = require("./dto/chat.dto");
-const message_dto_1 = require("./dto/message.dto");
 const jwt_auth_guard_1 = require("../auth/strategy/jwt-auth.guard");
 const jwt_1 = require("@nestjs/jwt");
 let ChatsController = class ChatsController {
@@ -40,16 +39,8 @@ let ChatsController = class ChatsController {
         const json = this.jwtService.decode(jwt, { json: true });
         const chatUsers = body.users;
         chatUsers.push(json.id);
-        console.log(body);
         const chat = await this.chatsService.createChat(body);
         res.json(chat);
-    }
-    async createMessage(res, req, body, param) {
-        const jwt = req.headers.authorization.replace('Bearer ', '');
-        const json = this.jwtService.decode(jwt, { json: true });
-        console.log(param.chat_id, json.id, body);
-        const message = await this.chatsService.createMessage(param.chat_id, Number(json.id), body);
-        res.json(message);
     }
 };
 __decorate([
@@ -82,18 +73,6 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object, chat_dto_1.ChatDTO]),
     __metadata("design:returntype", Promise)
 ], ChatsController.prototype, "createChat", null);
-__decorate([
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, swagger_1.ApiParam)({ name: 'chat_id', required: true }),
-    (0, common_1.Post)('/message/:chat_id'),
-    __param(0, (0, common_1.Res)()),
-    __param(1, (0, common_1.Req)()),
-    __param(2, (0, common_1.Body)()),
-    __param(3, (0, common_1.Param)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object, message_dto_1.MessageDTO, Object]),
-    __metadata("design:returntype", Promise)
-], ChatsController.prototype, "createMessage", null);
 ChatsController = __decorate([
     (0, swagger_1.ApiTags)('chats'),
     (0, common_1.Controller)('chats'),

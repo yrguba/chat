@@ -7,4 +7,5 @@ export declare class UserEntity {
     email: string;
     birth: string;
     player_id: string;
+    socket_id: string;
 }

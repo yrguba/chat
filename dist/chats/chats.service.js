@@ -29,12 +29,15 @@ let ChatsService = class ChatsService {
     async getChat(chat_id) {
         return await this.chatsRepository.createQueryBuilder('chat')
             .leftJoinAndSelect('chat.message', 'message')
+            .orderBy('message.created_at', 'DESC')
             .where('chat.id = :id', { id: chat_id })
             .getOne();
     }
     async getChats(user_id) {
         return await this.chatsRepository.createQueryBuilder('chats')
             .leftJoinAndSelect('chats.message', 'message')
+            .orderBy('message.created_at', 'DESC')
+            .limit(1)
             .where('chats.users @> :users', { users: [user_id] })
             .getMany();
     }
@@ -49,7 +52,6 @@ let ChatsService = class ChatsService {
         return await this.chatsRepository.save(updated);
     }
     async createMessage(chat_id, user_id, data) {
-        console.log(user_id);
         data.initiator_id = Number(user_id);
         const message = await this.messageRepository.save(data);
         const chat = await this.chatsRepository.findOne({
@@ -58,7 +60,10 @@ let ChatsService = class ChatsService {
         });
         chat.message.push(message);
         await this.chatsRepository.save(chat);
-        return message;
+        return {
+            message: message,
+            users: chat.users
+        };
     }
 };
 ChatsService = __decorate([

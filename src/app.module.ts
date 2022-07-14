@@ -7,10 +7,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { ProfileModule } from './profile/profile.module';
 import { ChatsModule } from "./chats/chats.module";
+import { UsersModule } from "./users/users.module";
 import { UserEntity } from './database/entities/user.entity';
 import { ChatsEntity } from "./database/entities/chats.entity";
 import { MessageEntity } from "./database/entities/message.entity";
-import { AppGateway } from './app.gateway';
 import { ChatGateway } from './chat.gateway';
 
 @Module({
@@ -27,9 +27,11 @@ import { ChatGateway } from './chat.gateway';
     }),
     AuthModule,
     ProfileModule,
-    ChatsModule
+    ChatsModule,
+    UsersModule,
+    ChatGateway
   ],
   controllers: [AppController],
-  providers: [AppService, AppGateway, ChatGateway],
+  providers: [AppService],
 })
 export class AppModule {}

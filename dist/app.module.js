@@ -16,10 +16,10 @@ const typeorm_1 = require("@nestjs/typeorm");
 const auth_module_1 = require("./auth/auth.module");
 const profile_module_1 = require("./profile/profile.module");
 const chats_module_1 = require("./chats/chats.module");
+const users_module_1 = require("./users/users.module");
 const user_entity_1 = require("./database/entities/user.entity");
 const chats_entity_1 = require("./database/entities/chats.entity");
 const message_entity_1 = require("./database/entities/message.entity");
-const app_gateway_1 = require("./app.gateway");
 const chat_gateway_1 = require("./chat.gateway");
 let AppModule = class AppModule {
 };
@@ -38,10 +38,12 @@ AppModule = __decorate([
             }),
             auth_module_1.AuthModule,
             profile_module_1.ProfileModule,
-            chats_module_1.ChatsModule
+            chats_module_1.ChatsModule,
+            users_module_1.UsersModule,
+            chat_gateway_1.ChatGateway
         ],
         controllers: [app_controller_1.AppController],
-        providers: [app_service_1.AppService, app_gateway_1.AppGateway, chat_gateway_1.ChatGateway],
+        providers: [app_service_1.AppService],
     })
 ], AppModule);
 exports.AppModule = AppModule;
