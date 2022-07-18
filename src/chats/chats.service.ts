@@ -57,10 +57,10 @@ export class ChatsService {
     }
 
     async createMessage(chat_id: number, user_id: number, data:any): Promise<any> {
-
-        data.initiator_id = await this.userRepository.createQueryBuilder('users')
+        const user = await this.userRepository.createQueryBuilder('users')
             .where('users.id = :id', { id: Number(user_id) })
             .getOne()
+        data.initiator_id = Number(user_id);
 
         const message = await this.messageRepository.save(data);
 
@@ -72,7 +72,8 @@ export class ChatsService {
         await this.chatsRepository.save(chat);
         return {
             message: message,
-            users: chat.users
+            users: chat.users,
+            user: user
         }
     }
 }
