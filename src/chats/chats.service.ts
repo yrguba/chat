@@ -1,8 +1,8 @@
-import {Injectable} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Server } from 'socket.io';
-import {InjectRepository} from '@nestjs/typeorm';
-import {Repository} from 'typeorm';
-import {ChatsEntity} from "../database/entities/chats.entity";
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { ChatsEntity } from "../database/entities/chats.entity";
 import { MessageEntity } from "../database/entities/message.entity";
 import {ChatDTO} from "./dto/chat.dto";
 import {MessageDTO} from "./dto/message.dto";
@@ -13,7 +13,7 @@ export class ChatsService {
         @InjectRepository(ChatsEntity)
         private chatsRepository: Repository<ChatsEntity>,
         @InjectRepository(MessageEntity)
-        private messageRepository: Repository<MessageEntity>
+        private messageRepository: Repository<MessageEntity>,
     ) {}
 
     public socket: Server = null;

@@ -31,14 +31,17 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     handleEmit (data) {
         data?.users.map((userId) => {
-            const client = this.usersPool.find(user => user.user_id === userId);
-            if (client) {
-                client?.socket?.emit('receiveMessage', {
-                    message: data?.message,
-                });
-            } else {
-                //send push
-            }
+            this.usersService.getUser(userId).then((user) => {
+                console.log(user);
+                if (user && user.socket_id) {
+                    this.server?.to(user.socket_id)?.emit('receiveMessage', {
+                        message: data?.message,
+                    });
+                } else {
+                    //send push
+                }
+            });
+
         });
     };
 
@@ -51,6 +54,7 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                 chat_id,
                 message
             } = payload;
+
             this.chatsService.createMessage(chat_id, json.id, message).then((data: any) => {
                 data?.users.map((userId) => {
                     const client = this.usersPool.find(user => user.user_id === userId);
@@ -87,16 +91,20 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         const jwt = client.handshake?.headers?.authorization?.replace('Bearer ', '');
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
         if (json?.id) {
-            this.usersService.updateUserSocket(json.id, client.id);
-            const currentUser = this.usersPool.findIndex(user => user.id === json.id);
-            if (currentUser !== -1) {
-                this.usersPool.splice(currentUser, 1);
-            }
-
-            this.usersPool.push({
-                user_id: json.id,
-                socket: client
-            });
+            const user = this.usersService.updateUserSocket(json.id, client);
+            console.log(user);
+            // const currentUser = this.usersPool.findIndex(user => user.id === json.id);
+            // if (currentUser !== -1) {
+            //     this.usersPool.splice(currentUser, 1);
+            // }
+            //
+            // this.usersPool.push({
+            //     user_id: json.id,
+            //     socket: client
+            // });
         }
+
+        const user = this.usersService.updateUserSocket(6, client.id);
+        console.log(user);
     }
 }

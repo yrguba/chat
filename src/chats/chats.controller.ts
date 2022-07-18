@@ -11,13 +11,17 @@ import {
 } from '@nestjs/common';
 import { ChatsService } from './chats.service';
 import { ChatsGateway } from "./chats.gateway";
-import { ApiTags, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiParam, ApiHeader } from '@nestjs/swagger';
 import { ChatDTO } from './dto/chat.dto';
 import { MessageDTO } from "./dto/message.dto";
 import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { JwtService } from '@nestjs/jwt';
 
 @ApiTags('chats')
+@ApiHeader({
+    name: 'Authorization',
+    allowEmptyValue: true
+})
 @Controller('chats')
 export class ChatsController {
     constructor(

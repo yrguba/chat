@@ -16,7 +16,14 @@ export class UsersService {
             .getMany();
     }
 
-    async updateUserSocket(id: number, socket_id: string) {
+    async getUser(id: number): Promise<UserEntity> {
+        return await this.usersRepository
+            .createQueryBuilder('users')
+            .where('users.id = :id', { id: id })
+            .getOne();
+    }
+
+    async updateUserSocket(id: number, socket_id: any) {
         const user = await this.usersRepository
             .createQueryBuilder('users')
             .where('users.id = :id', { id: id })
