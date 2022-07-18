@@ -10,6 +10,7 @@ import { JwtService } from "@nestjs/jwt";
 import { Socket, Server } from 'socket.io';
 import { ChatsService } from "./chats.service";
 import { UsersService } from "../users/users.service";
+import {log} from "util";
 
 @WebSocketGateway({
     cors: {
@@ -30,8 +31,11 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     private usersPool: any[];
 
     handleEmit (data) {
+        console.log(34);
+        console.log(data);
         data?.users.map((userId) => {
             this.usersService.getUser(userId).then((user) => {
+                console.log(38);
                 console.log(user);
                 if (user && user.socket_id) {
                     this.server?.to(user.socket_id)?.emit('receiveMessage', {
@@ -103,8 +107,5 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             //     socket: client
             // });
         }
-
-        const user = this.usersService.updateUserSocket(6, client.id);
-        console.log(user);
     }
 }
