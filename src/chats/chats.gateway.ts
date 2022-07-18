@@ -40,6 +40,9 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                     this.server?.to(user.socket_id)?.emit('receiveMessage', {
                         message: data?.message,
                     });
+                    this.server.emit('receiveMessage', {
+                        message: data?.message,
+                    });
                 } else {
                     //send push
                 }
