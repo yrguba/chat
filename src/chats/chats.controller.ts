@@ -18,10 +18,6 @@ import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { JwtService } from '@nestjs/jwt';
 
 @ApiTags('chats')
-@ApiHeader({
-    name: 'Authorization',
-    allowEmptyValue: true
-})
 @Controller('chats')
 export class ChatsController {
     constructor(
