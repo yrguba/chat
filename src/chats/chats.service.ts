@@ -70,10 +70,10 @@ export class ChatsService {
         });
         chat.message.push(message);
         await this.chatsRepository.save(chat);
+        message.initiator = user;
         return {
             message: message,
             users: chat.users,
-            user: user
         }
     }
 }
