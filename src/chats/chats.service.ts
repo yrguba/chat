@@ -4,7 +4,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ChatsEntity } from "../database/entities/chats.entity";
 import { MessageEntity } from "../database/entities/message.entity";
-import {ChatDTO} from "./dto/chat.dto";
+import { UserEntity } from "../database/entities/user.entity";
+import { ChatDTO } from "./dto/chat.dto";
 import {MessageDTO} from "./dto/message.dto";
 
 @Injectable()
@@ -14,6 +15,8 @@ export class ChatsService {
         private chatsRepository: Repository<ChatsEntity>,
         @InjectRepository(MessageEntity)
         private messageRepository: Repository<MessageEntity>,
+        @InjectRepository(UserEntity)
+        private userRepository: Repository<UserEntity>,
     ) {}
 
     public socket: Server = null;
@@ -54,7 +57,11 @@ export class ChatsService {
     }
 
     async createMessage(chat_id: number, user_id: number, data:any): Promise<any> {
-        data.initiator_id = Number(user_id);
+
+        data.initiator_id = await this.userRepository.createQueryBuilder('users')
+            .where('users.id = :id', { id: Number(user_id) })
+            .getOne()
+
         const message = await this.messageRepository.save(data);
 
         const chat = await this.chatsRepository.findOne({
