@@ -31,13 +31,11 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     private usersPool: any[];
 
     handleEmit (data) {
-        console.log(34);
-        console.log(data);
         data?.users.map((userId) => {
             this.usersService.getUser(userId).then((user) => {
-                console.log(38);
-                console.log(user);
                 if (user && user.socket_id) {
+                    console.log(user.socket_id);
+                    console.log(this.server);
                     this.server?.to(user.socket_id)?.emit('receiveMessage', {
                         message: data?.message,
                     });
@@ -95,8 +93,7 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         const jwt = client.handshake?.headers?.authorization?.replace('Bearer ', '');
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
         if (json?.id) {
-            const user = this.usersService.updateUserSocket(json.id, client);
-            console.log(user);
+            this.usersService.updateUserSocket(json.id, client);
             // const currentUser = this.usersPool.findIndex(user => user.id === json.id);
             // if (currentUser !== -1) {
             //     this.usersPool.splice(currentUser, 1);
