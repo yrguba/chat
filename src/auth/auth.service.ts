@@ -46,7 +46,12 @@ export class AuthService {
         .getOne();
 
       if (userDetails == null) {
-        return { status: 401, message: { message: 'Invalid credentials' } };
+        return { status: 401, data: {
+          error: {
+            code: 401,
+            message: "Invalid credentials"
+          }
+        }};
       }
 
       // Check if the given password match with saved password
@@ -55,23 +60,44 @@ export class AuthService {
         delete userDetails.code;
         return {
           status: 200,
-          message: {
-            access_token: this.jwtService.sign({
-              phone: user.phone,
-              id: userDetails.id,
-            }),
-            ...userDetails,
+          data: {
+            data: {
+              access_token: this.jwtService.sign({
+                phone: user.phone,
+                id: userDetails.id,
+              }),
+              ...userDetails,
+            }
           },
         };
       } else {
-        return { status: 401, message: { message: 'Invalid credentials' } };
+        return { status: 401, data: {
+          error: {
+            code: 401,
+            message: "Invalid credentials"
+          }
+        }};
       }
     } else {
-      return { status: 400, message: { message: 'Invalid fields.' } };
+      return { status: 400, data: {
+        error: {
+          code: 400,
+          message: "Invalid fields"
+        }
+      }};
     }
   }
 
   async send_code(phone: string): Promise<Record<string, any>> {
+    if (!phone) {
+      return { status: 400, data: {
+        error: {
+          code: 400,
+          message: "Invalid phone"
+        }
+      }};
+    }
+
     const userDetails = await this.usersRepository
       .createQueryBuilder('users')
       .where('users.phone = :phone', { phone: phone })
@@ -87,12 +113,20 @@ export class AuthService {
       await this.usersRepository
         .save(userData)
         .then(() => {
-          return { status: 200, message: { message: 'success' } };
+          return {
+            status: 200,
+            data: {
+              data: 'Code sent successfully'
+            }
+          };
         })
         .catch((error) => {
-          console.log(error);
-          //this.logger.debug(error.message, AuthService.name);
-          //errorText = error.message;
+          return { status: 500, data: {
+            error: {
+              code: 500,
+              message: error
+            }
+          }};
         });
     } else {
       phone = userDetails.phone;
@@ -100,10 +134,20 @@ export class AuthService {
       await this.usersRepository
         .save(newUserData)
         .then(() => {
-          return { status: 200, message: { message: 'success' } };
+          return {
+            status: 200,
+            data: {
+              data: 'Code sent successfully'
+            }
+          };
         })
         .catch((error) => {
-          console.log(error);
+          return { status: 500, data: {
+              error: {
+                code: 500,
+                message: error
+              }
+            }};
         });
     }
 
@@ -128,7 +172,12 @@ export class AuthService {
       );
     }
 
-    return { status: 200, message: { message: 'success send' } };
+    return {
+      status: 200,
+      data: {
+        data: 'Code sent successfully'
+      }
+    };
   }
 
   makeTemporaryPass(length) {

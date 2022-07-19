@@ -28,14 +28,14 @@ export class ProfileController {
     const jwt = req.headers.authorization.replace('Bearer ', '');
     const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
     const profile = await this.profileService.getProfile(json.id);
-    res.json(profile);
+    res.status(profile.status).json(profile.data);
   }
 
   @Patch('/')
-  async updateUser(@Res() res, @Req() req, @Body() body: ProfileDTO) {
+  async updateUser(@Res() res, @Req() req, @Body() body: any) {
     const jwt = req.headers.authorization.replace('Bearer ', '');
     const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
-    const user = await this.profileService.updateProfile(json.id, body);
-    res.json(user);
+    const profile = await this.profileService.updateProfile(json.id, body);
+    res.status(profile.status).json(profile.data);
   }
 }

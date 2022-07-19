@@ -92,13 +92,11 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     }
 
     handleConnection(client: Socket, ...args: any[]) {
-        console.log(client);
         const jwt = client.handshake?.headers?.authorization?.replace('Bearer ', '');
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
         if (json?.id) {
             this.usersService.updateUserSocket(json.id, client.id).then(data => {
                 console.log('updated client');
-                console.log(data);
             });
             // const currentUser = this.usersPool.findIndex(user => user.id === json.id);
             // if (currentUser !== -1) {

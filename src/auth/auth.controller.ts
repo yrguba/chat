@@ -12,12 +12,12 @@ export class AuthController {
   @Post('send_code')
   async send_code(@Req() req, @Res() res, @Body() body: PhoneDTO) {
     const response = await this.authService.send_code(body.phone);
-    res.status(response.status).json(response.message);
+    res.status(response.status).json(response.data);
   }
 
   @Post('login')
   async login(@Req() req, @Res() res, @Body() body: LoginDTO) {
     const auth = await this.authService.login(body);
-    res.status(auth.status).json(auth.message);
+    res.status(auth.status).json(auth.data);
   }
 }

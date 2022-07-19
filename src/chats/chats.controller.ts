@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { ChatsService } from './chats.service';
 import { ChatsGateway } from "./chats.gateway";
-import { ApiTags, ApiParam, ApiHeader } from '@nestjs/swagger';
+import { ApiTags, ApiParam } from '@nestjs/swagger';
 import { ChatDTO } from './dto/chat.dto';
 import { MessageDTO } from "./dto/message.dto";
 import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
@@ -32,7 +32,7 @@ export class ChatsController {
         const jwt = req.headers.authorization.replace('Bearer ', '');
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
         const chats = await this.chatsService.getChats(json.id);
-        res.json(chats);
+        res.status(chats.status).json(chats.data);
     }
 
     @UseGuards(JwtAuthGuard)
@@ -40,7 +40,7 @@ export class ChatsController {
     @Get('/:chat_id')
     async getChat(@Res() res, @Req() req, @Param() param) {
         const chat = await this.chatsService.getChat(param.chat_id,);
-        res.json(chat);
+        res.status(chat.status).json(chat.data);
     }
 
     @UseGuards(JwtAuthGuard)
@@ -61,12 +61,14 @@ export class ChatsController {
         const jwt = req.headers.authorization.replace('Bearer ', '');
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
         const message = await this.chatsService.createMessage(param.chat_id, Number(json.id), body);
-        //console.log(this.chatsGateway.server.sockets);
-        this.chatsGateway.handleEmit({
-            chat_id: param.chat_id,
-            ...message
-        });
-        res.json(message);
+
+        if (message?.status === 201) {
+            this.chatsGateway.handleEmit({
+                chat_id: param.chat_id,
+                ...message
+            });
+        }
+        res.status(message.status).json(message.data);
     }
 
     // @Patch('/')
