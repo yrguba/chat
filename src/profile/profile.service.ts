@@ -1,10 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DeleteResult } from 'typeorm';
+import { Repository } from 'typeorm';
 import { UserEntity } from '../database/entities/user.entity';
-import { ProfileDTO } from './dto/profile.dto';
-import {validate} from "class-validator";
-import {LoginDTO} from "../auth/dto/login.dto";
+import { ProfileEmptyDTO } from './dto/profile.empty.dto';
 
 @Injectable()
 export class ProfileService {
@@ -37,7 +35,7 @@ export class ProfileService {
     };
   }
 
-  async updateProfile(id: any, profileData: ProfileDTO) {
+  async updateProfile(id: any, profileData: ProfileEmptyDTO) {
     let keyError = '';
     const profile = await this.usersRepository
       .createQueryBuilder('users')

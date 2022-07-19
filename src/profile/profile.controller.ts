@@ -9,8 +9,8 @@ import {
   UseGuards
 } from '@nestjs/common';
 import { ProfileService } from './profile.service';
-import { ApiTags, ApiParam } from '@nestjs/swagger';
-import { ProfileDTO } from './dto/profile.dto';
+import { ApiTags } from '@nestjs/swagger';
+import { ProfileEmptyDTO } from './dto/profile.empty.dto';
 import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { JwtService } from '@nestjs/jwt';
 
@@ -31,8 +31,9 @@ export class ProfileController {
     res.status(profile.status).json(profile.data);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch('/')
-  async updateUser(@Res() res, @Req() req, @Body() body: any) {
+  async updateUser(@Res() res, @Req() req, @Body() body: ProfileEmptyDTO) {
     const jwt = req.headers.authorization.replace('Bearer ', '');
     const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
     const profile = await this.profileService.updateProfile(json.id, body);

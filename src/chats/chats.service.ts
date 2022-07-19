@@ -54,22 +54,45 @@ export class ChatsService {
         }
     }
 
-    async getChats(user_id: number) {
-        const chats = await this.chatsRepository.createQueryBuilder('chats')
-            .leftJoinAndSelect('chats.message', 'message')
-            .orderBy('message.created_at', 'DESC')
-            .where('chats.users @> :users', {users: [user_id]})
-            .getMany();
+    async getChats(user_id: number, options) {
+        let offset = 0;
+        if (options.page > 1) offset = (options.page - 1) * options.limit;
 
-        chats.map(chat => {
-            chat.message.splice(1, chat.message.length - 1);
-        });
+        const count = await this.chatsRepository.createQueryBuilder('chats')
+          .getCount();
 
-        if (chats) {
+        if (offset < count) {
+            const chats = await this.chatsRepository.createQueryBuilder('chats')
+              .leftJoinAndSelect('chats.message', 'message')
+              .orderBy('message.created_at', 'DESC')
+              .offset(offset)
+              .limit(options.limit)
+              .where('chats.users @> :users', {users: [user_id]})
+              .getMany();
+
+            chats.map(chat => {
+                chat.message.splice(1, chat.message.length - 1);
+            });
+
+            if (chats) {
+                return {
+                    status: 200,
+                    data: {
+                        data: chats,
+                        page: options.page,
+                        limit: options.limit,
+                        total: count
+                    }
+                };
+            }
+        } else {
             return {
                 status: 200,
                 data: {
-                    data: chats
+                    data: [],
+                    page: options.page,
+                    limit: options.limit,
+                    total: count
                 }
             };
         }

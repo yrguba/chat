@@ -2,16 +2,18 @@ import {
     Body,
     Controller,
     Get,
-    Patch,
     Post,
     Res,
     Req,
     Param,
-    UseGuards
+    UseGuards,
+    Query,
+    DefaultValuePipe,
+    ParseIntPipe,
 } from '@nestjs/common';
 import { ChatsService } from './chats.service';
 import { ChatsGateway } from "./chats.gateway";
-import { ApiTags, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { ChatDTO } from './dto/chat.dto';
 import { MessageDTO } from "./dto/message.dto";
 import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
@@ -28,10 +30,32 @@ export class ChatsController {
 
     @UseGuards(JwtAuthGuard)
     @Get('/')
-    async getChats(@Res() res, @Req() req) {
+    @ApiQuery({
+        name: 'page',
+        description: 'Текущая страница',
+        required: false,
+        type: Number,
+    })
+    @ApiQuery({
+        name: 'limit',
+        description: 'Количество записей на странице',
+        required: false,
+        type: Number,
+    })
+    async getChats(
+      @Res() res,
+      @Req() req,
+      @Query('page', new DefaultValuePipe(1), ParseIntPipe) page = 1,
+      @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit = 10,
+    ) {
         const jwt = req.headers.authorization.replace('Bearer ', '');
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
-        const chats = await this.chatsService.getChats(json.id);
+        const chats = await this.chatsService.getChats(json.id,
+          {
+                page,
+                limit,
+            }
+        );
         res.status(chats.status).json(chats.data);
     }
 
