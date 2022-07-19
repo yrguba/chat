@@ -6,7 +6,6 @@ import { ChatsEntity } from "../database/entities/chats.entity";
 import { MessageEntity } from "../database/entities/message.entity";
 import { UserEntity } from "../database/entities/user.entity";
 import { ChatDTO } from "./dto/chat.dto";
-import {MessageDTO} from "./dto/message.dto";
 
 @Injectable()
 export class ChatsService {
@@ -21,8 +20,14 @@ export class ChatsService {
 
     public socket: Server = null;
 
-    async createChat(data: ChatDTO): Promise<ChatsEntity> {
-        return await this.chatsRepository.save(data);
+    async createChat(data: ChatDTO) {
+        const chat = await this.chatsRepository.save(data);
+        return {
+            status: 201,
+            data: {
+                data: chat
+            }
+        }
     }
 
     async getChat(chat_id: number) {

@@ -51,7 +51,7 @@ export class ChatsController {
         const chatUsers = body.users;
         chatUsers.push(json.id);
         const chat = await this.chatsService.createChat(body);
-        res.json(chat);
+        res.status(chat.status).json(chat.data);
     }
 
     @UseGuards(JwtAuthGuard)
