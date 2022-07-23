@@ -13,11 +13,18 @@ import { ChatsEntity } from "./database/entities/chats.entity";
 import { MessageEntity } from "./database/entities/message.entity";
 import { ChatGateway } from './chat.gateway';
 
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'client'),
+      exclude: ['/api*'],
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
