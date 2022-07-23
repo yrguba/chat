@@ -21,7 +21,15 @@ export class ChatsService {
     public socket: Server = null;
 
     async createChat(data: ChatDTO) {
-        const chat = await this.chatsRepository.save(data);
+        let chat;
+        const currentChat = await this.chatsRepository.createQueryBuilder('chats')
+          .where('chats.users @> :users', {users: data.users})
+          .getOne();
+
+        if (!currentChat) {
+            chat = await this.chatsRepository.save(data);
+        } else chat = currentChat;
+
         return {
             status: 201,
             data: {

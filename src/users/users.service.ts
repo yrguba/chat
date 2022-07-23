@@ -11,9 +11,10 @@ export class UsersService {
   ) {
   }
 
-  async getUsers() {
+  async getUsers(id: number) {
     const users = await this.usersRepository
       .createQueryBuilder('users')
+      .where('users.id != :id', { id: Number(id) })
       .getMany();
 
     return {
