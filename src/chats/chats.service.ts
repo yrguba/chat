@@ -71,6 +71,7 @@ export class ChatsService {
     }
 
     async deleteChat(chat_id: number): Promise<DeleteResult> {
+        console.log(chat_id);
         return await this.chatsRepository.delete(chat_id);
     }
 

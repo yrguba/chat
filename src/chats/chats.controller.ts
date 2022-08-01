@@ -79,9 +79,10 @@ export class ChatsController {
     }
 
     @UseGuards(JwtAuthGuard)
-    @Delete('/')
     @ApiParam({ name: 'chat_id', required: true })
+    @Delete('/:chat_id')
     async deleteChat(@Res() res, @Req() req, @Param() params) {
+        console.log(params);
         return await this.chatsService.deleteChat(params.chat_id);
     }
 
