@@ -9,7 +9,7 @@ import {
     UseGuards,
     Query,
     DefaultValuePipe,
-    ParseIntPipe,
+    ParseIntPipe, Delete,
 } from '@nestjs/common';
 import { ChatsService } from './chats.service';
 import { ChatsGateway } from "./chats.gateway";
@@ -76,6 +76,13 @@ export class ChatsController {
         chatUsers.push(json.id);
         const chat = await this.chatsService.createChat(body);
         res.status(chat.status).json(chat.data);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Delete('/')
+    @ApiParam({ name: 'chat_id', required: true })
+    async deleteChat(@Res() res, @Req() req, @Param() params) {
+        return await this.chatsService.deleteChat(params.chat_id);
     }
 
     @UseGuards(JwtAuthGuard)

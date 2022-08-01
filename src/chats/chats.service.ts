@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Server } from 'socket.io';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DeleteResult } from 'typeorm';
 import { ChatsEntity } from "../database/entities/chats.entity";
 import { MessageEntity } from "../database/entities/message.entity";
 import { UserEntity } from "../database/entities/user.entity";
@@ -27,6 +27,14 @@ export class ChatsService {
           .getOne();
 
         if (!currentChat) {
+            const user = await this.userRepository.createQueryBuilder('users')
+              .where('users.id = :id', { id: Number(data?.users[0]) })
+              .getOne();
+
+            if (user) {
+                data.name = user.name;
+            }
+
             chat = await this.chatsRepository.save(data);
         } else chat = currentChat;
 
@@ -60,6 +68,10 @@ export class ChatsService {
                 }
             }};
         }
+    }
+
+    async deleteChat(chat_id: number): Promise<DeleteResult> {
+        return await this.chatsRepository.delete(chat_id);
     }
 
     async getChats(user_id: number, options) {
