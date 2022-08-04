@@ -74,6 +74,14 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         return '';
     }
 
+    @SubscribeMessage('ping')
+    handlePing(client: any, payload: any): string {
+        client?.socket?.emit('receiveMessage', {
+            message: 'pong',
+        });
+        return '';
+    }
+
     afterInit(server: Server) {
         this.chatsService.socket = server;
         //Do stuffs
