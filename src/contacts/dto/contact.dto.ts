@@ -1,11 +1,11 @@
-import { IsString, IsArray } from 'class-validator';
+import { IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class ChatDTO {
+export class ContactDTO {
     @IsString()
     @ApiProperty()
     name: string;
+    @IsString()
     @ApiProperty()
-    @IsArray()
-    users: number[];
+    phone: string;
 }

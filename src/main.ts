@@ -7,6 +7,7 @@ import { ChatsModule } from './chats/chats.module';
 import { UsersModule } from "./users/users.module";
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { ContactsModule } from "./contacts/contacts.module";
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -34,7 +35,8 @@ async function bootstrap() {
       AuthModule,
       ProfileModule,
       ChatsModule,
-      UsersModule
+      UsersModule,
+      ContactsModule,
     ],
   });
   SwaggerModule.setup('swagger/v1', app, document);

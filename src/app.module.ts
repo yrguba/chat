@@ -11,10 +11,12 @@ import { UsersModule } from "./users/users.module";
 import { UserEntity } from './database/entities/user.entity';
 import { ChatsEntity } from "./database/entities/chats.entity";
 import { MessageEntity } from "./database/entities/message.entity";
+import { ContactEntity } from "./database/entities/contact.entity";
 import { ChatGateway } from './chat.gateway';
 
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import {ContactsModule} from "./contacts/contacts.module";
 
 @Module({
   imports: [
@@ -29,13 +31,14 @@ import { join } from 'path';
     TypeOrmModule.forRoot({
       type: 'postgres',
       url: process.env.DATABASE_URI,
-      entities: [UserEntity, ChatsEntity, MessageEntity],
+      entities: [UserEntity, ChatsEntity, MessageEntity, ContactEntity],
       synchronize: true,
     }),
     AuthModule,
     ProfileModule,
     ChatsModule,
     UsersModule,
+    ContactsModule,
     ChatGateway
   ],
   controllers: [AppController],

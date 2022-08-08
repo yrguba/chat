@@ -1,5 +1,5 @@
 import {Entity, Column, PrimaryGeneratedColumn, OneToMany} from 'typeorm';
-import {MessageEntity} from "./message.entity";
+import {ContactEntity} from "./contact.entity";
 
 @Entity()
 export class UserEntity {
@@ -21,4 +21,6 @@ export class UserEntity {
   player_id: string;
   @Column({ nullable: true })
   socket_id: string;
+  @OneToMany(() => ContactEntity, (contact) => contact.user)
+  contact: ContactEntity[];
 }
