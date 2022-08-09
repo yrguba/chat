@@ -57,9 +57,11 @@ export class AuthService {
 
       // Check if the given password match with saved password
       const isValid = bcrypt.compareSync(user.code, userDetails.code);
+      console.log(typeof user.code);
+      console.log(bcrypt.hashSync(user.code, 10));
       console.log(`user code - ${user.code}, userDetails code - ${userDetails.code}`);
       if (isValid) {
-        console.log('notValid');
+        console.log('Valid');
         delete userDetails.code;
         return {
           status: 200,
