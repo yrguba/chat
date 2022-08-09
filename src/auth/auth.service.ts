@@ -46,7 +46,6 @@ export class AuthService {
         .getOne();
 
       if (userDetails == null) {
-        console.log(`userDetails - null`);
         return { status: 401, data: {
           error: {
             code: 401,
@@ -57,11 +56,7 @@ export class AuthService {
 
       // Check if the given password match with saved password
       const isValid = bcrypt.compareSync(user.code, userDetails.code);
-      console.log(typeof user.code);
-      console.log(bcrypt.hashSync(user.code, 10));
-      console.log(`user code - ${user.code}, userDetails code - ${userDetails.code}`);
       if (isValid) {
-        console.log('Valid');
         delete userDetails.code;
         return {
           status: 200,
@@ -110,8 +105,6 @@ export class AuthService {
 
     const code = this.makeCode(4);
 
-    console.log(userDetails);
-
     if (!userDetails) {
       const userData = {
         phone: phone,
@@ -138,9 +131,6 @@ export class AuthService {
     } else {
       phone = userDetails.phone;
       const newUserData = { ...userDetails, code: bcrypt.hashSync(code, 10) };
-      console.log(code);
-      console.log(newUserData);
-      console.log('Code sent successfully');
       await this.usersRepository
         .save(newUserData)
         .then(() => {
@@ -167,7 +157,6 @@ export class AuthService {
     });
 
     if (data) {
-      console.log(`Sended code ${code}`);
       const token = JSON.parse(<string>data).token;
       await this.post(
         'https://online.sigmasms.ru/api/sendings',

@@ -18,6 +18,8 @@ export class UserEntity {
   @Column({ nullable: true })
   birth: string;
   @Column({ nullable: true })
+  avatar: string;
+  @Column({ nullable: true })
   player_id: string;
   @Column({ nullable: true })
   socket_id: string;

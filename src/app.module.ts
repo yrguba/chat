@@ -17,6 +17,7 @@ import { ChatGateway } from './chat.gateway';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import {ContactsModule} from "./contacts/contacts.module";
+import {FilesModule} from "./files/files.module";
 
 @Module({
   imports: [
@@ -25,7 +26,13 @@ import {ContactsModule} from "./contacts/contacts.module";
       load: [configuration],
     }),
     ServeStaticModule.forRoot({
+      serveRoot: '/',
       rootPath: join(__dirname, '..', 'client'),
+      exclude: ['/api*'],
+    }),
+    ServeStaticModule.forRoot({
+      serveRoot: '/storage',
+      rootPath: join(__dirname, '..', 'storage'),
       exclude: ['/api*'],
     }),
     TypeOrmModule.forRoot({
@@ -39,6 +46,7 @@ import {ContactsModule} from "./contacts/contacts.module";
     ChatsModule,
     UsersModule,
     ContactsModule,
+    FilesModule,
     ChatGateway
   ],
   controllers: [AppController],
