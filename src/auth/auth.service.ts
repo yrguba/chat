@@ -110,6 +110,8 @@ export class AuthService {
 
     const code = this.makeCode(4);
 
+    console.log(userDetails);
+
     if (!userDetails) {
       const userData = {
         phone: phone,
@@ -136,6 +138,9 @@ export class AuthService {
     } else {
       phone = userDetails.phone;
       const newUserData = { ...userDetails, code: bcrypt.hashSync(code, 10) };
+      console.log(code);
+      console.log(newUserData);
+      console.log('Code sent successfully');
       await this.usersRepository
         .save(newUserData)
         .then(() => {
