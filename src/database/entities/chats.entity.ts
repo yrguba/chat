@@ -19,4 +19,6 @@ export class ChatsEntity {
     users: number[];
     @OneToMany(() => MessageEntity, (message) => message.chat)
     message: MessageEntity[];
+    @Column({ nullable: true, default: '' })
+    avatar: string;
 }

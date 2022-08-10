@@ -57,6 +57,7 @@ export class ChatsService {
 
             if (user) {
                 chat.name = user.nickname || user.name || 'Unknown user';
+                chat.avatar = user.avatar;
             }
 
             return {
@@ -100,6 +101,7 @@ export class ChatsService {
                 const user = await this.getUser(id);
                 if (user) {
                     chat.name = user.nickname || user.name || 'Unknown user';
+                    chat.avatar = user.avatar;
                 }
                 chat.message.splice(1, chat.message.length - 1);
             }
