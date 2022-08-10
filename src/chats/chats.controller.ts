@@ -63,7 +63,9 @@ export class ChatsController {
     @ApiParam({ name: 'chat_id', required: true })
     @Get('/:chat_id')
     async getChat(@Res() res, @Req() req, @Param() param) {
-        const chat = await this.chatsService.getChat(param.chat_id,);
+        const jwt = req.headers.authorization.replace('Bearer ', '');
+        const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
+        const chat = await this.chatsService.getChat(json.id, param.chat_id,);
         res.status(chat.status).json(chat.data);
     }
 

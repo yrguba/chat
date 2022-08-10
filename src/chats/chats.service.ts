@@ -20,6 +20,12 @@ export class ChatsService {
 
     public socket: Server = null;
 
+    async getUser(id) {
+        return await this.userRepository.createQueryBuilder('users')
+            .where('users.id = :id', { id: Number(id) })
+            .getOne();
+    }
+
     async createChat(data: ChatDTO) {
         let chat;
         const currentChat = await this.chatsRepository.createQueryBuilder('chats')
@@ -38,7 +44,7 @@ export class ChatsService {
         }
     }
 
-    async getChat(chat_id: number) {
+    async getChat(user_id: number, chat_id: number) {
         const chat = await this.chatsRepository.createQueryBuilder('chat')
             .leftJoinAndSelect('chat.message', 'message')
             .orderBy('message.created_at', 'DESC')
@@ -46,9 +52,8 @@ export class ChatsService {
             .getOne();
 
         if (chat) {
-            const user = await this.userRepository.createQueryBuilder('users')
-                .where('users.id = :id', { id: Number(chat?.users[0]) })
-                .getOne();
+            const id = chat?.users[0] === user_id ? chat?.users[1] : chat?.users[0];
+            const user = await this.getUser(id);
 
             if (user) {
                 chat.name = user.nickname || user.name || 'Unknown user';
@@ -74,12 +79,6 @@ export class ChatsService {
         return await this.chatsRepository.delete(chat_id);
     }
 
-    async getUser(id) {
-        return await this.userRepository.createQueryBuilder('users')
-            .where('users.id = :id', { id: Number(id) })
-            .getOne();
-    }
-
     async getChats(user_id: number, options) {
         let offset = 0;
         if (options.page > 1) offset = (options.page - 1) * options.limit;
@@ -97,7 +96,8 @@ export class ChatsService {
               .getMany();
 
             for (const chat of chats) {
-                const user = await this.getUser(chat?.users[0]);
+                const id = chat?.users[0] === user_id ? chat?.users[1] : chat?.users[0];
+                const user = await this.getUser(id);
                 if (user) {
                     chat.name = user.nickname || user.name || 'Unknown user';
                 }
