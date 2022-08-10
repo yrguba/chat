@@ -27,14 +27,6 @@ export class ChatsService {
           .getOne();
 
         if (!currentChat) {
-            const user = await this.userRepository.createQueryBuilder('users')
-              .where('users.id = :id', { id: Number(data?.users[0]) })
-              .getOne();
-
-            if (user) {
-                data.name = user.name;
-            }
-
             chat = await this.chatsRepository.save(data);
         } else chat = currentChat;
 
@@ -54,6 +46,14 @@ export class ChatsService {
             .getOne();
 
         if (chat) {
+            const user = await this.userRepository.createQueryBuilder('users')
+                .where('users.id = :id', { id: Number(chat?.users[0]) })
+                .getOne();
+
+            if (user) {
+                chat.name = user.nickname || user.name || 'Unknown user';
+            }
+
             return {
                 status: 200,
                 data: {
@@ -71,8 +71,13 @@ export class ChatsService {
     }
 
     async deleteChat(chat_id: number): Promise<DeleteResult> {
-        console.log(chat_id);
         return await this.chatsRepository.delete(chat_id);
+    }
+
+    async getUser(id) {
+        return await this.userRepository.createQueryBuilder('users')
+            .where('users.id = :id', { id: Number(id) })
+            .getOne();
     }
 
     async getChats(user_id: number, options) {
@@ -91,9 +96,13 @@ export class ChatsService {
               .where('chats.users @> :users', {users: [user_id]})
               .getMany();
 
-            chats.map(chat => {
+            for (const chat of chats) {
+                const user = await this.getUser(chat?.users[0]);
+                if (user) {
+                    chat.name = user.nickname || user.name || 'Unknown user';
+                }
                 chat.message.splice(1, chat.message.length - 1);
-            });
+            }
 
             if (chats) {
                 return {
