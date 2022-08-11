@@ -66,9 +66,9 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                     const client = this.usersPool.find(user => user.user_id === userId);
                     if (client) {
                         console.log('receiveMessage dublicate');
-                        client?.socket?.emit('receiveMessage', {
-                            message: data.message,
-                        });
+                        // client?.socket?.emit('receiveMessage', {
+                        //     message: data.message,
+                        // });
                     } else {
                         //send push
                     }
