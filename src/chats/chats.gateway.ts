@@ -37,6 +37,7 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                     // this.server?.to(user.socket_id)?.emit('receiveMessage', {
                     //     message: {...data?.message, chat_id: data.chat_id},
                     // });
+                    console.log('SEND MESSAGE', user.socket_id, data?.message);
                     this.server?.sockets?.to(user.socket_id)?.emit('receiveMessage', {
                         message: {...data?.message, chat_id: data.chat_id},
                     });
@@ -62,6 +63,7 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                 data?.users.map((userId) => {
                     const client = this.usersPool.find(user => user.user_id === userId);
                     if (client) {
+                        console.log('receiveMessage dublicate');
                         client?.socket?.emit('receiveMessage', {
                             message: data.message,
                         });
@@ -76,7 +78,7 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     @SubscribeMessage('ping')
     handlePing(client: any, payload: any): string {
-        client?.socket?.emit('receiveMessage', {
+        client?.socket?.emit('pong', {
             message: 'pong',
         });
         return '';
