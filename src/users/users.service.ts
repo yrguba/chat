@@ -32,12 +32,12 @@ export class UsersService {
       .getOne();
   }
 
-  async updateUserSocket(id: number, socket_id: any) {
+  async updateUserSocket(id: number, socket_id: any, is_online: boolean = false,) {
     const user = await this.usersRepository
       .createQueryBuilder('users')
       .where('users.id = :id', {id: id})
       .getOne();
-    const updated = Object.assign(user, {socket_id: socket_id});
+    const updated = Object.assign(user, {socket_id: socket_id, is_online: is_online, last_active: new Date()});
     return await this.usersRepository.save(updated);
   }
 }

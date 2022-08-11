@@ -10,7 +10,6 @@ import { JwtService } from "@nestjs/jwt";
 import { Socket, Server } from 'socket.io';
 import { ChatsService } from "./chats.service";
 import { UsersService } from "../users/users.service";
-import {log} from "util";
 
 
 @WebSocketGateway({
@@ -32,14 +31,9 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     private usersPool: any[];
 
     handleEmit (data) {
-        console.log(data);
         data?.users.map((userId) => {
             this.usersService.getUser(userId).then((user) => {
                 if (user && user.socket_id) {
-                    // this.server?.to(user.socket_id)?.emit('receiveMessage', {
-                    //     message: {...data?.message, chat_id: data.chat_id},
-                    // });
-                    console.log('SEND MESSAGE', user.socket_id, data?.message?.text);
                     this.server?.sockets?.to(user.socket_id)?.emit('receiveMessage', {
                         message: {...data?.message, chat_id: data.chat_id},
                     });
@@ -51,32 +45,29 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         });
     };
 
-    @SubscribeMessage('sendMessage')
-    handleMessage(client: any, payload: any): string {
-        const jwt = client.handshake?.headers?.authorization?.replace('Bearer ', '');
-        const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
-        if (json?.id) {
-            const {
-                chat_id,
-                message
-            } = payload;
-
-            this.chatsService.createMessage(chat_id, json.id, message).then((data: any) => {
-                data?.users.map((userId) => {
-                    const client = this.usersPool.find(user => user.user_id === userId);
-                    if (client) {
-                        console.log('receiveMessage dublicate');
-                        // client?.socket?.emit('receiveMessage', {
-                        //     message: data.message,
-                        // });
-                    } else {
-                        //send push
-                    }
-                });
-            });
-        }
-        return '';
-    }
+    // @SubscribeMessage('sendMessage')
+    // handleMessage(client: any, payload: any): string {
+    //     const jwt = client.handshake?.headers?.authorization?.replace('Bearer ', '');
+    //     const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
+    //     if (json?.id) {
+    //         const {
+    //             chat_id,
+    //             message
+    //         } = payload;
+    //
+    //         this.chatsService.createMessage(chat_id, json.id, message).then((data: any) => {
+    //             data?.users.map((userId) => {
+    //                 const client = this.usersPool.find(user => user.user_id === userId);
+    //                 if (client) {
+    //                     console.log('receiveMessage dublicate');
+    //                 } else {
+    //                     //send push
+    //                 }
+    //             });
+    //         });
+    //     }
+    //     return '';
+    // }
 
     @SubscribeMessage('ping')
     handlePing(client: any, payload: any): string {
@@ -92,36 +83,22 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     }
 
     handleDisconnect(client: Socket) {
-        console.log('disconnect')
-        // const jwt = client.handshake?.headers?.authorization?.replace('Bearer ', '');
-        // const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
-        // if (json?.id) {
-        //     const currentUser = this.usersPool.findIndex(user => user.id === json.id);
-        //     if (currentUser !== -1) {
-        //         this.usersPool.splice(currentUser, 1);
-        //     }
-        // }
+        const jwt = client.handshake?.headers?.authorization?.replace('Bearer ', '');
+        const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
+        if (json?.id) {
+            this.usersService.updateUserSocket(json.id, client.id, false).then(data => {
+                console.log('disconnect client');
+            });
+        }
     }
 
     handleConnection(client: Socket, ...args: any[]) {
         const jwt = client.handshake?.headers?.authorization?.replace('Bearer ', '');
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
         if (json?.id) {
-            this.usersService.updateUserSocket(json.id, client.id).then(data => {
+            this.usersService.updateUserSocket(json.id, client.id, true).then(data => {
                 console.log('updated client');
             });
-            // const currentUser = this.usersPool.findIndex(user => user.id === json.id);
-            // if (currentUser !== -1) {
-            //     this.usersPool.splice(currentUser, 1);
-            // }
-            //
-            // this.usersPool.push({
-            //     user_id: json.id,
-            //     socket: client
-            // });
         }
-
-        // const user = this.usersService.updateUserSocket(6, client);
-        // console.log(user);
     }
 }

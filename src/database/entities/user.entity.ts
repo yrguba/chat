@@ -23,6 +23,10 @@ export class UserEntity {
   player_id: string;
   @Column({ nullable: true })
   socket_id: string;
+  @Column({ nullable: true, default: false })
+  is_online: boolean;
+  @Column({ nullable: true })
+  last_active: Date;
   @OneToMany(() => ContactEntity, (contact) => contact.user)
   contact: ContactEntity[];
 }
