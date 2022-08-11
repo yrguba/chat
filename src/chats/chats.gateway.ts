@@ -10,6 +10,7 @@ import { JwtService } from "@nestjs/jwt";
 import { Socket, Server } from 'socket.io';
 import { ChatsService } from "./chats.service";
 import { UsersService } from "../users/users.service";
+import {log} from "util";
 
 
 @WebSocketGateway({
@@ -31,6 +32,7 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     private usersPool: any[];
 
     handleEmit (data) {
+        console.log(data);
         data?.users.map((userId) => {
             this.usersService.getUser(userId).then((user) => {
                 if (user && user.socket_id) {
