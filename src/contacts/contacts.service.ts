@@ -25,6 +25,7 @@ export class ContactsService {
         delete contact['user'].code;
         delete contact['user'].player_id;
         delete contact['user'].socket_id;
+        delete contact['user'].refresh_token;
       }
     });
 

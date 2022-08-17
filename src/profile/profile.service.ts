@@ -27,6 +27,7 @@ export class ProfileService {
 
     delete profile.code;
     delete profile.socket_id;
+    delete profile.refresh_token;
     return {
       status: 200,
       data: {
@@ -59,6 +60,7 @@ export class ProfileService {
         const updated = Object.assign(profile, profileData);
         delete updated.code;
         delete updated.socket_id;
+        delete updated.refresh_token;
         const updatedProfile = await this.usersRepository.save(updated);
         return {
           status: 200,

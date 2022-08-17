@@ -17,6 +17,12 @@ export class UsersService {
       .where('users.id != :id', { id: Number(id) })
       .getMany();
 
+    users.map(user => {
+      delete user.code;
+      delete user.refresh_token;
+      delete user.socket_id;
+    })
+
     return {
       status: 200,
       data: {

@@ -29,4 +29,6 @@ export class UserEntity {
   last_active: Date;
   @OneToMany(() => ContactEntity, (contact) => contact.user)
   contact: ContactEntity[];
+  @Column({ nullable: true })
+  refresh_token: string;
 }

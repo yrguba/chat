@@ -8,6 +8,7 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { HttpService } from '@nestjs/axios';
 import * as https from 'https';
+import * as argon2 from 'argon2';
 
 @Injectable()
 export class AuthService {
@@ -58,6 +59,14 @@ export class AuthService {
       const isValid = bcrypt.compareSync(user.code, userDetails.code);
       if (isValid) {
         delete userDetails.code;
+        const refreshToken = this.jwtService.sign({
+          phone: user.phone,
+          id: userDetails.id,
+        }, {
+          secret: `${process.env.SECRET_REFRESH.replace(/\\\\n/gm, '\\n')}`,
+          expiresIn: '7d',
+        });
+        await this.updateRefreshToken(userDetails.id, refreshToken)
         return {
           status: 200,
           data: {
@@ -65,8 +74,12 @@ export class AuthService {
               access_token: this.jwtService.sign({
                 phone: user.phone,
                 id: userDetails.id,
-              }),
+              },{
+                    secret: `${process.env.SECRET.replace(/\\\\n/gm, '\\n')}`,
+                    expiresIn: '15m',
+                  }),
               ...userDetails,
+              refresh_token: refreshToken,
             }
           },
         };
@@ -245,5 +258,82 @@ export class AuthService {
       req.write(dataString);
       req.end();
     });
+  }
+
+  async refreshTokens(id: number, refresh_token: string): Promise<Record<string, any>> {
+    const user = await this.usersRepository
+        .createQueryBuilder('users')
+        .where('users.id = :id', { id: id })
+        .getOne();
+
+    if (user == null || !user.refresh_token) {
+      return { status: 401, data: {
+          error: {
+            code: 401,
+            message: "Invalid credentials"
+          }
+        }};
+    }
+
+    const refreshTokenMatches = await argon2.verify(
+        user.refresh_token,
+        refresh_token,
+    );
+
+    if (!refreshTokenMatches) {
+      return { status: 403, data: {
+          error: {
+            code: 401,
+            message: "refresh token invalid"
+          }
+        }};
+    }
+    const tokens = await this.getTokens(user.id, user.phone);
+    await this.updateRefreshToken(user.id, tokens.refresh_token);
+    return {
+      status: 200,
+      data: {
+        data: {
+          access_token: tokens.access_token,
+          refresh_token: tokens.refresh_token,
+        }
+      },
+    };
+  }
+
+  async updateRefreshToken(userId: number, refreshToken: string) {
+    const hashedRefreshToken = await this.hashData(refreshToken);
+    await this.usersRepository.update(userId, {
+      refresh_token: hashedRefreshToken,
+    });
+  }
+
+  async getTokens(userId: number, phone: string) {
+    return {
+      access_token: this.jwtService.sign(
+          {
+            phone: phone,
+            id: userId,
+          },
+          {
+            secret: `${process.env.SECRET.replace(/\\\\n/gm, '\\n')}`,
+            expiresIn: '15m',
+          },
+      ),
+      refresh_token: this.jwtService.sign(
+          {
+            phone: phone,
+            id: userId,
+          },
+          {
+            secret: `${process.env.SECRET_REFRESH.replace(/\\\\n/gm, '\\n')}`,
+            expiresIn: '7d',
+          },
+      )
+    }
+  }
+
+  hashData(data: string) {
+    return argon2.hash(data);
   }
 }
