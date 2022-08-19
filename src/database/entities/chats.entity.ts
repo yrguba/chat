@@ -21,4 +21,5 @@ export class ChatsEntity {
     message: MessageEntity[];
     @Column({ nullable: true, default: '' })
     avatar: string;
+    chatUsers: any;
 }

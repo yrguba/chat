@@ -51,14 +51,20 @@ export class ChatsService {
             .where('chat.id = :id', { id: chat_id })
             .getOne();
 
-        if (chat) {
+        const users = await this.userRepository.createQueryBuilder('users')
+            .where("users.id IN (:...usersArray)", { usersArray: chat.users })
+            .getMany();
+
+        if (chat && chat?.users?.length < 3) {
             const id = chat?.users[0] === user_id ? chat?.users[1] : chat?.users[0];
             const user = await this.getUser(id);
 
             if (user) {
-                chat.name = user.nickname || user.name || 'Unknown user';
+                chat.name = user.nickname || user.name || user.phone;
                 chat.avatar = user.avatar;
             }
+
+            if (users) chat.chatUsers = users;
 
             return {
                 status: 200,
@@ -66,6 +72,14 @@ export class ChatsService {
                     data: chat
                 }
             };
+        } else if (chat) {
+            if (users) chat.chatUsers = users;
+            return {
+                status: 200,
+                data: {
+                    data: chat
+                }
+            }
         } else {
             return { status: 404, data: {
                 error: {
@@ -97,11 +111,13 @@ export class ChatsService {
               .getMany();
 
             for (const chat of chats) {
-                const id = chat?.users[0] === user_id ? chat?.users[1] : chat?.users[0];
-                const user = await this.getUser(id);
-                if (user) {
-                    chat.name = user.nickname || user.name || 'Unknown user';
-                    chat.avatar = user.avatar;
+                if (chat.users.length < 3) {
+                    const id = chat?.users[0] === user_id ? chat?.users[1] : chat?.users[0];
+                    const user = await this.getUser(id);
+                    if (user) {
+                        chat.name = user.nickname || user.name || user.phone;
+                        chat.avatar = user.avatar;
+                    }
                 }
                 chat.message.splice(1, chat.message.length - 1);
             }

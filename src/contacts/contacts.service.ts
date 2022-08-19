@@ -37,17 +37,36 @@ export class ContactsService {
     }
   }
 
-  async saveContact(id: number, contact: any) {
+  async getContact(contact_id: number) {
+    const contact = await this.contactsRepository.createQueryBuilder('contact')
+        .where('contact.id = :id', { id: contact_id })
+        .getOne();
+
+    return {
+      status: 200,
+      data: {
+        data: contact
+      }
+    };
+  }
+
+  async saveContact(id: number, contactData: any) {
     const user = await this.usersRepository.findOne({
-      where: { phone: contact.phone },
+      where: { phone: contactData.phone },
       relations: ['contact'],
+    });
+
+    const contact = await this.contactsRepository.findOne({
+      where: { phone: contactData.phone },
+      relations: ['user'],
     });
 
     let newContact = {...contact, owner: id};
 
-    if (user) {
+    if (user && !contact) {
       const updatedUser = Object.assign(user, {});
-      newContact = {...contact, user: updatedUser, owner: id};
+      newContact = {...contactData, user: updatedUser, owner: id};
+
       updatedUser.contact.push(newContact);
       await this.usersRepository.save(updatedUser);
     }

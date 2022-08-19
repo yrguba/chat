@@ -32,6 +32,14 @@ export class ContactsController {
     }
 
     @UseGuards(JwtAuthGuard)
+    @ApiParam({ name: 'contact_id', required: true })
+    @Get('/:contact_id')
+    async getContact(@Res() res, @Req() req, @Param() param) {
+        const contact = await this.contactsService.getContact(param.contact_id);
+        res.status(contact.status).json(contact.data);
+    }
+
+    @UseGuards(JwtAuthGuard)
     @Post('/')
     async saveContacts(@Res() res, @Req() req, @Body() body: ContactDTO[]) {
         const jwt = req.headers.authorization.replace('Bearer ', '');
