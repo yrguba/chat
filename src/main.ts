@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 import { AuthModule } from './auth/auth.module';
 import { ProfileModule } from './profile/profile.module';
@@ -10,8 +11,26 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ContactsModule } from "./contacts/contacts.module";
 import { FilesModule } from "./files/files.module";
 
+import * as admin from 'firebase-admin';
+import { ServiceAccount } from "firebase-admin";
+
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const configService: ConfigService = app.get(ConfigService);
+
+  const adminConfig: ServiceAccount = {
+    "projectId": configService.get<string>('FIREBASE_PROJECT_ID'),
+    "privateKey": configService.get<string>('FIREBASE_PRIVATE_KEY')
+        .replace(/\\n/g, '\n'),
+    "clientEmail": configService.get<string>('FIREBASE_CLIENT_EMAIL'),
+  };
+  console.log(adminConfig);
+  // Initialize the firebase admin app
+  admin.initializeApp({
+    credential: admin.credential.cert(adminConfig),
+    //databaseURL: "https://xxxxx.firebaseio.com",
+  });
+
   app.enableVersioning({
     type: VersioningType.URI,
   });

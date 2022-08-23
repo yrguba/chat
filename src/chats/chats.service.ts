@@ -6,6 +6,7 @@ import { ChatsEntity } from "../database/entities/chats.entity";
 import { MessageEntity } from "../database/entities/message.entity";
 import { UserEntity } from "../database/entities/user.entity";
 import { ChatDTO } from "./dto/chat.dto";
+import * as admin from "firebase-admin";
 
 @Injectable()
 export class ChatsService {
@@ -178,6 +179,19 @@ export class ChatsService {
                 chat.message.push(message);
                 await this.chatsRepository.save(chat);
                 message.initiator = user;
+
+                chat.users.forEach(user_id => {
+                    const groupUser: any = this.getUser(user_id);
+                    if (user?.player_id) {
+                        admin.messaging().sendToDevice(groupUser.player_id, {
+                            "notification": {
+                                "title": user.name,
+                                "body": message.text
+                            },
+                        });
+                    }
+                });
+
                 return {
                     status: 201,
                     data: {
