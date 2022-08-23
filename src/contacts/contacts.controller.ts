@@ -6,7 +6,7 @@ import {
     Body,
     UseGuards,
     Param,
-    Post
+    Post, Delete
 } from '@nestjs/common';
 import { ContactsService } from './contacts.service';
 import {ApiParam, ApiTags} from '@nestjs/swagger';
@@ -47,6 +47,16 @@ export class ContactsController {
 
         body.map(contact => {
             this.contactsService.saveContact(json.id, contact);
+        });
+
+        res.status(200).json({data: body});
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Delete('/')
+    async deleteChat(@Res() res, @Req() req, @Body() body: ContactDTO[]) {
+        body.map((id: any) => {
+            this.contactsService.deleteContact(id);
         });
 
         res.status(200).json({data: body});

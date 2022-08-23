@@ -1,4 +1,4 @@
-import { IsString, IsArray } from 'class-validator';
+import {IsString, IsArray, IsBoolean} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class ChatDTO {
@@ -8,4 +8,7 @@ export class ChatDTO {
     @ApiProperty()
     @IsArray()
     users: number[];
+    @ApiProperty()
+    @IsBoolean()
+    is_group: boolean;
 }

@@ -1,6 +1,6 @@
 import {Injectable} from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
-import {Repository} from 'typeorm';
+import {DeleteResult, Repository} from 'typeorm';
 import { ContactEntity } from "../database/entities/contact.entity";
 import { UserEntity } from "../database/entities/user.entity";
 
@@ -79,6 +79,10 @@ export class ContactsService {
         data: newContact
       }
     }
+  }
+
+  async deleteContact(id: number): Promise<DeleteResult> {
+    return await this.contactsRepository.delete(id);
   }
 }
 

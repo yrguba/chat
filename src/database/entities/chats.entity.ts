@@ -21,5 +21,7 @@ export class ChatsEntity {
     message: MessageEntity[];
     @Column({ nullable: true, default: '' })
     avatar: string;
+    @Column({ nullable: true, default: false })
+    is_group: boolean;
     chatUsers: any;
 }
