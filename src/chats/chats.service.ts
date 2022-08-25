@@ -47,8 +47,6 @@ export class ChatsService {
 
     async getChat(user_id: number, chat_id: number) {
         const chat = await this.chatsRepository.createQueryBuilder('chat')
-            .leftJoinAndSelect('chat.message', 'message')
-            .orderBy('message.created_at', 'DESC')
             .where('chat.id = :id', { id: chat_id })
             .getOne();
 
@@ -56,7 +54,7 @@ export class ChatsService {
             .where("users.id IN (:...usersArray)", { usersArray: chat.users })
             .getMany();
 
-        if (chat && chat?.users?.length < 3) {
+        if (chat && !chat?.is_group) {
             const id = chat?.users[0] === user_id ? chat?.users[1] : chat?.users[0];
             const user = await this.getUser(id);
 
@@ -91,6 +89,48 @@ export class ChatsService {
         }
     }
 
+    async getMessages(user_id, chat_id, options) {
+        let offset = 0;
+        if (options.page > 1) offset = (options.page - 1) * options.limit;
+        let messages = [];
+
+        const chat = await this.chatsRepository.createQueryBuilder('chat')
+            .where('chat.id = :id', { id: chat_id })
+            .getOne();
+
+        if (chat.users.includes(user_id) && !chat.is_group) {
+            const count = await this.messageRepository.createQueryBuilder('messages')
+                .where('messages.chat.id = :id', { id: chat_id })
+                .getCount();
+
+            if (offset < count) {
+                messages = await this.messageRepository.createQueryBuilder('messages')
+                    .orderBy('messages.created_at', 'DESC')
+                    .offset(offset)
+                    .limit(options.limit)
+                    .where('messages.chat.id = :id', { id: chat_id })
+                    .getMany();
+            }
+
+            return {
+                status: 200,
+                data: {
+                    data: messages
+                }
+            }
+        } else {
+            return {
+                status: 403,
+                data: {
+                    error: {
+                        code: 403,
+                        message: "You cant read this chat or this chat is not group"
+                    }
+                }
+            }
+        }
+    }
+
     async deleteChat(chat_id: number): Promise<DeleteResult> {
         return await this.chatsRepository.delete(chat_id);
     }
@@ -112,7 +152,7 @@ export class ChatsService {
               .getMany();
 
             for (const chat of chats) {
-                if (chat.users.length < 3) {
+                if (!chat.is_group) {
                     const id = chat?.users[0] === user_id ? chat?.users[1] : chat?.users[0];
                     const user = await this.getUser(id);
                     if (user) {
@@ -147,18 +187,44 @@ export class ChatsService {
         }
     }
 
-    async addUserToChat(user_id: number, chat_id: number): Promise<ChatsEntity> {
+    async addUserToChat(user_id: number, users: number[], chat_id: number) {
         const chat = await this.chatsRepository.createQueryBuilder('chat')
             .where('chat.id = :id', { id: chat_id })
             .getOne();
 
+        let currentChatUsers = Array.from(chat.users);
         const updated = Object.assign(chat, {});
 
-        if (chat) {
-            updated.users.push(user_id)
-        }
+        if (chat && chat.users.includes(user_id)) {
+            users.forEach((user) => {
+                this.userRepository.createQueryBuilder('users')
+                    .where('users.id = :id', { id: Number(user) })
+                    .getOne().then(activeUser => {
+                        if (activeUser && !chat.users.includes(user)) {
+                            currentChatUsers.push(user);
+                        }
+                    });
+            });
+            updated.users = currentChatUsers;
+            const chat = await this.chatsRepository.save(updated);
 
-        return await this.chatsRepository.save(updated);
+            return {
+                status: 200,
+                data: {
+                    data: chat,
+                }
+            };
+        } else {
+            return {
+                status: 403,
+                data: {
+                    error: {
+                        code: 403,
+                        message: "You cant add user to this chat"
+                    }
+                }
+            }
+        }
     }
 
     async createMessage(chat_id: number, user_id: number, data:any): Promise<any> {

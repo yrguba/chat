@@ -5,6 +5,7 @@ import {
     Post,
     Res,
     Req,
+    Patch,
     Param,
     UseGuards,
     Query,
@@ -70,6 +71,34 @@ export class ChatsController {
     }
 
     @UseGuards(JwtAuthGuard)
+    @ApiQuery({
+        name: 'page',
+        description: 'Текущая страница',
+        required: false,
+        type: Number,
+    })
+    @ApiQuery({
+        name: 'limit',
+        description: 'Количество записей на странице',
+        required: false,
+        type: Number,
+    })
+    @ApiParam({ name: 'chat_id', required: true })
+    @Get('/:chat_id/messages')
+    async getMessages(
+        @Res() res,
+        @Req() req,
+        @Param() param,
+        @Query('page', new DefaultValuePipe(1), ParseIntPipe) page = 1,
+        @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit = 20,
+    ) {
+        const jwt = req.headers.authorization.replace('Bearer ', '');
+        const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
+        const messages = await this.chatsService.getMessages(json.id, param.chat_id, {page, limit});
+        res.status(messages.status).json(messages.data);
+    }
+
+    @UseGuards(JwtAuthGuard)
     @Post('/')
     async createChat(@Res() res, @Req() req, @Body() body: ChatDTO) {
         const jwt = req.headers.authorization.replace('Bearer ', '');
@@ -105,11 +134,13 @@ export class ChatsController {
         res.status(message.status).json(message.data);
     }
 
-    // @Patch('/')
-    // async addUserToChat(@Res() res, @Req() req, @Body() user_id: number) {
+    // @Patch(':chat_id/add-users')
+    // @ApiParam({ name: 'chat_id', required: true })
+    // async addUserToChat(@Res() res, @Req() req, @Param() params,  @Body() users: number[]) {
     //     const jwt = req.headers.authorization.replace('Bearer ', '');
     //     const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
-    //     const user = await this.chatsService.addUserToChat(json.id, body);
-    //     res.json(user);
+    //
+    //     const addedUsers = await this.chatsService.addUserToChat(json.id, users, params.chat_id);
+    //     res.status(addedUsers.status).json(addedUsers.data);
     // }
 }

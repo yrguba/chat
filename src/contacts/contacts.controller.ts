@@ -13,6 +13,7 @@ import {ApiParam, ApiTags} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { JwtService } from "@nestjs/jwt";
 import {ContactDTO} from "./dto/contact.dto";
+import {DeleteContactsDto} from "./dto/deleteContacts.dto";
 
 @ApiTags('contacts')
 @Controller('contacts')
@@ -54,8 +55,8 @@ export class ContactsController {
 
     @UseGuards(JwtAuthGuard)
     @Delete('/')
-    async deleteChat(@Res() res, @Req() req, @Body() body: ContactDTO[]) {
-        body.map((id: any) => {
+    async deleteContacts(@Res() res, @Req() req, @Body() body: DeleteContactsDto) {
+        body?.contacts.map((id: any) => {
             this.contactsService.deleteContact(id);
         });
 
