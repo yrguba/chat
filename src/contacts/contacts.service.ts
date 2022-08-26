@@ -3,6 +3,7 @@ import {InjectRepository} from '@nestjs/typeorm';
 import {DeleteResult, Repository} from 'typeorm';
 import { ContactEntity } from "../database/entities/contact.entity";
 import { UserEntity } from "../database/entities/user.entity";
+import {log} from "util";
 
 @Injectable()
 export class ContactsService {
@@ -70,8 +71,7 @@ export class ContactsService {
       updatedUser.contact.push(newContact);
       await this.usersRepository.save(updatedUser);
     }
-
-    await this.contactsRepository.save(newContact);
+    if (newContact?.phone) await this.contactsRepository.save(newContact);
 
     return {
       status: 200,

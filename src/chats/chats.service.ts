@@ -98,7 +98,7 @@ export class ChatsService {
             .where('chat.id = :id', { id: chat_id })
             .getOne();
 
-        if (chat.users.includes(user_id) && !chat.is_group) {
+        if (chat.users.includes(user_id)) {
             const count = await this.messageRepository.createQueryBuilder('messages')
                 .where('messages.chat.id = :id', { id: chat_id })
                 .getCount();
@@ -115,7 +115,10 @@ export class ChatsService {
             return {
                 status: 200,
                 data: {
-                    data: messages
+                    data: messages,
+                    page: options.page,
+                    limit: options.limit,
+                    total: count
                 }
             }
         } else {
@@ -140,7 +143,8 @@ export class ChatsService {
         if (options.page > 1) offset = (options.page - 1) * options.limit;
 
         const count = await this.chatsRepository.createQueryBuilder('chats')
-          .getCount();
+            .where('chats.users @> :users', {users: [user_id]})
+            .getCount();
 
         if (offset < count) {
             const chats = await this.chatsRepository.createQueryBuilder('chats')
@@ -247,15 +251,16 @@ export class ChatsService {
                 message.initiator = user;
 
                 chat.users.forEach(user_id => {
-                    const groupUser: any = this.getUser(user_id);
-                    if (user?.player_id) {
-                        admin.messaging().sendToDevice(groupUser.player_id, {
-                            "notification": {
-                                "title": user.name,
-                                "body": message.text
-                            },
-                        });
-                    }
+                    this.getUser(user_id).then(user => {
+                        if (user && user.player_id) {
+                            admin.messaging().sendToDevice(user.player_id, {
+                                "notification": {
+                                    "title": user.name,
+                                    "body": message.text
+                                },
+                            });
+                        }
+                    });
                 });
 
                 return {

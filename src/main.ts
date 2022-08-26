@@ -24,7 +24,6 @@ async function bootstrap() {
         .replace(/\\n/g, '\n'),
     "clientEmail": configService.get<string>('FIREBASE_CLIENT_EMAIL'),
   };
-  console.log(adminConfig);
   // Initialize the firebase admin app
   admin.initializeApp({
     credential: admin.credential.cert(adminConfig),
