@@ -29,13 +29,17 @@ export class ChatsService {
 
     async createChat(data: ChatDTO) {
         let chat;
-        const currentChat = await this.chatsRepository.createQueryBuilder('chats')
+        const currentChats = await this.chatsRepository.createQueryBuilder('chats')
           .where('chats.users @> :users', {users: data.users})
-          .getOne();
+          .getMany();
 
-        if (!currentChat) {
-            chat = await this.chatsRepository.save(data);
-        } else chat = currentChat;
+        if (currentChats) {
+            const targetChat = currentChats.filter(chat => chat.users.toString() === data.users.toString());
+
+            if (!targetChat) {
+                chat = await this.chatsRepository.save(data);
+            } else chat = targetChat;
+        }
 
         return {
             status: 201,
