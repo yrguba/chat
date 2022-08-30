@@ -35,6 +35,8 @@ export class ContactsService {
       })
     });
 
+    console.log(contacts);
+
     return {
       status: 200,
       data: {
