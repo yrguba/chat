@@ -11,6 +11,8 @@ export class ContactEntity {
     name: string;
     @Column({ nullable: true })
     owner: number;
+    @Column({ nullable: true })
+    user_id: number;
     @ManyToOne(() => UserEntity, (user) => user.contact, {
         onDelete: 'CASCADE',
     })

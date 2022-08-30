@@ -15,30 +15,30 @@ export class ContactsService {
   }
 
   async getContacts(id: number) {
-    // const contacts = await this.contactsRepository.find({
-    //   relations: ['user'],
-    //   where: { owner: Number(id) }
-    // });
+    const contacts = await this.contactsRepository.find({
+      relations: ['user'],
+      where: { owner: Number(id) }
+    });
 
-    const user = await this.usersRepository.findOne({
-      where: { id: id },
-      relations: ['contact'],
-    })
-
-
-    user.contact.map(contact => {
-      if (contact.user) {
-        delete contact['user'].code;
-        delete contact['user'].player_id;
-        delete contact['user'].socket_id;
-        delete contact['user'].refresh_token;
-      }
+    contacts.map(contact => {
+      this.usersRepository.findOne({
+        where: { phone: contact.phone },
+      }).then(user => {
+        if (user) {
+          contact.user = user;
+          delete contact['user'].code;
+          delete contact['user'].player_id;
+          delete contact['user'].socket_id;
+          delete contact['user'].refresh_token;
+          delete contact['user'].fb_tokens;
+        }
+      })
     });
 
     return {
       status: 200,
       data: {
-        data: user.contact
+        data: contacts
       }
     }
   }
@@ -67,7 +67,7 @@ export class ContactsService {
       relations: ['contact'],
     });
 
-    const newContact = {...contactData, user: user, owner: id};
+    const newContact = {...contactData, user_id: user.id, owner: id};
 
     if (newContact?.phone[0] === '+') {
       await this.contactsRepository.save(newContact);
