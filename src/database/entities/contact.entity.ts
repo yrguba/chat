@@ -5,7 +5,7 @@ import { UserEntity } from "./user.entity";
 export class ContactEntity {
     @PrimaryGeneratedColumn()
     id: number;
-    @Column({ nullable: false, unique: true })
+    @Column({ nullable: false })
     phone: string;
     @Column({ nullable: true })
     name: string;
