@@ -333,6 +333,56 @@ export class AuthService {
     }
   }
 
+  async addFirebaseToken(userId: number, token: string) {
+    let tokens = [];
+    const profile = await this.usersRepository
+        .createQueryBuilder('users')
+        .where('users.id = :id', { id: userId })
+        .getOne();
+
+    console.log(profile.fb_tokens);
+
+    if (!Array.isArray(profile.fb_tokens)) {
+      tokens.push(token);
+    } else if (!profile?.fb_tokens?.includes(token)) {
+      tokens = profile.fb_tokens;
+      tokens.push(token);
+    }
+
+    const profileUpdated = {...profile, fb_tokens: tokens}
+    await this.usersRepository.save(profileUpdated);
+
+    return {
+      status: 200,
+      data: {
+        data: tokens
+      }
+    };
+  }
+
+  async deleteFirebaseToken(userId: number, token: string) {
+    const profile = await this.usersRepository
+        .createQueryBuilder('users')
+        .where('users.id = :id', { id: userId })
+        .getOne();
+
+    if (profile.fb_tokens.includes(token)) {
+      const tokens = profile.fb_tokens;
+      const targetTokenIndex = tokens.indexOf(token);
+      tokens.splice(targetTokenIndex, 1);
+
+      const profileUpdated = {...profile, fb_tokens: tokens}
+      await this.usersRepository.save(profileUpdated);
+
+      return {
+        status: 200,
+        data: {
+          data: tokens
+        }
+      };
+    }
+  }
+
   hashData(data: string) {
     return argon2.hash(data);
   }

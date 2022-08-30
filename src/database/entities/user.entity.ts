@@ -31,4 +31,6 @@ export class UserEntity {
   contact: ContactEntity[];
   @Column({ nullable: true })
   refresh_token: string;
+  @Column("text", { array: true, nullable: true, default: [] })
+  fb_tokens: string[];
 }

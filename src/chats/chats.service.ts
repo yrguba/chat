@@ -252,12 +252,14 @@ export class ChatsService {
 
                 chat.users.forEach(user_id => {
                     this.getUser(user_id).then(user => {
-                        if (user && user.player_id) {
-                            admin.messaging().sendToDevice(user.player_id, {
-                                "notification": {
-                                    "title": user.name,
-                                    "body": message.text
-                                },
+                        if (user && user?.fb_tokens) {
+                            user?.fb_tokens.map(token => {
+                                admin.messaging().sendToDevice(token, {
+                                    "notification": {
+                                        "title": user.name,
+                                        "body": message.text
+                                    },
+                                });
                             });
                         }
                     });
