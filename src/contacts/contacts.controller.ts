@@ -30,6 +30,7 @@ export class ContactsController {
     async getContacts(@Res() res, @Req() req) {
         const jwt = req.headers.authorization.replace('Bearer ', '');
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
+
         const contacts = await this.contactsService.getContacts(json.id);
         res.status(contacts.status).json(contacts.data);
     }

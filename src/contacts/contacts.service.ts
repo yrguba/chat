@@ -15,14 +15,18 @@ export class ContactsService {
   }
 
   async getContacts(id: number) {
-    const contacts = await this.contactsRepository.find({
-      relations: ['user'],
-      where: { owner: Number(id) }
-    });
+    // const contacts = await this.contactsRepository.find({
+    //   relations: ['user'],
+    //   where: { owner: Number(id) }
+    // });
 
-    console.log(contacts);
+    const user = await this.usersRepository.findOne({
+      where: { id: id },
+      relations: ['contact'],
+    })
 
-    contacts.map(contact => {
+
+    user.contact.map(contact => {
       if (contact.user) {
         delete contact['user'].code;
         delete contact['user'].player_id;
@@ -34,7 +38,7 @@ export class ContactsService {
     return {
       status: 200,
       data: {
-        data: contacts
+        data: user.contact
       }
     }
   }
