@@ -3,7 +3,6 @@ import {InjectRepository} from '@nestjs/typeorm';
 import {DeleteResult, Repository} from 'typeorm';
 import { ContactEntity } from "../database/entities/contact.entity";
 import { UserEntity } from "../database/entities/user.entity";
-import {log} from "util";
 
 @Injectable()
 export class ContactsService {
@@ -20,6 +19,15 @@ export class ContactsService {
       relations: ['user'],
       where: { owner: Number(id) }
     });
+
+    const allContacts = await this.contactsRepository.find({
+      where: { owner: Number(id) }
+    });
+
+    console.log(contacts);
+    console.log('-----');
+
+    console.log(allContacts);
 
     contacts.map(contact => {
       if (contact.user) {
