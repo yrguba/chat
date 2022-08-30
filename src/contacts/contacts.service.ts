@@ -23,14 +23,12 @@ export class ContactsService {
       this.usersRepository.findOne({
         where: { phone: contact.phone },
       }).then(user => {
-        if (user) {
           contact.user = user;
           delete contact['user'].code;
           delete contact['user'].player_id;
           delete contact['user'].socket_id;
           delete contact['user'].refresh_token;
           delete contact['user'].fb_tokens;
-        }
       })
     });
 
