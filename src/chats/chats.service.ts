@@ -102,7 +102,7 @@ export class ChatsService {
             .where('chat.id = :id', { id: chat_id })
             .getOne();
 
-        if (chat.users.includes(user_id)) {
+        if (chat?.users.includes(user_id)) {
             const count = await this.messageRepository.createQueryBuilder('messages')
                 .where('messages.chat.id = :id', { id: chat_id })
                 .getCount();
