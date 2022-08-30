@@ -20,6 +20,8 @@ export class ContactsService {
       where: { owner: Number(id) }
     });
 
+    console.log(contacts);
+
     contacts.map(contact => {
       if (contact.user) {
         delete contact['user'].code;
