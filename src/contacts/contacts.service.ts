@@ -62,16 +62,17 @@ export class ContactsService {
       relations: ['user'],
     });
 
-    let newContact = {...contact, owner: id};
+    const newContact = {...contactData, user: user, owner: id};
 
-    if (user && !contact) {
-      const updatedUser = Object.assign(user, {});
-      newContact = {...contactData, user: updatedUser, owner: id};
-
-      updatedUser.contact.push(newContact);
-      await this.usersRepository.save(updatedUser);
+    if (!contact || contact?.user?.id !== id) {
+      if (user) {
+        const updatedUser = Object.assign(user, {});
+        updatedUser.contact.push(newContact);
+        await this.usersRepository.save(updatedUser);
+      }
     }
-    if (newContact?.phone) await this.contactsRepository.save(newContact);
+
+    if (newContact?.phone[0] === '+') await this.contactsRepository.save(newContact);
 
     return {
       status: 200,
@@ -85,4 +86,3 @@ export class ContactsService {
     return await this.contactsRepository.delete(id);
   }
 }
-
