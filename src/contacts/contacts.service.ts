@@ -25,9 +25,6 @@ export class ContactsService {
     });
 
     console.log(contacts);
-    console.log('-----');
-
-    console.log(allContacts);
 
     contacts.map(contact => {
       if (contact.user) {
@@ -37,6 +34,8 @@ export class ContactsService {
         delete contact['user'].refresh_token;
       }
     });
+
+    console.log(contacts);
 
     return {
       status: 200,
