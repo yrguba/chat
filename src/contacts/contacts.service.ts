@@ -3,6 +3,7 @@ import {InjectRepository} from '@nestjs/typeorm';
 import {DeleteResult, Repository} from 'typeorm';
 import { ContactEntity } from "../database/entities/contact.entity";
 import { UserEntity } from "../database/entities/user.entity";
+import {log} from "util";
 
 @Injectable()
 export class ContactsService {
@@ -15,35 +16,55 @@ export class ContactsService {
   }
 
   async getContacts(id: number) {
+    let count = 0;
     const contacts = await this.contactsRepository.find({
       where: { owner: Number(id) }
     });
 
+    const phones = [];
+    contacts.map(contact => {
+      phones.push(contact.phone);
+    });
+    const users = await this.usersRepository.createQueryBuilder('users')
+        .where("users.phone IN (:...phonesArray)", { phonesArray: phones })
+        .getMany();
+
     const currentContacts = Array.from(contacts);
 
-    currentContacts.map(contact => {
-      this.usersRepository.findOne({
-        where: { phone: contact.phone },
-      }).then(user => {
-          contact.user = user;
-          if (user) {
-            delete contact['user'].code;
-            delete contact['user'].player_id;
-            delete contact['user'].socket_id;
-            delete contact['user'].refresh_token;
-            delete contact['user'].fb_tokens;
-          }
-      })
+    currentContacts.forEach(cont => {
+      const cUser = users.find(us => us.phone === cont.phone);
+      if (cUser) {
+        delete cUser.code;
+        delete cUser.player_id;
+        delete cUser.socket_id;
+        delete cUser.refresh_token;
+        delete cUser.fb_tokens;
+        cont.user = cUser
+      } else cont.user = null;
     });
 
-    console.log(currentContacts);
+    // currentContacts.map((contact, index) => {
+    //   this.usersRepository.findOne({
+    //     where: { phone: contact.phone },
+    //   }).then(user => {
+    //     console.log(user);
+    //       contact.user = user;
+    //       if (user) {
+    //         delete contact['user'].code;
+    //         delete contact['user'].player_id;
+    //         delete contact['user'].socket_id;
+    //         delete contact['user'].refresh_token;
+    //         delete contact['user'].fb_tokens;
+    //       }
+    //   });
+    // });
 
-    return {
-      status: 200,
-      data: {
-        data: currentContacts
+      return {
+        status: 200,
+        data: {
+          data: currentContacts
+        }
       }
-    }
   }
 
   async getContact(contact_id: number) {
