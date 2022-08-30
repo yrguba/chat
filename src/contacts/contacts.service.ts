@@ -24,11 +24,13 @@ export class ContactsService {
         where: { phone: contact.phone },
       }).then(user => {
           contact.user = user;
-          delete contact['user'].code;
-          delete contact['user'].player_id;
-          delete contact['user'].socket_id;
-          delete contact['user'].refresh_token;
-          delete contact['user'].fb_tokens;
+          if (user) {
+            delete contact['user'].code;
+            delete contact['user'].player_id;
+            delete contact['user'].socket_id;
+            delete contact['user'].refresh_token;
+            delete contact['user'].fb_tokens;
+          }
       })
     });
 
