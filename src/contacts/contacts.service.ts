@@ -19,7 +19,9 @@ export class ContactsService {
       where: { owner: Number(id) }
     });
 
-    contacts.map(contact => {
+    const currentContacts = Array.from(contacts);
+
+    currentContacts.map(contact => {
       this.usersRepository.findOne({
         where: { phone: contact.phone },
       }).then(user => {
@@ -34,12 +36,12 @@ export class ContactsService {
       })
     });
 
-    console.log(contacts);
+    console.log(currentContacts);
 
     return {
       status: 200,
       data: {
-        data: contacts
+        data: currentContacts
       }
     }
   }
@@ -68,7 +70,7 @@ export class ContactsService {
       relations: ['contact'],
     });
 
-    const newContact = {...contactData, user_id: user.id, owner: id};
+    const newContact = {...contactData, owner: id};
 
     if (newContact?.phone[0] === '+') {
       await this.contactsRepository.save(newContact);
