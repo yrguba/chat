@@ -38,6 +38,13 @@ export class UsersService {
       .getOne();
   }
 
+  async getUserWithContacts(id: number): Promise<UserEntity> {
+    return await this.usersRepository.findOne({
+      where: { id: id },
+      relations: ['contact'],
+    })
+  }
+
   async updateUserSocket(id: number, socket_id: any, is_online: boolean = false,) {
     const user = await this.usersRepository
       .createQueryBuilder('users')

@@ -20,12 +20,6 @@ export class ContactsService {
       where: { owner: Number(id) }
     });
 
-    const allContacts = await this.contactsRepository.find({
-      where: { owner: Number(id) }
-    });
-
-    console.log(contacts);
-
     contacts.map(contact => {
       if (contact.user) {
         delete contact['user'].code;
@@ -34,8 +28,6 @@ export class ContactsService {
         delete contact['user'].refresh_token;
       }
     });
-
-    console.log(contacts);
 
     return {
       status: 200,
@@ -64,22 +56,21 @@ export class ContactsService {
       relations: ['contact'],
     });
 
-    const contact = await this.contactsRepository.findOne({
-      where: { phone: contactData.phone },
-      relations: ['user'],
+    const owner = await this.usersRepository.findOne({
+      where: { id: id },
+      relations: ['contact'],
     });
 
     const newContact = {...contactData, user: user, owner: id};
 
-    if (!contact || contact?.user?.id !== id) {
-      if (user) {
-        const updatedUser = Object.assign(user, {});
+    if (newContact?.phone[0] === '+') {
+      await this.contactsRepository.save(newContact);
+      if (owner) {
+        const updatedUser = Object.assign(owner, {});
         updatedUser.contact.push(newContact);
         await this.usersRepository.save(updatedUser);
       }
     }
-
-    if (newContact?.phone[0] === '+') await this.contactsRepository.save(newContact);
 
     return {
       status: 200,

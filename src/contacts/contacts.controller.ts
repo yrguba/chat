@@ -14,12 +14,15 @@ import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { JwtService } from "@nestjs/jwt";
 import {ContactDTO} from "./dto/contact.dto";
 import {DeleteContactsDto} from "./dto/deleteContacts.dto";
+import {UsersService} from "../users/users.service";
+import * as convert from "typeorm-schema-to-json-schema";
 
 @ApiTags('contacts')
 @Controller('contacts')
 export class ContactsController {
     constructor(
         private contactsService: ContactsService,
+        private usersService: UsersService,
         private readonly jwtService: JwtService,
     ) {}
 
@@ -45,8 +48,13 @@ export class ContactsController {
     async saveContacts(@Res() res, @Req() req, @Body() body: ContactDTO[]) {
         const jwt = req.headers.authorization.replace('Bearer ', '');
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
+        const owner = await this.usersService.getUserWithContacts(json.id);
 
-        body.map(contact => {
+        const newContacts = body.filter(contact => {
+            return !owner.contact.find(ownerContact => ownerContact.phone === contact.phone)
+        });
+
+        newContacts.map(contact => {
             this.contactsService.saveContact(json.id, contact);
         });
 
