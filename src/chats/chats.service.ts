@@ -252,7 +252,11 @@ export class ChatsService {
             if (chat) {
                 chat.message.push(message);
                 await this.chatsRepository.save(chat);
-                message.initiator = user;
+                delete user['code'];
+                delete user['player_id'];
+                delete user['socket_id'];
+                delete user['refresh_token'];
+                delete user['fb_tokens'];
 
                 chat.users.forEach(user_id => {
                     this.getUser(user_id).then(user => {
