@@ -15,7 +15,6 @@ import { JwtService } from "@nestjs/jwt";
 import {ContactDTO} from "./dto/contact.dto";
 import {DeleteContactsDto} from "./dto/deleteContacts.dto";
 import {UsersService} from "../users/users.service";
-import * as convert from "typeorm-schema-to-json-schema";
 
 @ApiTags('contacts')
 @Controller('contacts')
