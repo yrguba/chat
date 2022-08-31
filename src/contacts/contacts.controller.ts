@@ -51,8 +51,10 @@ export class ContactsController {
         const owner = await this.usersService.getUserWithContacts(json.id);
 
         const newContacts = body.filter(contact => {
-            console.log(owner.contact.find(ownerContact => ownerContact.phone === contact.phone));
-            return !owner.contact.find(ownerContact => ownerContact.phone === contact.phone)
+            const index = owner.contact.findIndex(ownerContact => ownerContact.phone === contact.phone);
+            console.log(index);
+
+            return index >= 0;
         });
         //console.log(owner.contact)
         // console.log(body);
