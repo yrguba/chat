@@ -16,7 +16,6 @@ export class ContactsService {
   }
 
   async getContacts(id: number) {
-    let count = 0;
     const contacts = await this.contactsRepository.find({
       where: { owner: Number(id) }
     });
