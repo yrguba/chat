@@ -281,7 +281,7 @@ export class ChatsService {
                     data: {
                         message: {...message, initiator: user}
                     },
-                    message: message,
+                    message: {...message, initiator: user},
                     users: chat.users,
                 }
             } else {
