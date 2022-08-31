@@ -53,9 +53,9 @@ export class ContactsController {
         const newContacts = body.filter(contact => {
             return !owner.contact.find(ownerContact => ownerContact.phone === contact.phone)
         });
-        console.log(owner.contact)
+        //console.log(owner.contact)
         // console.log(body);
-        // console.log(newContacts);
+        console.log(newContacts);
 
         newContacts.map(contact => {
             this.contactsService.saveContact(json.id, contact);
