@@ -8,6 +8,12 @@ import { UserEntity } from "../database/entities/user.entity";
 import { ChatDTO } from "./dto/chat.dto";
 import * as admin from "firebase-admin";
 
+const serviceAccount = require("../../fb.json");
+
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
+
 @Injectable()
 export class ChatsService {
     constructor(
@@ -18,6 +24,7 @@ export class ChatsService {
         @InjectRepository(UserEntity)
         private userRepository: Repository<UserEntity>,
     ) {}
+
 
     public socket: Server = null;
 
