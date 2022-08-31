@@ -53,7 +53,6 @@ export class ContactsController {
         const newContacts = body.filter(contact => {
             const index = owner.contact.some(ownerContact => ownerContact.phone === contact.phone);
             console.log(index);
-
             return !index;
         });
         //console.log(owner.contact)

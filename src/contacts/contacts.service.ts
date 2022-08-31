@@ -28,37 +28,37 @@ export class ContactsService {
         .where("users.phone IN (:...phonesArray)", { phonesArray: phones })
         .getMany();
 
-    // const currentContacts = Array.from(contacts);
-    //
-    // currentContacts.forEach(cont => {
-    //   const cUser = users.find(us => us.phone === cont.phone);
-    //   if (cUser) {
-    //     delete cUser.code;
-    //     delete cUser.player_id;
-    //     delete cUser.socket_id;
-    //     delete cUser.refresh_token;
-    //     delete cUser.fb_tokens;
-    //     cont.user = cUser
-    //   } else cont.user = null;
+    const currentContacts = Array.from(contacts);
+
+    currentContacts.forEach(cont => {
+      const cUser = users.find(us => us.phone === cont.phone);
+      if (cUser) {
+        delete cUser.code;
+        delete cUser.player_id;
+        delete cUser.socket_id;
+        delete cUser.refresh_token;
+        delete cUser.fb_tokens;
+        cont.user = cUser
+      } else cont.user = null;
+    });
+
+    // currentContacts.map((contact, index) => {
+    //   this.usersRepository.findOne({
+    //     where: { phone: contact.phone },
+    //   }).then(user => {
+    //     console.log(user);
+    //       contact.user = user;
+    //       if (user) {
+    //         delete contact['user'].code;
+    //         delete contact['user'].player_id;
+    //         delete contact['user'].socket_id;
+    //         delete contact['user'].refresh_token;
+    //         delete contact['user'].fb_tokens;
+    //       }
+    //   });
     // });
-    //
-    // // currentContacts.map((contact, index) => {
-    // //   this.usersRepository.findOne({
-    // //     where: { phone: contact.phone },
-    // //   }).then(user => {
-    // //     console.log(user);
-    // //       contact.user = user;
-    // //       if (user) {
-    // //         delete contact['user'].code;
-    // //         delete contact['user'].player_id;
-    // //         delete contact['user'].socket_id;
-    // //         delete contact['user'].refresh_token;
-    // //         delete contact['user'].fb_tokens;
-    // //       }
-    // //   });
-    // // });
-    //
-    // console.log(currentContacts);
+
+    console.log(currentContacts);
 
       return {
         status: 200,
