@@ -22,7 +22,7 @@ export class ContactsService {
     });
 
     const phones = [];
-    contacts.map(contact => {
+      contacts.map(contact => {
       phones.push(contact.phone);
     });
     const users = await this.usersRepository.createQueryBuilder('users')
@@ -30,6 +30,8 @@ export class ContactsService {
         .getMany();
 
     const currentContacts = Array.from(contacts);
+
+    console.log(currentContacts);
 
     currentContacts.forEach(cont => {
       const cUser = users.find(us => us.phone === cont.phone);
