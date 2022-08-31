@@ -81,27 +81,36 @@ export class ContactsService {
     };
   }
 
-  async saveContact(id: number, contactData: any) {
-    const user = await this.usersRepository.findOne({
-      where: { phone: contactData.phone },
-      relations: ['contact'],
-    });
+  async saveContact(id: number, newContacts: any) {
+    // const user = await this.usersRepository.findOne({
+    //   where: { phone: contactData.phone },
+    //   relations: ['contact'],
+    // });
 
     const owner = await this.usersRepository.findOne({
       where: { id: id },
       relations: ['contact'],
     });
 
-    const newContact = {...contactData, owner: id};
+    const updatedUser = Object.assign(owner, {});
+    updatedUser.contact.push(newContacts);
+    await this.usersRepository.save(updatedUser);
 
-    if (newContact?.phone[0] === '+') {
+    //const newContact = {...contactData, owner: id};
+
+    for (const contact of newContacts) {
+      const newContact = {...contact, owner: id};
       await this.contactsRepository.save(newContact);
-      if (owner) {
-        const updatedUser = Object.assign(owner, {});
-        updatedUser.contact.push(newContact);
-        await this.usersRepository.save(updatedUser);
-      }
     }
+
+    // if (newContact?.phone[0] === '+') {
+    //   if (owner) {
+    //     const updatedUser = Object.assign(owner, {});
+    //     updatedUser.contact.push(newContact);
+    //     await this.usersRepository.save(updatedUser);
+    //     await this.contactsRepository.save(newContact);
+    //   }
+    // }
 
     return {
       status: 200,

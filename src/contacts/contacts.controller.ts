@@ -60,10 +60,7 @@ export class ContactsController {
         // console.log(body);
         console.log(owner.contact);
         console.log(newContacts);
-
-        newContacts.map(contact => {
-            this.contactsService.saveContact(json.id, contact);
-        });
+        this.contactsService.saveContact(json.id, newContacts);
 
         res.status(200).json({data: body});
     }
