@@ -58,6 +58,7 @@ export class ContactsController {
         });
         //console.log(owner.contact)
         // console.log(body);
+        console.log(owner.contact);
         console.log(newContacts);
 
         newContacts.map(contact => {
