@@ -42,24 +42,6 @@ export class ContactsService {
       } else cont.user = null;
     });
 
-    // currentContacts.map((contact, index) => {
-    //   this.usersRepository.findOne({
-    //     where: { phone: contact.phone },
-    //   }).then(user => {
-    //     console.log(user);
-    //       contact.user = user;
-    //       if (user) {
-    //         delete contact['user'].code;
-    //         delete contact['user'].player_id;
-    //         delete contact['user'].socket_id;
-    //         delete contact['user'].refresh_token;
-    //         delete contact['user'].fb_tokens;
-    //       }
-    //   });
-    // });
-
-    console.log(currentContacts);
-
       return {
         status: 200,
         data: {
@@ -82,27 +64,22 @@ export class ContactsService {
   }
 
   async saveContact(id: number, newContacts: any) {
-    // const user = await this.usersRepository.findOne({
-    //   where: { phone: contactData.phone },
-    //   relations: ['contact'],
-    // });
-
+    const phones = [];
     const owner = await this.usersRepository.findOne({
       where: { id: id },
       relations: ['contact'],
     });
-    //
+
     const updatedUser = Object.assign(owner, {});
-    // updatedUser.contact.push(newContacts);
-    // await this.usersRepository.save(updatedUser);
-    //
-    // //const newContact = {...contactData, owner: id};
 
     for (const contact of newContacts) {
-      const newContact = {...contact, owner: id};
-      const savedContact = await this.contactsRepository.save(newContact);
-      updatedUser.contact.push(savedContact);
-      await this.usersRepository.save(updatedUser);
+      if (!phones.includes(contact.phone)) {
+        const newContact = {...contact, owner: id};
+        const savedContact = await this.contactsRepository.save(newContact);
+        updatedUser.contact.push(savedContact);
+        await this.usersRepository.save(updatedUser);
+        phones.push(contact.phone);
+      }
     }
 
     // if (newContact?.phone[0] === '+') {

@@ -52,14 +52,9 @@ export class ContactsController {
 
         const newContacts = body.filter(contact => {
             const index = owner.contact.some(ownerContact => ownerContact.phone === contact.phone);
-            console.log(index);
             return !index;
         });
-        //console.log(owner.contact)
-        // console.log(body);
-        console.log(owner.contact);
-        console.log(newContacts);
-        this.contactsService.saveContact(json.id, newContacts);
+        await this.contactsService.saveContact(json.id, newContacts);
 
         res.status(200).json({data: body});
     }

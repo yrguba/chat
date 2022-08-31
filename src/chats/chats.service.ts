@@ -272,6 +272,7 @@ export class ChatsService {
                         if (user) {
                             if (user?.fb_tokens) {
                                 user?.fb_tokens.map(token => {
+                                    console.log(token);
                                     admin.messaging().sendToDevice(token, {
                                         "notification": {
                                             "title": user.name,
