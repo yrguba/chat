@@ -91,16 +91,18 @@ export class ContactsService {
       where: { id: id },
       relations: ['contact'],
     });
-
+    //
     const updatedUser = Object.assign(owner, {});
-    updatedUser.contact.push(newContacts);
-    await this.usersRepository.save(updatedUser);
-
-    //const newContact = {...contactData, owner: id};
+    // updatedUser.contact.push(newContacts);
+    // await this.usersRepository.save(updatedUser);
+    //
+    // //const newContact = {...contactData, owner: id};
 
     for (const contact of newContacts) {
       const newContact = {...contact, owner: id};
-      await this.contactsRepository.save(newContact);
+      const savedContact = await this.contactsRepository.save(newContact);
+      updatedUser.contact.push(savedContact);
+      await this.usersRepository.save(updatedUser);
     }
 
     // if (newContact?.phone[0] === '+') {
@@ -115,7 +117,7 @@ export class ContactsService {
     return {
       status: 200,
       data: {
-        data: newContact
+        data: newContacts
       }
     }
   }
