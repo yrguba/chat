@@ -244,6 +244,7 @@ export class ChatsService {
             data.initiator_id = Number(user_id);
             const message = await this.messageRepository.save(data);
 
+
             const chat = await this.chatsRepository.findOne({
                 where: { id: chat_id },
                 relations: ['message'],
@@ -260,15 +261,17 @@ export class ChatsService {
 
                 chat.users.forEach(user_id => {
                     this.getUser(user_id).then(user => {
-                        if (user && user?.fb_tokens) {
-                            user?.fb_tokens.map(token => {
-                                admin.messaging().sendToDevice(token, {
-                                    "notification": {
-                                        "title": user.name,
-                                        "body": message.text
-                                    },
+                        if (user) {
+                            if (user?.fb_tokens) {
+                                user?.fb_tokens.map(token => {
+                                    admin.messaging().sendToDevice(token, {
+                                        "notification": {
+                                            "title": user.name,
+                                            "body": message.text
+                                        },
+                                    });
                                 });
-                            });
+                            }
                         }
                     });
                 });
@@ -276,7 +279,7 @@ export class ChatsService {
                 return {
                     status: 201,
                     data: {
-                        message: message
+                        message: {...message, initiator: user}
                     },
                     message: message,
                     users: chat.users,
