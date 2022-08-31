@@ -58,6 +58,14 @@ export class ChatsService {
             .where("users.id IN (:...usersArray)", { usersArray: chat.users })
             .getMany();
 
+        users.forEach(user => {
+            delete user['code'];
+            delete user['player_id'];
+            delete user['socket_id'];
+            delete user['refresh_token'];
+            delete user['fb_tokens'];
+        });
+
         if (chat && !chat?.is_group) {
             const id = chat?.users[0] === user_id ? chat?.users[1] : chat?.users[0];
             const user = await this.getUser(id);
