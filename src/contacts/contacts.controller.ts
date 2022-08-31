@@ -54,7 +54,7 @@ export class ContactsController {
             const index = owner.contact.some(ownerContact => ownerContact.phone === contact.phone);
             console.log(index);
 
-            return index;
+            return !index;
         });
         //console.log(owner.contact)
         // console.log(body);
