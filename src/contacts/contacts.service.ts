@@ -31,8 +31,6 @@ export class ContactsService {
 
     const currentContacts = Array.from(contacts);
 
-    console.log(currentContacts);
-
     currentContacts.forEach(cont => {
       const cUser = users.find(us => us.phone === cont.phone);
       if (cUser) {
@@ -60,6 +58,8 @@ export class ContactsService {
     //       }
     //   });
     // });
+
+    console.log(currentContacts);
 
       return {
         status: 200,
