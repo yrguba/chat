@@ -39,7 +39,7 @@ export class ChatsService {
 
             if (targetChat && targetChat.length === 0) {
                 chat = await this.chatsRepository.save(data);
-            } else chat = targetChat;
+            } else chat = Array.isArray(targetChat) ? targetChat[0] : targetChat;
         }
 
         return {
