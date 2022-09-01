@@ -292,6 +292,7 @@ export class ChatsService {
                 delete user['socket_id'];
                 delete user['refresh_token'];
                 delete user['fb_tokens'];
+                delete user['message'];
 
                 chat.users.forEach(user_id => {
                     this.getUser(user_id).then(user => {
@@ -313,9 +314,9 @@ export class ChatsService {
                 return {
                     status: 201,
                     data: {
-                        message: {...message, initiator: user}
+                        message: {...message, user: user}
                     },
-                    message: {...message, initiator: user},
+                    message: {...message, user: user},
                     users: chat.users,
                 }
             } else {
