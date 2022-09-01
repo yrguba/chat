@@ -1,12 +1,5 @@
 {
-  "type": "service_account",
   "project_id": "hoolichat-a7077",
-  "private_key_id": "37c182199afac63ebba99ed7f70a3450676c4385",
   "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDoMjqQ0pcxHXhS\nTcWMEUda7G8j94jc0XoOtqt1ZToK61CVM8TYdU5dTUF8WBs7SEBvoDtMEZWeBMGA\nh+a3G7ntORUIFRoHVGpy505RYql2dasIobv2ySCvDnlmMCSNkjNqAGkcVEtuvnmb\ndsDM5nSQ6qeCL5GXtVDfZNcvEbI9HTcZYbhhhRUkuZDnfjvjNvNJ/Vjuu/0H7uk/\nZj99n+LlMZ5IN02cX+dwthWcqOhP2fapBEV0ovl6CKT9VnbsM97JVmBXubpV69cE\n/RcyIMaNpK7xcXieH0DoItItZDem2DuWC7cjNcfffJs7jHzpuustD28TO0761Dj+\nIUfGXumnAgMBAAECggEACFw5SZpGK/7gpINSV+RjX6hgVA4x6lQh2JfGfU1Dar3l\nl98A+RONhRnRVXXNUolxGykiGW9kpgeLzrdAnQUti5dg5M/wW6U0HqZUu+TD2epg\nrx3g/lYS4YVcOkwEyj13sRsKAyVx1dnxLPd4olKwjcCKfssnAIGxw2lbv2vGsXaN\n74IVReORzUF14BfXmSxuMti3j/6vmHxibfyWlC/yMqykF/OZbB/BSdPneFL6eNn0\nKFp9zw5GXvUOBkBRziU7EigvYcgP1dRDknEeM65TVbs+zjCxY3DWokFThA1yfe4a\noJ4btuSN7ODJ3i+HAEySr/nU9229rId72uMBKrEfMQKBgQD2V0ahs3WMOnpDXBpP\neSgmiax17Acxiw2Wjk4XXQFeKcnapBfNAlfyyEi16fhewrtGlX43C5UX1ArImvva\nLe1UV7C7l1GGDhbpK+iLjyj6kxWRQeJNXHBIxpndPhtM04zxOv6ztipaETq6MqHL\nybVM3J4ryghL+rIVF4Favx3NyQKBgQDxTPiKTAn/zYFSp+GpHNiWORxMD19iqv2T\nYkGlo2/vPOxvttEPS8Ejrec2Oud90Q+IzkXZTKguG805JWGociXcoyB3zeJMA/qI\nFIe6YaLPsof4PuSGHtVnGyNvYPM5OP4zv2WBT28UHCXhSnAdPGuQcLdRQLuNnw3P\nmaX1mIbz7wKBgH+MLvEYp1tlB9sKvEC7/bL+g8JG5G6djfqPUhW8vTGRN4eygPRQ\nK1N0qlkufMAr2aWxT7mWkKrWyoKV5KNSNlj+Um6+6aIcd3ZhmrVv+YrMT1V3pIHj\nw+uakR5BwwbjXk2k+y33uzQJSbwQ7T9EAFB8xpTrtaIJet163yoqXHcpAoGAcF8f\n/4eZwH67kvqLpG3Cj3LZMrKWASUQIerIF5MdNZRxpzTD9xOYRj1eR2r3Eyigy10E\nOkXwrEhWMh6uc/t0lmOBY0mF8VCJA4ZMDwgZAhBqMblYQv1o9DM3NU849ZUNDJw9\ncRLE7+CL43b+7x6MGR/kvvoeXb2MePlcyBrX/hECgYAeyrkKe1VT2gnxmHVPmQeY\n+g3K1PG3HgVN1W+Tjr1w3oYhR7sdQIZL7zzKW2yfwoZG1+ACJrNNRW5iz5Fl48qF\nl5cFBslvtrvT+RYaosjKHw4jnZzyi+q3p+GHttZShIFq0NdPSgKSTlRkklmpvfY8\nqZmzhAAxiuo+2X8iAY/M9g==\n-----END PRIVATE KEY-----\n",
-  "client_email": "firebase-adminsdk-2om63@hoolichat-a7077.iam.gserviceaccount.com",
-  "client_id": "109313904445565411450",
-  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-  "token_uri": "https://oauth2.googleapis.com/token",
-  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-2om63%40hoolichat-a7077.iam.gserviceaccount.com"
+  "client_email": "firebase-adminsdk-2om63@hoolichat-a7077.iam.gserviceaccount.com"
 }

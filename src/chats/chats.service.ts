@@ -118,12 +118,23 @@ export class ChatsService {
 
             if (offset < count) {
                 messages = await this.messageRepository.createQueryBuilder('messages')
+                    .leftJoinAndSelect("messages.user", "user")
                     .orderBy('messages.created_at', 'DESC')
                     .offset(offset)
                     .limit(options.limit)
                     .where('messages.chat.id = :id', { id: chat_id })
                     .getMany();
             }
+
+            messages.forEach(message => {
+                if (message.user) {
+                    delete message.user['code'];
+                    delete message.user['player_id'];
+                    delete message.user['socket_id'];
+                    delete message.user['refresh_token'];
+                    delete message.user['fb_tokens'];
+                }
+            });
 
             return {
                 status: 200,
@@ -147,7 +158,12 @@ export class ChatsService {
         }
     }
 
-    async deleteChat(chat_id: number): Promise<DeleteResult> {
+    async deleteChat(id: number, chat_id: number): Promise<DeleteResult> {
+        const chat = await this.chatsRepository.createQueryBuilder('chat')
+            .where('chat.id = :id', { id: chat_id })
+            .getOne();
+
+        console.log(chat);
         return await this.chatsRepository.delete(chat_id);
     }
 
@@ -253,11 +269,20 @@ export class ChatsService {
             data.initiator_id = Number(user_id);
             const message = await this.messageRepository.save(data);
 
-
             const chat = await this.chatsRepository.findOne({
                 where: { id: chat_id },
                 relations: ['message'],
             });
+
+            const user = await this.userRepository.findOne({
+                where: { id: user_id },
+                relations: ['message'],
+            });
+
+            if (user) {
+                user.message.push(message);
+                await this.userRepository.save(user);
+            }
 
             if (chat) {
                 chat.message.push(message);
@@ -273,7 +298,6 @@ export class ChatsService {
                         if (user) {
                             if (user?.fb_tokens) {
                                 user?.fb_tokens.map(token => {
-                                    console.log(token);
                                     admin.messaging().sendToDevice(token, {
                                         "notification": {
                                             "title": user.name,

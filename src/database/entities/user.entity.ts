@@ -1,5 +1,6 @@
 import {Entity, Column, PrimaryGeneratedColumn, OneToMany} from 'typeorm';
 import {ContactEntity} from "./contact.entity";
+import {MessageEntity} from "./message.entity";
 
 @Entity()
 export class UserEntity {
@@ -29,6 +30,8 @@ export class UserEntity {
   last_active: Date;
   @OneToMany(() => ContactEntity, (contact) => contact.user)
   contact: ContactEntity[];
+  @OneToMany(() => MessageEntity, (message) => message.user)
+  message: MessageEntity[];
   @Column({ nullable: true })
   refresh_token: string;
   @Column("text", { array: true, nullable: true, default: [] })

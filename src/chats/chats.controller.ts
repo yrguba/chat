@@ -106,6 +106,9 @@ export class ChatsController {
         const chatUsers = body.users;
         chatUsers.push(json.id);
         const chat = await this.chatsService.createChat(body);
+        if (chat?.status === 201) {
+            this.chatsGateway.handleEmitNewChat(chat?.data?.data || []);
+        }
         res.status(chat.status).json(chat.data);
     }
 
@@ -113,7 +116,9 @@ export class ChatsController {
     @ApiParam({ name: 'chat_id', required: true })
     @Delete('/:chat_id')
     async deleteChat(@Res() res, @Req() req, @Param() params) {
-        const result =  await this.chatsService.deleteChat(params.chat_id);
+        const jwt = req.headers.authorization.replace('Bearer ', '');
+        const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
+        const result =  await this.chatsService.deleteChat(json.id, params.chat_id);
         res.status(200).json({data: result});
     }
 

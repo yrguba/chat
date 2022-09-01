@@ -24,4 +24,8 @@ export class MessageEntity {
         onDelete: 'CASCADE',
     })
     chat: ChatsEntity;
+    @ManyToOne(() => UserEntity, (user) => user.message, {
+        onDelete: 'CASCADE',
+    })
+    user: UserEntity;
 }
