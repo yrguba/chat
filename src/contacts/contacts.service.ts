@@ -24,23 +24,26 @@ export class ContactsService {
       contacts.map(contact => {
       phones.push(contact.phone);
     });
-    const users = await this.usersRepository.createQueryBuilder('users')
-        .where("users.phone IN (:...phonesArray)", { phonesArray: phones })
-        .getMany();
 
-    const currentContacts = Array.from(contacts);
+    if (phones.length) {
+      const users = await this.usersRepository.createQueryBuilder('users')
+          .where("users.phone IN (:...phonesArray)", { phonesArray: phones })
+          .getMany();
 
-    currentContacts.forEach(cont => {
-      const cUser = users.find(us => us.phone === cont.phone);
-      if (cUser) {
-        delete cUser.code;
-        delete cUser.player_id;
-        delete cUser.socket_id;
-        delete cUser.refresh_token;
-        delete cUser.fb_tokens;
-        cont.user = cUser
-      } else cont.user = null;
-    });
+      const currentContacts = Array.from(contacts);
+
+      currentContacts.forEach(cont => {
+        const cUser = users.find(us => us.phone === cont.phone);
+        if (cUser) {
+          delete cUser.code;
+          delete cUser.player_id;
+          delete cUser.socket_id;
+          delete cUser.refresh_token;
+          delete cUser.fb_tokens;
+          cont.user = cUser
+        } else cont.user = null;
+      });
+    }
 
       return {
         status: 200,
