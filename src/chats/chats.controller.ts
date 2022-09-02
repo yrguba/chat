@@ -139,6 +139,15 @@ export class ChatsController {
         res.status(message.status).json(message.data);
     }
 
+    @UseGuards(JwtAuthGuard)
+    @Post('/test_push/')
+    async createPush(@Res() res, @Req() req, @Body() body: MessageDTO, @Param() param) {
+        const jwt = req.headers.authorization.replace('Bearer ', '');
+        const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
+        const message = await this.chatsService.createPush(param.chat_id, Number(json.id), body);
+        res.status(message.status).json(message.data);
+    }
+
     // @Patch(':chat_id/add-users')
     // @ApiParam({ name: 'chat_id', required: true })
     // async addUserToChat(@Res() res, @Req() req, @Param() params,  @Body() users: number[]) {

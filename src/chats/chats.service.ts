@@ -304,6 +304,9 @@ export class ChatsService {
                                             "title": user.name,
                                             "body": message.text
                                         },
+                                        data: {
+                                            ...message, user: user,
+                                        }
                                     });
                                 });
                             }
@@ -335,5 +338,30 @@ export class ChatsService {
                 }
             }};
         }
+    }
+
+    async createPush(chat_id: number, user_id: number, data:any): Promise<any> {
+        const user = await this.userRepository.createQueryBuilder('users')
+            .where('users.id = :id', { id: Number(user_id) })
+            .getOne();
+
+        if (user) {
+            if (user?.fb_tokens) {
+                user?.fb_tokens.map(token => {
+                    admin.messaging().sendToDevice(token, {
+                        "notification": {
+                            "title": "Test Push",
+                            "body": "Body of test push"
+                        },
+                        data: {
+                            text: "Test Push",
+                            chat_id : "1",
+                            body: "Body of test push"
+                        }
+                    });
+                });
+            }
+        }
+
     }
 }
