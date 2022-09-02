@@ -15,6 +15,7 @@ import { JwtService } from "@nestjs/jwt";
 import {ContactDTO} from "./dto/contact.dto";
 import {DeleteContactsDto} from "./dto/deleteContacts.dto";
 import {UsersService} from "../users/users.service";
+import {CreateContactsDto} from "./dto/createContacts.dto";
 
 @ApiTags('contacts')
 @Controller('contacts')
@@ -45,15 +46,16 @@ export class ContactsController {
 
     @UseGuards(JwtAuthGuard)
     @Post('/')
-    async saveContacts(@Res() res, @Req() req, @Body() body: ContactDTO[]) {
+    async saveContacts(@Res() res, @Req() req, @Body() body: CreateContactsDto) {
         const jwt = req.headers.authorization.replace('Bearer ', '');
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
         const owner = await this.usersService.getUserWithContacts(json.id);
 
-        const newContacts = body.filter(contact => {
+        const newContacts = body?.contacts.filter(contact => {
             const index = owner.contact.some(ownerContact => ownerContact.phone === contact.phone);
             return !index;
         });
+
         await this.contactsService.saveContact(json.id, newContacts);
 
         res.status(200).json({data: body});
