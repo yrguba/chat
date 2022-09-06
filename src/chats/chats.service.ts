@@ -297,6 +297,16 @@ export class ChatsService {
                 chat.users.forEach(user_id => {
                     this.getUser(user_id).then(user => {
                         if (user) {
+                            console.log({
+                                text: message.text,
+                                message_type: message.message_type,
+                                chat_id: String(chat.id),
+                                user_id: String(user.id),
+                                user_name: user.name,
+                                user_nickname: user.nickname,
+                                user_avatar: user.avatar,
+                                chat_avatar: chat.avatar,
+                            })
                             if (user?.fb_tokens) {
                                 user?.fb_tokens.map(token => {
                                     admin.messaging().sendToDevice(token, {
@@ -305,7 +315,14 @@ export class ChatsService {
                                             "body": message.text
                                         },
                                         data: {
-                                            ...message, user: user,
+                                            text: message.text,
+                                            message_type: message.message_type,
+                                            chat_id: String(chat.id),
+                                            user_id: String(user.id),
+                                            user_name: user.name,
+                                            user_nickname: user.nickname,
+                                            user_avatar: user.avatar,
+                                            chat_avatar: chat.avatar,
                                         }
                                     });
                                 });
@@ -365,3 +382,4 @@ export class ChatsService {
 
     }
 }
+
