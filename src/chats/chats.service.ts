@@ -316,7 +316,7 @@ export class ChatsService {
                                         },
                                         data: {
                                             text: message.text,
-                                            message_type: message.message_type,
+                                            msg_type: message.message_type,
                                             chat_id: String(chat.id),
                                             user_id: String(user.id),
                                             user_name: user.name,
