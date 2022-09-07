@@ -313,15 +313,15 @@ export class ChatsService {
                                         "title": initiator.name,
                                         "body": message.text
                                     },
-                                    data: {
-                                        text: message.text,
-                                        msg_type: message.message_type,
-                                        chat_id: String(chat.id),
-                                        user_id: String(initiator.id),
-                                        user_name: initiator.name,
-                                        user_nickname: initiator.nickname,
-                                        user_avatar: initiator.avatar,
-                                        chat_avatar: chat.avatar,
+                                    "data": {
+                                        "text": message.text,
+                                        "msg_type": message.message_type,
+                                        "chat_id": String(chat.id),
+                                        "user_id": String(initiator.id),
+                                        "user_name": initiator.name,
+                                        "user_nickname": initiator.nickname,
+                                        "user_avatar": initiator.avatar,
+                                        "chat_avatar": chat.avatar,
                                     }
                                 });
                             });
@@ -370,6 +370,13 @@ export class ChatsService {
                 });
             }
         }
+
+        return { status: 200, data: {
+            error: {
+                code: 200,
+                message: "Test Push"
+            }
+        }};
 
     }
 }

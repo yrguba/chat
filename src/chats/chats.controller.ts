@@ -145,7 +145,7 @@ export class ChatsController {
         const jwt = req.headers.authorization.replace('Bearer ', '');
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
         const message = await this.chatsService.createPush(param.chat_id, Number(json.id), body);
-        res.status(message.status).json(message.data);
+        res.status(200).json(message.data);
     }
 
     // @Patch(':chat_id/add-users')
