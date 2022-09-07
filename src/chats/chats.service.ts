@@ -261,67 +261,53 @@ export class ChatsService {
     }
 
     async createMessage(chat_id: number, user_id: number, data:any): Promise<any> {
-        const user = await this.userRepository.createQueryBuilder('users')
-            .where('users.id = :id', { id: Number(user_id) })
-            .getOne();
+        data.initiator_id = Number(user_id);
+        const message = await this.messageRepository.save(data);
 
-        if (user) {
-            data.initiator_id = Number(user_id);
-            const message = await this.messageRepository.save(data);
+        const chat = await this.chatsRepository.findOne({
+            where: { id: chat_id },
+            relations: ['message'],
+        });
 
-            const chat = await this.chatsRepository.findOne({
-                where: { id: chat_id },
-                relations: ['message'],
-            });
+        const initiator = await this.userRepository.findOne({
+            where: { id: user_id },
+            relations: ['message'],
+        });
 
-            const user = await this.userRepository.findOne({
-                where: { id: user_id },
-                relations: ['message'],
-            });
+        if (initiator) {
+            initiator.message.push(message);
+            await this.userRepository.save(initiator);
+        }
 
-            if (user) {
-                user.message.push(message);
-                await this.userRepository.save(user);
-            }
+        if (chat) {
+            chat.message.push(message);
+            await this.chatsRepository.save(chat);
+            delete initiator['code'];
+            delete initiator['player_id'];
+            delete initiator['socket_id'];
+            delete initiator['refresh_token'];
+            delete initiator['fb_tokens'];
+            delete initiator['message'];
 
-            if (chat) {
-                chat.message.push(message);
-                await this.chatsRepository.save(chat);
-                delete user['code'];
-                delete user['player_id'];
-                delete user['socket_id'];
-                delete user['refresh_token'];
-                delete user['fb_tokens'];
-                delete user['message'];
-
-                chat.users.forEach(user_id => {
+            chat.users.forEach(user_id => {
+                if (user_id !== initiator.id) {
                     this.getUser(user_id).then(user => {
                         if (user) {
-                            console.log({
-                                text: message.text,
-                                message_type: message.message_type,
-                                chat_id: String(chat.id),
-                                user_id: String(user.id),
-                                user_name: user.name,
-                                user_nickname: user.nickname,
-                                user_avatar: user.avatar,
-                                chat_avatar: chat.avatar,
-                            })
                             if (user?.fb_tokens) {
                                 user?.fb_tokens.map(token => {
                                     admin.messaging().sendToDevice(token, {
                                         "notification": {
-                                            "title": user.name,
+                                            "title": initiator.name,
                                             "body": message.text
                                         },
                                         data: {
                                             text: message.text,
                                             msg_type: message.message_type,
                                             chat_id: String(chat.id),
-                                            user_id: String(user.id),
-                                            user_name: user.name,
-                                            user_nickname: user.nickname,
-                                            user_avatar: user.avatar,
+                                            user_id: String(initiator.id),
+                                            user_name: initiator.name,
+                                            user_nickname: initiator.nickname,
+                                            user_avatar: initiator.avatar,
                                             chat_avatar: chat.avatar,
                                         }
                                     });
@@ -329,29 +315,22 @@ export class ChatsService {
                             }
                         }
                     });
-                });
-
-                return {
-                    status: 201,
-                    data: {
-                        message: {...message, user: user}
-                    },
-                    message: {...message, user: user},
-                    users: chat.users,
                 }
-            } else {
-                return { status: 404, data: {
-                    error: {
-                        code: 404,
-                        message: "Chat not found"
-                    }
-                }};
+            });
+
+            return {
+                status: 201,
+                data: {
+                    message: {...message, user: initiator}
+                },
+                message: {...message, user: initiator},
+                users: chat.users,
             }
         } else {
-            return { status: 400, data: {
+            return { status: 404, data: {
                 error: {
-                    code: 400,
-                    message: "Sender not found"
+                    code: 404,
+                    message: "Chat not found"
                 }
             }};
         }
