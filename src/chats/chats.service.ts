@@ -178,7 +178,6 @@ export class ChatsService {
             .where('chat.id = :id', { id: chat_id })
             .getOne();
 
-        console.log(chat);
         return await this.chatsRepository.delete(chat_id);
     }
 
@@ -307,27 +306,25 @@ export class ChatsService {
             chat.users.forEach(user_id => {
                 if (user_id !== initiator.id) {
                     this.getUser(user_id).then(user => {
-                        if (user) {
-                            if (user?.fb_tokens) {
-                                user?.fb_tokens.map(token => {
-                                    admin.messaging().sendToDevice(token, {
-                                        "notification": {
-                                            "title": initiator.name,
-                                            "body": message.text
-                                        },
-                                        data: {
-                                            text: message.text,
-                                            msg_type: message.message_type,
-                                            chat_id: String(chat.id),
-                                            user_id: String(initiator.id),
-                                            user_name: initiator.name,
-                                            user_nickname: initiator.nickname,
-                                            user_avatar: initiator.avatar,
-                                            chat_avatar: chat.avatar,
-                                        }
-                                    });
+                        if (user && user?.fb_tokens) {
+                            user?.fb_tokens.map(token => {
+                                admin.messaging().sendToDevice(token, {
+                                    "notification": {
+                                        "title": initiator.name,
+                                        "body": message.text
+                                    },
+                                    data: {
+                                        text: message.text,
+                                        msg_type: message.message_type,
+                                        chat_id: String(chat.id),
+                                        user_id: String(initiator.id),
+                                        user_name: initiator.name,
+                                        user_nickname: initiator.nickname,
+                                        user_avatar: initiator.avatar,
+                                        chat_avatar: chat.avatar,
+                                    }
                                 });
-                            }
+                            });
                         }
                     });
                 }
