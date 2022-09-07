@@ -35,7 +35,7 @@ export class ChatsService {
           .getMany();
 
         if (currentChats) {
-            const targetChat = currentChats.filter(chat => chat.users.toString() === data.users.toString());
+            const targetChat = currentChats.filter(chat => chat.users.sort().toString() === data.users.sort().toString());
 
             if (targetChat && targetChat.length === 0) {
                 chat = await this.chatsRepository.save(data);
