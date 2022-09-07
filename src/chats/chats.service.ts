@@ -319,6 +319,7 @@ export class ChatsService {
                                         "text": message.text,
                                         "msg_type": message.message_type,
                                         "chat_id": String(chat.id),
+                                        "chat_name": String(chat.name),
                                         "user_id": String(initiator.id),
                                         "user_name": initiator.name,
                                         "user_nickname": initiator.nickname,
