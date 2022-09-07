@@ -42,10 +42,25 @@ export class ChatsService {
             } else chat = Array.isArray(targetChat) ? targetChat[0] : targetChat;
         }
 
+        const users = await this.userRepository.createQueryBuilder('users')
+            .where("users.id IN (:...usersArray)", { usersArray: chat.users })
+            .getMany();
+
+        users.forEach(user => {
+            delete user['code'];
+            delete user['player_id'];
+            delete user['socket_id'];
+            delete user['refresh_token'];
+            delete user['fb_tokens'];
+        });
+
         return {
             status: 201,
             data: {
-                data: chat
+                data: {
+                    ...chat,
+                    chatUsers: users
+                }
             }
         }
     }
