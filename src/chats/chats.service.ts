@@ -201,10 +201,12 @@ export class ChatsService {
             for (const chat of chats) {
                 if (!chat.is_group) {
                     const id = chat?.users[0] === user_id ? chat?.users[1] : chat?.users[0];
-                    const user = await this.getUser(id);
-                    if (user) {
-                        chat.name = user.nickname || user.name || user.phone;
-                        chat.avatar = user.avatar;
+                    if (id) {
+                        const user = await this.getUser(id);
+                        if (user) {
+                            chat.name = user.nickname || user.name || user.phone;
+                            chat.avatar = user.avatar;
+                        }
                     }
                 }
                 chat.message.splice(1, chat.message.length - 1);
