@@ -102,13 +102,15 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     }
 
     handleDisconnect(client: Socket) {
-        const jwt = client.handshake?.headers?.authorization?.replace('Bearer ', '');
-        const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
-        if (json?.id) {
-            this.usersService.updateUserSocket(json.id, client.id, false).then(data => {
-                console.log('disconnect client');
-            });
-        }
+        // const jwt = client.handshake?.headers?.authorization?.replace('Bearer ', '');
+        // const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
+        // if (json?.id) {
+        //     this.usersService.updateUserSocket(json.id, client.id, false).then(data => {
+        //         console.log('disconnect client');
+        //     });
+        // }
+
+        console.log('disconnect client');
     }
 
     handleConnection(client: Socket, ...args: any[]) {
