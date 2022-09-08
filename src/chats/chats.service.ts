@@ -190,7 +190,7 @@ export class ChatsService {
             .getCount();
 
         if (offset < count) {
-
+            console.log(offset, options.limit);
             const chats = await this.chatsRepository.createQueryBuilder('chats')
               .leftJoinAndSelect('chats.message', 'message')
               .orderBy('message.created_at', 'DESC')
@@ -222,7 +222,7 @@ export class ChatsService {
                         data: chats,
                         page: options.page,
                         limit: options.limit,
-                        total: count
+                        total: chats.length,
                     }
                 };
             }
