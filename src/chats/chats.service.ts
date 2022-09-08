@@ -316,7 +316,8 @@ export class ChatsService {
                                 admin.messaging().sendToDevice(token, {
                                     "notification": {
                                         "title": initiator.name,
-                                        "body": message.text
+                                        "body": message.text,
+                                        "priority": "max",
                                     },
                                     "data": {
                                         "text": message.text,
@@ -330,8 +331,6 @@ export class ChatsService {
                                         "chat_avatar": chat.avatar,
                                         "is_group": chat.is_group ? "true" : "false"
                                     },
-                                }, {
-                                    priority: "high",
                                 });
                             });
                         }
