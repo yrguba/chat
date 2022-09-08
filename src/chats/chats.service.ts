@@ -196,7 +196,7 @@ export class ChatsService {
               .orderBy('message.created_at', 'DESC')
               .offset(offset)
               .limit(options.limit)
-              .where('chats.users @> :users', {users: [user_id]})
+              .where('chats.users @> :users', {users: [user_id.toString()]})
               .getMany();
 
             console.log(chats);
