@@ -33,6 +33,7 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     private usersPool: any[];
 
     handleEmit (data) {
+        console.log(data);
         data?.users.map((userId) => {
             this.usersService.getUser(userId).then((user) => {
                 if (user && user.socket_id) {
@@ -48,7 +49,6 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     };
 
     handleEmitNewChat (chat) {
-        console.log(chat);
         chat?.users.map((userId) => {
             this.usersService.getUser(userId).then((user) => {
                 if (user && user.socket_id) {
