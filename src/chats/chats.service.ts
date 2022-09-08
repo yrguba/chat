@@ -318,6 +318,7 @@ export class ChatsService {
                                         "title": initiator.name,
                                         "body": message.text,
                                         "priority": "max",
+                                        "visibility": "public"
                                     },
                                     "data": {
                                         "text": message.text,
