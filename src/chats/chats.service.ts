@@ -197,7 +197,7 @@ export class ChatsService {
                 // .limit(options.limit)
                 .where('chats.users @> :users', {users: [user_id]})
                 .leftJoinAndSelect('chats.message', 'message')
-                //.orderBy('message.created_at', 'DESC')
+                .orderBy('message.created_at', 'DESC')
                 .getMany();
 
             console.log(chats);
@@ -223,7 +223,7 @@ export class ChatsService {
                         data: chats,
                         page: options.page,
                         limit: options.limit,
-                        total: chats.length,
+                        total: count,
                     }
                 };
             }
