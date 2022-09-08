@@ -195,9 +195,8 @@ export class ChatsService {
                 .leftJoinAndSelect('chats.message', 'message')
                 .offset(offset)
                 .limit(options.limit)
-                .orderBy('message.created_at', 'DESC')
-
                 .where('chats.users @> :users', {users: [user_id]})
+                .orderBy('message.created_at', 'DESC')
                 .getMany();
 
             console.log(chats);
