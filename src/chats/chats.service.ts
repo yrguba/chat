@@ -135,13 +135,15 @@ export class ChatsService {
                 messages = await this.messageRepository.createQueryBuilder('messages')
                     .leftJoinAndSelect("messages.user", "user")
                     .orderBy('messages.created_at', 'DESC')
-                    .offset(offset)
-                    .limit(options.limit)
+                    // .offset(offset)
+                    // .limit(options.limit)
                     .where('messages.chat.id = :id', { id: chat_id })
                     .getMany();
             }
 
-            messages.forEach(message => {
+            const splicedMessages = messages.splice(offset, options.limit);
+
+            splicedMessages.forEach(message => {
                 if (message.user) {
                     delete message.user['code'];
                     delete message.user['player_id'];
@@ -154,7 +156,7 @@ export class ChatsService {
             return {
                 status: 200,
                 data: {
-                    data: messages,
+                    data: splicedMessages,
                     page: options.page,
                     limit: options.limit,
                     total: count
