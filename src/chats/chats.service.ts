@@ -196,6 +196,7 @@ export class ChatsService {
                 // .offset(offset)
                 // .limit(options.limit)
                 .where('chats.users @> :users', {users: [user_id]})
+                .leftJoinAndSelect('chats.message', 'message')
                 //.orderBy('message.created_at', 'DESC')
                 .getMany();
 
