@@ -329,7 +329,9 @@ export class ChatsService {
                                         "user_avatar": initiator.avatar,
                                         "chat_avatar": chat.avatar,
                                         "is_group": chat.is_group ? "true" : "false"
-                                    }
+                                    },
+                                }, {
+                                    priority: "high",
                                 });
                             });
                         }
