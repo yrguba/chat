@@ -192,18 +192,14 @@ export class ChatsService {
         if (offset < count) {
             console.log(offset, options.limit);
             const chats = await this.chatsRepository.createQueryBuilder('chats')
-                // .leftJoinAndSelect('chats.message', 'message')
                 .where('chats.users @> :users', {users: [user_id]})
-                .limit(options.limit)
                 .leftJoinAndSelect('chats.message', 'message')
                 .orderBy('message.created_at', 'DESC')
-                //.offset(offset)
-
                 .getMany();
 
-            console.log(chats);
+            const splicedChats = chats.splice(offset, options.limit);
 
-            for (const chat of chats) {
+            for (const chat of splicedChats) {
                 if (!chat.is_group) {
                     const id = chat?.users[0] === user_id ? chat?.users[1] : chat?.users[0];
                     if (id) {
@@ -217,11 +213,11 @@ export class ChatsService {
                 chat.message.splice(1, chat.message.length - 1);
             }
 
-            if (chats) {
+            if (splicedChats) {
                 return {
                     status: 200,
                     data: {
-                        data: chats,
+                        data: splicedChats,
                         page: options.page,
                         limit: options.limit,
                         total: count,
