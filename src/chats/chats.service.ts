@@ -190,6 +190,7 @@ export class ChatsService {
             .getCount();
 
         if (offset < count) {
+
             const chats = await this.chatsRepository.createQueryBuilder('chats')
               .leftJoinAndSelect('chats.message', 'message')
               .orderBy('message.created_at', 'DESC')
@@ -197,6 +198,8 @@ export class ChatsService {
               .limit(options.limit)
               .where('chats.users @> :users', {users: [user_id]})
               .getMany();
+
+            console.log(chats);
 
             for (const chat of chats) {
                 if (!chat.is_group) {
