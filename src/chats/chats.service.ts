@@ -193,12 +193,12 @@ export class ChatsService {
             console.log(offset, options.limit);
             const chats = await this.chatsRepository.createQueryBuilder('chats')
                 // .leftJoinAndSelect('chats.message', 'message')
-
+                .limit(options.limit)
                 .where('chats.users @> :users', {users: [user_id]})
                 .leftJoinAndSelect('chats.message', 'message')
                 .orderBy('message.created_at', 'DESC')
                 //.offset(offset)
-                .limit(options.limit)
+
                 .getMany();
 
             console.log(chats);
