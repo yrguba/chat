@@ -317,8 +317,7 @@ export class ChatsService {
                                     "notification": {
                                         "title": initiator.name,
                                         "body": message.text,
-                                        "priority": "max",
-                                        "visibility": "public"
+                                        "priority": "max"
                                     },
                                     "data": {
                                         "text": message.text,
