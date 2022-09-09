@@ -87,7 +87,7 @@ export class ChatsService {
             const user = await this.getUser(id);
 
             if (user) {
-                chat.name = user.nickname || user.name || user.phone;
+                chat.name = user.name || user.nickname  || user.phone;
                 chat.avatar = user.avatar;
             }
 
@@ -207,7 +207,7 @@ export class ChatsService {
                     if (id) {
                         const user = await this.getUser(id);
                         if (user) {
-                            chat.name = user.nickname || user.name || user.phone;
+                            chat.name = user.name || user.nickname  || user.phone;
                             chat.avatar = user.avatar;
                         }
                     }
