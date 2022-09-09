@@ -37,6 +37,7 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             this.usersService.getUser(userId).then((user) => {
                 console.log(user.socket_id);
                 if (user && user.socket_id) {
+                    console.log(user.socket_id);
                     console.log(...data?.message.text);
                     this.server?.sockets?.to(user.socket_id)?.emit('receiveMessage', {
                         message: {...data?.message, chat_id: data.chat_id},
