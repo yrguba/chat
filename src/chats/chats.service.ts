@@ -135,8 +135,6 @@ export class ChatsService {
                 messages = await this.messageRepository.createQueryBuilder('messages')
                     .leftJoinAndSelect("messages.user", "user")
                     .orderBy('messages.created_at', 'DESC')
-                    // .offset(offset)
-                    // .limit(options.limit)
                     .where('messages.chat.id = :id', { id: chat_id })
                     .getMany();
             }
@@ -245,28 +243,8 @@ export class ChatsService {
             .getOne();
 
         let currentChatUsers = Array.from(chat.users);
-        const updated = Object.assign(chat, {});
 
-        if (chat && chat.users.includes(user_id)) {
-            users.forEach((user) => {
-                this.userRepository.createQueryBuilder('users')
-                    .where('users.id = :id', { id: Number(user) })
-                    .getOne().then(activeUser => {
-                        if (activeUser && !chat.users.includes(user)) {
-                            currentChatUsers.push(user);
-                        }
-                    });
-            });
-            updated.users = currentChatUsers;
-            const chat = await this.chatsRepository.save(updated);
-
-            return {
-                status: 200,
-                data: {
-                    data: chat,
-                }
-            };
-        } else {
+        if (!currentChatUsers.includes(user_id)) {
             return {
                 status: 403,
                 data: {
@@ -276,6 +254,37 @@ export class ChatsService {
                     }
                 }
             }
+        }
+
+        if (currentChatUsers) {
+            users.forEach(user => {
+                if (!currentChatUsers.includes(user)) {
+                    currentChatUsers.push(user);
+                }
+            });
+
+            const updatedChat = {...chat, users: currentChatUsers}
+            await this.chatsRepository.save(updatedChat);
+
+            const chatUsers = await this.userRepository.createQueryBuilder('users')
+                .where("users.id IN (:...usersArray)", { usersArray: chat.users })
+                .getMany();
+
+            chatUsers.map(user => {
+                delete user['code'];
+                delete user['player_id'];
+                delete user['socket_id'];
+                delete user['refresh_token'];
+                delete user['fb_tokens'];
+                delete user['message'];
+            });
+
+            return {
+                status: 200,
+                data: {
+                    data: {...chat, chatUsers: chatUsers},
+                }
+            };
         }
     }
 

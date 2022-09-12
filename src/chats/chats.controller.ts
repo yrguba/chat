@@ -148,13 +148,13 @@ export class ChatsController {
         res.status(200).json(message.data);
     }
 
-    // @Patch(':chat_id/add-users')
-    // @ApiParam({ name: 'chat_id', required: true })
-    // async addUserToChat(@Res() res, @Req() req, @Param() params,  @Body() users: number[]) {
-    //     const jwt = req.headers.authorization.replace('Bearer ', '');
-    //     const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
-    //
-    //     const addedUsers = await this.chatsService.addUserToChat(json.id, users, params.chat_id);
-    //     res.status(addedUsers.status).json(addedUsers.data);
-    // }
+    @Patch(':chat_id/add-user/')
+    @ApiParam({ name: 'chat_id', required: true })
+    async addUserToChat(@Res() res, @Req() req, @Param() params,  @Body() users: number[]) {
+        const jwt = req.headers.authorization.replace('Bearer ', '');
+        const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
+
+        const chat = await this.chatsService.addUserToChat(json.id, users, params.chat_id);
+        res.status(chat.status).json(chat.data);
+    }
 }

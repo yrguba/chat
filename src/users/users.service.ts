@@ -1,6 +1,6 @@
 import {Injectable} from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
-import {Repository} from 'typeorm';
+import {DeleteResult, Repository} from 'typeorm';
 import {UserEntity} from '../database/entities/user.entity';
 
 @Injectable()
@@ -43,6 +43,10 @@ export class UsersService {
       where: { id: id },
       relations: ['contact'],
     })
+  };
+
+  async deleteUser(user_id: number): Promise<DeleteResult> {
+    return await this.usersRepository.delete(user_id);
   }
 
   async updateUserSocket(id: number, socket_id: any, is_online: boolean = false,) {
