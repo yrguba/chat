@@ -6,6 +6,8 @@ import { ChatsEntity } from "../database/entities/chats.entity";
 import { MessageEntity } from "../database/entities/message.entity";
 import { UserEntity } from "../database/entities/user.entity";
 import { ChatDTO } from "./dto/chat.dto";
+import { ChatNameDTO } from "./dto/chatName.dto";
+import { ChatAvatarDTO } from "./dto/chatAvatar.dto";
 import * as admin from "firebase-admin";
 
 @Injectable()
@@ -38,6 +40,7 @@ export class ChatsService {
             const targetChat = currentChats.filter(chat => chat.users.sort().toString() === data.users.sort().toString());
 
             if (targetChat && targetChat.length === 0) {
+                data.updated_at = new Date();
                 chat = await this.chatsRepository.save(data);
             } else chat = Array.isArray(targetChat) ? targetChat[0] : targetChat;
         }
@@ -117,6 +120,36 @@ export class ChatsService {
         }
     }
 
+    async updateChatName(user_id: number, chat_id: number, name: string) {
+        const chat = await this.chatsRepository.createQueryBuilder('chat')
+            .where('chat.id = :id', { id: chat_id })
+            .getOne();
+        const updatedChat = {...chat, name: name, updated_at: new Date()}
+        await this.chatsRepository.save(updatedChat);
+
+        return {
+            status: 200,
+            data: {
+                data: updatedChat,
+            }
+        }
+    }
+
+    async updateChatAvatar(user_id: number, chat_id: number, avatar: string) {
+        const chat = await this.chatsRepository.createQueryBuilder('chat')
+            .where('chat.id = :id', { id: chat_id })
+            .getOne();
+        const updatedChat = {...chat, avatar: avatar, updated_at: new Date()}
+        await this.chatsRepository.save(updatedChat);
+
+        return {
+            status: 200,
+            data: {
+                data: updatedChat,
+            }
+        }
+    }
+
     async getMessages(user_id, chat_id, options) {
         let offset = 0;
         if (options.page > 1) offset = (options.page - 1) * options.limit;
@@ -190,11 +223,12 @@ export class ChatsService {
             .getCount();
 
         if (offset < count) {
-            console.log(offset, options.limit);
             const chats = await this.chatsRepository.createQueryBuilder('chats')
                 .where('chats.users @> :users', {users: [user_id]})
+                .andWhere("chats.name like :name", { name:`%${options.like}%` })
                 .leftJoinAndSelect('chats.message', 'message')
-                .orderBy('message.created_at', 'DESC')
+                //.orderBy('message.created_at', 'DESC')
+                .orderBy('chats.updated_at', 'ASC')
                 .getMany();
 
             const splicedChats = chats.splice(offset, options.limit);
@@ -263,7 +297,7 @@ export class ChatsService {
                 }
             });
 
-            const updatedChat = {...chat, users: currentChatUsers}
+            const updatedChat = {...chat, users: currentChatUsers, updated_at: new Date()}
             await this.chatsRepository.save(updatedChat);
 
             const chatUsers = await this.userRepository.createQueryBuilder('users')
@@ -309,6 +343,7 @@ export class ChatsService {
 
         if (chat) {
             chat.message.push(message);
+            chat.updated_at = new Date();
             await this.chatsRepository.save(chat);
             delete initiator['code'];
             delete initiator['player_id'];

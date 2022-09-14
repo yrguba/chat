@@ -11,4 +11,5 @@ export class ChatDTO {
     @ApiProperty()
     @IsBoolean()
     is_group: boolean;
+    updated_at: Date;
 }

@@ -15,6 +15,8 @@ export class ChatsEntity {
     name: string;
     @CreateDateColumn()
     created_at: Date;
+    @Column({ nullable: true })
+    updated_at: Date;
     @Column("int", { array: true })
     users: number[];
     @OneToMany(() => MessageEntity, (message) => message.chat)

@@ -61,29 +61,31 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         });
     };
 
-    // @SubscribeMessage('sendMessage')
-    // handleMessage(client: any, payload: any): string {
-    //     const jwt = client.handshake?.headers?.authorization?.replace('Bearer ', '');
-    //     const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
-    //     if (json?.id) {
-    //         const {
-    //             chat_id,
-    //             message
-    //         } = payload;
-    //
-    //         this.chatsService.createMessage(chat_id, json.id, message).then((data: any) => {
-    //             data?.users.map((userId) => {
-    //                 const client = this.usersPool.find(user => user.user_id === userId);
-    //                 if (client) {
-    //                     console.log('receiveMessage dublicate');
-    //                 } else {
-    //                     //send push
-    //                 }
-    //             });
-    //         });
-    //     }
-    //     return '';
-    // }
+    @SubscribeMessage('typingMessage')
+    handleTypingMessage(client: any, payload: any): string {
+        const jwt = client.handshake?.headers?.authorization?.replace('Bearer ', '');
+        const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
+        if (json?.id) {
+            const {
+                chat_id,
+            } = payload;
+
+            this.chatsService.getChat(json.id, chat_id).then((data: any) => {
+                data?.users.map((userId) => {
+                    if (userId !== json.id) {
+                        this.usersService.getUser(userId).then((user) => {
+                            if (user && user.socket_id) {
+                                this.server?.sockets?.to(user.socket_id)?.emit('receiveTypingMessage', {
+                                    message: `${user.name || user.nickname  || user.phone} печатает`,
+                                });
+                            }
+                        });
+                    }
+                });
+            });
+        }
+        return '';
+    }
 
     @SubscribeMessage('ping')
     handlePing(client: any, payload: any): string {

@@ -15,7 +15,6 @@ import * as admin from 'firebase-admin';
 import { ServiceAccount } from "firebase-admin";
 
 const serviceAccount = require("../fb.json");
-console.log(serviceAccount);
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);

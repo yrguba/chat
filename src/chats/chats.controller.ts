@@ -3,6 +3,7 @@ import {
     Controller,
     Get,
     Post,
+    Put,
     Res,
     Req,
     Patch,
@@ -16,6 +17,8 @@ import { ChatsService } from './chats.service';
 import { ChatsGateway } from "./chats.gateway";
 import { ApiTags, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { ChatDTO } from './dto/chat.dto';
+import { ChatNameDTO } from "./dto/chatName.dto";
+import { ChatAvatarDTO } from "./dto/chatAvatar.dto";
 import { MessageDTO } from "./dto/message.dto";
 import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { JwtService } from '@nestjs/jwt';
@@ -43,11 +46,18 @@ export class ChatsController {
         required: false,
         type: Number,
     })
+    @ApiQuery({
+        name: 'like',
+        description: 'Поиск по имени чата',
+        required: false,
+        //type: String,
+    })
     async getChats(
       @Res() res,
       @Req() req,
       @Query('page', new DefaultValuePipe(1), ParseIntPipe) page = 1,
       @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit = 10,
+      @Query('like', new DefaultValuePipe('')) like = '',
     ) {
         const jwt = req.headers.authorization.replace('Bearer ', '');
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
@@ -55,6 +65,7 @@ export class ChatsController {
           {
                 page,
                 limit,
+                like,
             }
         );
         res.status(chats.status).json(chats.data);
@@ -67,6 +78,26 @@ export class ChatsController {
         const jwt = req.headers.authorization.replace('Bearer ', '');
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
         const chat = await this.chatsService.getChat(json.id, param.chat_id,);
+        res.status(chat.status).json(chat.data);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @ApiParam({ name: 'chat_id', required: true })
+    @Patch('/:chat_id/name')
+    async updateChatName(@Res() res, @Req() req, @Param() param, @Body() body: ChatNameDTO) {
+        const jwt = req.headers.authorization.replace('Bearer ', '');
+        const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
+        const chat = await this.chatsService.updateChatName(json.id, param.chat_id, body.name);
+        res.status(chat.status).json(chat.data);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @ApiParam({ name: 'chat_id', required: true })
+    @Patch('/:chat_id/avatar')
+    async updateChatAvatar(@Res() res, @Req() req, @Param() param, @Body() body: ChatAvatarDTO) {
+        const jwt = req.headers.authorization.replace('Bearer ', '');
+        const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
+        const chat = await this.chatsService.updateChatAvatar(json.id, param.chat_id, body.avatar);
         res.status(chat.status).json(chat.data);
     }
 
