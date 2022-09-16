@@ -225,7 +225,7 @@ export class ChatsService {
         if (offset < count) {
             const chats = await this.chatsRepository.createQueryBuilder('chats')
                 .where('chats.users @> :users', {users: [user_id]})
-                .andWhere("chats.name like :name", { name:`%${options.like}%` })
+                .andWhere("LOWER(chats.name) like LOWER(:name)", { name:`%${options.like.toLowerCase()}%` })
                 .leftJoinAndSelect('chats.message', 'message')
                 //.orderBy('message.created_at', 'DESC')
                 .orderBy('chats.updated_at', 'ASC')
