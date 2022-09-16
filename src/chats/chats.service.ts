@@ -120,6 +120,42 @@ export class ChatsService {
         }
     }
 
+    async getChatWithUser(id: number, user_id: number) {
+        const usersArray = [id, user_id];
+        let chat;
+
+        const currentChats = await this.chatsRepository.createQueryBuilder('chats')
+            .where('chats.users @> :users', {users: usersArray})
+            .getMany();
+
+        if (currentChats) {
+            const targetChat = currentChats.filter(chat => chat.users.sort().toString() === usersArray.sort().toString());
+            chat = Array.isArray(targetChat) ? targetChat[0] : targetChat;
+        }
+
+        const users = await this.userRepository.createQueryBuilder('users')
+            .where("users.id IN (:...usersArray)", { usersArray: chat.users })
+            .getMany();
+
+        users.forEach(user => {
+            delete user['code'];
+            delete user['player_id'];
+            delete user['socket_id'];
+            delete user['refresh_token'];
+            delete user['fb_tokens'];
+        });
+
+        return {
+            status: 201,
+            data: {
+                data: {
+                    ...chat || [],
+                    chatUsers: users
+                }
+            }
+        }
+    }
+
     async updateChatName(user_id: number, chat_id: number, name: string) {
         const chat = await this.chatsRepository.createQueryBuilder('chat')
             .where('chat.id = :id', { id: chat_id })
@@ -226,9 +262,9 @@ export class ChatsService {
             const chats = await this.chatsRepository.createQueryBuilder('chats')
                 .where('chats.users @> :users', {users: [user_id]})
                 .andWhere("LOWER(chats.name) like LOWER(:name)", { name:`%${options.like.toLowerCase()}%` })
-                .leftJoinAndSelect('chats.message', 'message')
-                //.orderBy('message.created_at', 'DESC')
+                .leftJoinAndSelect('chats.message', 'message', null,{'order': 'asc'})
                 .orderBy('chats.updated_at', 'ASC')
+                .addOrderBy('message.created_at', 'DESC')
                 .getMany();
 
             const splicedChats = chats.splice(offset, options.limit);

@@ -82,6 +82,16 @@ export class ChatsController {
     }
 
     @UseGuards(JwtAuthGuard)
+    @ApiParam({ name: 'user_id', required: true })
+    @Get('/chat/with-user/:user_id')
+    async getChatWithUser(@Res() res, @Req() req, @Param() param) {
+        const jwt = req.headers.authorization.replace('Bearer ', '');
+        const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
+        const chat = await this.chatsService.getChatWithUser(json.id, param.chat_id,);
+        res.status(chat.status).json(chat.data);
+    }
+
+    @UseGuards(JwtAuthGuard)
     @ApiParam({ name: 'chat_id', required: true })
     @Patch('/:chat_id/name')
     async updateChatName(@Res() res, @Req() req, @Param() param, @Body() body: ChatNameDTO) {
