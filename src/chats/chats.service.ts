@@ -150,7 +150,7 @@ export class ChatsService {
                 status: 201,
                 data: {
                     data: {
-                        ...chat || [],
+                        ...chat || null,
                         chatUsers: users
                     }
                 }
@@ -160,7 +160,7 @@ export class ChatsService {
                 status: 201,
                 data: {
                     data: {
-                        ...chat || [],
+                        ...chat || null,
                         chatUsers: []
                     }
                 }

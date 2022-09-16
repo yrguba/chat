@@ -87,7 +87,7 @@ export class ChatsController {
     async getChatWithUser(@Res() res, @Req() req, @Param() param) {
         const jwt = req.headers.authorization.replace('Bearer ', '');
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
-        const chat = await this.chatsService.getChatWithUser(json.id, param.chat_id,);
+        const chat = await this.chatsService.getChatWithUser(json.id, param.user_id,);
         res.status(chat.status).json(chat.data);
     }
 
@@ -145,7 +145,7 @@ export class ChatsController {
         const jwt = req.headers.authorization.replace('Bearer ', '');
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
         const chatUsers = body.users;
-        chatUsers.push(json.id);
+        if (!body.users.includes(json.id)) chatUsers.push(json.id);
         const chat = await this.chatsService.createChat(body);
         if (chat?.status === 201) {
             this.chatsGateway.handleEmitNewChat(chat?.data?.data || []);
