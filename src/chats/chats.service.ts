@@ -145,14 +145,24 @@ export class ChatsService {
                 delete user['refresh_token'];
                 delete user['fb_tokens'];
             });
-        }
 
-        return {
-            status: 201,
-            data: {
+            return {
+                status: 201,
                 data: {
-                    ...chat || [],
-                    chatUsers: users
+                    data: {
+                        ...chat || [],
+                        chatUsers: users
+                    }
+                }
+            }
+        } else {
+            return {
+                status: 201,
+                data: {
+                    data: {
+                        ...chat || [],
+                        chatUsers: []
+                    }
                 }
             }
         }
