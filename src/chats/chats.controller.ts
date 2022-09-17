@@ -198,4 +198,14 @@ export class ChatsController {
         const chat = await this.chatsService.addUserToChat(json.id, users, params.chat_id);
         res.status(chat.status).json(chat.data);
     }
+
+    @Patch(':chat_id/remove-user/')
+    @ApiParam({ name: 'chat_id', required: true })
+    async removeUserFromChat(@Res() res, @Req() req, @Param() params,  @Body() users: number[]) {
+        const jwt = req.headers.authorization.replace('Bearer ', '');
+        const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
+
+        const chat = await this.chatsService.removeUserFromChat(json.id, users, params.chat_id);
+        res.status(chat.status).json(chat.data);
+    }
 }

@@ -5,10 +5,12 @@ import { Repository, DeleteResult } from 'typeorm';
 import { ChatsEntity } from "../database/entities/chats.entity";
 import { MessageEntity } from "../database/entities/message.entity";
 import { UserEntity } from "../database/entities/user.entity";
+import { ContactEntity } from "../database/entities/contact.entity";
 import { ChatDTO } from "./dto/chat.dto";
 import { ChatNameDTO } from "./dto/chatName.dto";
 import { ChatAvatarDTO } from "./dto/chatAvatar.dto";
 import * as admin from "firebase-admin";
+
 
 @Injectable()
 export class ChatsService {
@@ -19,6 +21,8 @@ export class ChatsService {
         private messageRepository: Repository<MessageEntity>,
         @InjectRepository(UserEntity)
         private userRepository: Repository<UserEntity>,
+        @InjectRepository(ContactEntity)
+        private contactsRepository: Repository<ContactEntity>,
     ) {}
 
 
@@ -42,7 +46,13 @@ export class ChatsService {
             if (targetChat && targetChat.length === 0) {
                 data.updated_at = new Date();
                 chat = await this.chatsRepository.save(data);
-            } else chat = Array.isArray(targetChat) ? targetChat[0] : targetChat;
+            } else {
+                chat = Array.isArray(targetChat) ? targetChat[0] : targetChat;
+
+                if (chat.is_group) {
+                    chat = await this.chatsRepository.save(data);
+                }
+            }
         }
 
         const users = await this.userRepository.createQueryBuilder('users')
@@ -90,7 +100,12 @@ export class ChatsService {
             const user = await this.getUser(id);
 
             if (user) {
-                chat.name = user.name || user.nickname  || user.phone;
+                const contact = await this.contactsRepository.createQueryBuilder('contact')
+                    .where('contact.owner = :id', { id: user_id })
+                    .andWhere('contact.phone = :phone', { phone: user.phone })
+                    .getOne();
+
+                chat.name = contact?.name || user.name || user.nickname  || user.phone;
                 chat.avatar = user.avatar;
             }
 
@@ -287,7 +302,12 @@ export class ChatsService {
                     if (id) {
                         const user = await this.getUser(id);
                         if (user) {
-                            chat.name = user.name || user.nickname  || user.phone;
+                            const contact = await this.contactsRepository.createQueryBuilder('contact')
+                                .where('contact.owner = :id', { id: user_id })
+                                .andWhere('contact.phone = :phone', { phone: user.phone })
+                                .getOne();
+
+                            chat.name = contact?.name || user.name || user.nickname  || user.phone;
                             chat.avatar = user.avatar;
                         }
                     }
@@ -349,7 +369,7 @@ export class ChatsService {
             await this.chatsRepository.save(updatedChat);
 
             const chatUsers = await this.userRepository.createQueryBuilder('users')
-                .where("users.id IN (:...usersArray)", { usersArray: chat.users })
+                .where("users.id IN (:...usersArray)", { usersArray: currentChatUsers })
                 .getMany();
 
             chatUsers.map(user => {
@@ -364,7 +384,53 @@ export class ChatsService {
             return {
                 status: 200,
                 data: {
-                    data: {...chat, chatUsers: chatUsers},
+                    data: {...chat, chatUsers: chatUsers, users: currentChatUsers},
+                }
+            };
+        }
+    }
+
+    async removeUserFromChat(user_id: number, users: number[], chat_id: number) {
+        const chat = await this.chatsRepository.createQueryBuilder('chat')
+            .where('chat.id = :id', { id: chat_id })
+            .getOne();
+
+        let currentChatUsers = Array.from(chat.users);
+
+        if (!currentChatUsers.includes(user_id)) {
+            return {
+                status: 403,
+                data: {
+                    error: {
+                        code: 403,
+                        message: "You cant add user to this chat"
+                    }
+                }
+            }
+        }
+
+        if (currentChatUsers) {
+            const updatedUsers = currentChatUsers.filter(user => !users.includes(user));
+            const updatedChat = {...chat, users: updatedUsers, updated_at: new Date()}
+            await this.chatsRepository.save(updatedChat);
+
+            const chatUsers = await this.userRepository.createQueryBuilder('users')
+                .where("users.id IN (:...usersArray)", { usersArray: updatedChat.users })
+                .getMany();
+
+            chatUsers.map(user => {
+                delete user['code'];
+                delete user['player_id'];
+                delete user['socket_id'];
+                delete user['refresh_token'];
+                delete user['fb_tokens'];
+                delete user['message'];
+            });
+
+            return {
+                status: 200,
+                data: {
+                    data: {...chat, chatUsers: chatUsers, users: updatedUsers},
                 }
             };
         }
