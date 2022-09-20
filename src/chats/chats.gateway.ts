@@ -61,6 +61,36 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         });
     };
 
+    handleEmitAddToChat (chat) {
+        chat?.users.map((userId) => {
+            this.usersService.getUser(userId).then((user) => {
+                if (user && user.socket_id) {
+                    this.server?.sockets?.to(user.socket_id)?.emit('addedToChat', {
+                        message: chat,
+                    });
+                } else {
+                    //send push
+                }
+            });
+
+        });
+    };
+
+    handleEmitDeleteFromChat (chat) {
+        chat?.users.map((userId) => {
+            this.usersService.getUser(userId).then((user) => {
+                if (user && user.socket_id) {
+                    this.server?.sockets?.to(user.socket_id)?.emit('removedFromChat', {
+                        message: chat,
+                    });
+                } else {
+                    //send push
+                }
+            });
+
+        });
+    };
+
     @SubscribeMessage('typingMessage')
     handleTypingMessage(client: any, payload: any): string {
         const jwt = client.handshake?.headers?.authorization?.replace('Bearer ', '');
