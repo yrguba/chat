@@ -12,7 +12,5 @@ export class ChatDTO {
     @IsBoolean()
     is_group: boolean;
     updated_at: Date;
-    @ApiProperty()
-    @IsString()
     avatar: string;
 }
