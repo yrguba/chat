@@ -100,7 +100,7 @@ export class ChatsService {
                 delete user['refresh_token'];
                 delete user['fb_tokens'];
 
-                user.contactName = contact.name;
+                user.contactName = contact?.name || '';
             }
 
             if (chat && !chat?.is_group) {
