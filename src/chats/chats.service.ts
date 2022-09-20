@@ -34,7 +34,7 @@ export class ChatsService {
             .getOne();
     }
 
-    async createChat(data: ChatDTO) {
+    async createChat(user_id: number, data: ChatDTO) {
         let chat;
         const currentChats = await this.chatsRepository.createQueryBuilder('chats')
           .where('chats.users @> :users', {users: data.users})
@@ -42,9 +42,23 @@ export class ChatsService {
 
         if (currentChats) {
             const targetChat = currentChats.filter(chat => chat.users.sort().toString() === data.users.sort().toString());
+            data.updated_at = new Date();
+
 
             if (targetChat && targetChat.length === 0) {
-                data.updated_at = new Date();
+                if (!data.is_group) {
+                    const id = data?.users[0] === user_id ? data?.users[1] : data?.users[0];
+                    const user = await this.getUser(id);
+                    if (user) {
+                        const contact = await this.contactsRepository.createQueryBuilder('contact')
+                            .where('contact.owner = :id', { id: user_id })
+                            .andWhere('contact.phone = :phone', { phone: user.phone })
+                            .getOne();
+
+                        data.name = contact?.name || user.name || user.nickname  || user.phone;
+                        data.avatar = user.avatar;
+                    }
+                }
                 chat = await this.chatsRepository.save(data);
             } else {
                 chat = Array.isArray(targetChat) ? targetChat[0] : targetChat;
@@ -104,18 +118,18 @@ export class ChatsService {
             }
 
             if (chat && !chat?.is_group) {
-                const id = chat?.users[0] === user_id ? chat?.users[1] : chat?.users[0];
-                const user = await this.getUser(id);
-
-                if (user) {
-                    const contact = await this.contactsRepository.createQueryBuilder('contact')
-                        .where('contact.owner = :id', { id: user_id })
-                        .andWhere('contact.phone = :phone', { phone: user.phone })
-                        .getOne();
-
-                    chat.name = contact?.name || user.name || user.nickname  || user.phone;
-                    chat.avatar = user.avatar;
-                }
+                // const id = chat?.users[0] === user_id ? chat?.users[1] : chat?.users[0];
+                // const user = await this.getUser(id);
+                //
+                // if (user) {
+                //     const contact = await this.contactsRepository.createQueryBuilder('contact')
+                //         .where('contact.owner = :id', { id: user_id })
+                //         .andWhere('contact.phone = :phone', { phone: user.phone })
+                //         .getOne();
+                //
+                //     chat.name = contact?.name || user.name || user.nickname  || user.phone;
+                //     chat.avatar = user.avatar;
+                // }
 
                 if (users) chat.chatUsers = users;
 
@@ -313,21 +327,21 @@ export class ChatsService {
             const splicedChats = chats.splice(offset, options.limit);
 
             for (const chat of splicedChats) {
-                if (!chat.is_group) {
-                    const id = chat?.users[0] === user_id ? chat?.users[1] : chat?.users[0];
-                    if (id) {
-                        const user = await this.getUser(id);
-                        if (user) {
-                            const contact = await this.contactsRepository.createQueryBuilder('contact')
-                                .where('contact.owner = :id', { id: user_id })
-                                .andWhere('contact.phone = :phone', { phone: user.phone })
-                                .getOne();
-
-                            chat.name = contact?.name || user.name || user.nickname  || user.phone;
-                            chat.avatar = user.avatar;
-                        }
-                    }
-                }
+                // if (!chat.is_group) {
+                //     const id = chat?.users[0] === user_id ? chat?.users[1] : chat?.users[0];
+                //     if (id) {
+                //         const user = await this.getUser(id);
+                //         if (user) {
+                //             const contact = await this.contactsRepository.createQueryBuilder('contact')
+                //                 .where('contact.owner = :id', { id: user_id })
+                //                 .andWhere('contact.phone = :phone', { phone: user.phone })
+                //                 .getOne();
+                //
+                //             chat.name = contact?.name || user.name || user.nickname  || user.phone;
+                //             chat.avatar = user.avatar;
+                //         }
+                //     }
+                // }
                 chat.message.splice(1, chat.message.length - 1);
             }
 

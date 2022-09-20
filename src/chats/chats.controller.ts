@@ -146,7 +146,7 @@ export class ChatsController {
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
         const chatUsers = body.users;
         if (!body.users.includes(json.id)) chatUsers.push(json.id);
-        const chat = await this.chatsService.createChat(body);
+        const chat = await this.chatsService.createChat(json.id, body);
         if (chat?.status === 201) {
             this.chatsGateway.handleEmitNewChat(chat?.data?.data || []);
         }
