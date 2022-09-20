@@ -83,62 +83,71 @@ export class ChatsService {
             .where('chat.id = :id', { id: chat_id })
             .getOne();
 
-        const users = await this.userRepository.createQueryBuilder('users')
-            .where("users.id IN (:...usersArray)", { usersArray: chat.users })
-            .getMany();
+        if (chat) {
+            const users = await this.userRepository.createQueryBuilder('users')
+                .where("users.id IN (:...usersArray)", { usersArray: chat.users })
+                .getMany();
 
-        for (const user of users) {
-            const contact = await this.contactsRepository.createQueryBuilder('contact')
-                .where('contact.owner = :id', { id: user_id })
-                .andWhere('contact.phone = :phone', { phone: user.phone })
-                .getOne();
-
-            delete user['code'];
-            delete user['player_id'];
-            delete user['socket_id'];
-            delete user['refresh_token'];
-            delete user['fb_tokens'];
-
-            user.contactName = contact.name;
-        }
-
-        if (chat && !chat?.is_group) {
-            const id = chat?.users[0] === user_id ? chat?.users[1] : chat?.users[0];
-            const user = await this.getUser(id);
-
-            if (user) {
+            for (const user of users) {
                 const contact = await this.contactsRepository.createQueryBuilder('contact')
                     .where('contact.owner = :id', { id: user_id })
                     .andWhere('contact.phone = :phone', { phone: user.phone })
                     .getOne();
 
-                chat.name = contact?.name || user.name || user.nickname  || user.phone;
-                chat.avatar = user.avatar;
+                delete user['code'];
+                delete user['player_id'];
+                delete user['socket_id'];
+                delete user['refresh_token'];
+                delete user['fb_tokens'];
+
+                user.contactName = contact.name;
             }
 
-            if (users) chat.chatUsers = users;
+            if (chat && !chat?.is_group) {
+                const id = chat?.users[0] === user_id ? chat?.users[1] : chat?.users[0];
+                const user = await this.getUser(id);
 
-            return {
-                status: 200,
-                data: {
-                    data: chat
+                if (user) {
+                    const contact = await this.contactsRepository.createQueryBuilder('contact')
+                        .where('contact.owner = :id', { id: user_id })
+                        .andWhere('contact.phone = :phone', { phone: user.phone })
+                        .getOne();
+
+                    chat.name = contact?.name || user.name || user.nickname  || user.phone;
+                    chat.avatar = user.avatar;
                 }
-            };
-        } else if (chat) {
-            if (users) chat.chatUsers = users;
-            return {
-                status: 200,
-                data: {
-                    data: chat
+
+                if (users) chat.chatUsers = users;
+
+                return {
+                    status: 200,
+                    data: {
+                        data: chat
+                    }
+                };
+            } else if (chat) {
+                if (users) chat.chatUsers = users;
+                return {
+                    status: 200,
+                    data: {
+                        data: chat
+                    }
                 }
+            } else {
+                return { status: 404, data: {
+                        error: {
+                            code: 404,
+                            message: "Chat with not found"
+                        }
+                    }};
             }
         } else {
             return { status: 404, data: {
-                error: {
-                    code: 404,
-                    message: "Chat with not found"
-                }
-            }};
+                    error: {
+                        code: 404,
+                        message: "Chat with not found"
+                    }
+                }};
         }
     }
 
