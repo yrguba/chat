@@ -352,7 +352,7 @@ export class ChatsService {
             const splicedChats = filteredChats.splice(offset, options.limit);
 
             for (const chat of splicedChats) {
-                if (user_id) {
+                if (user_id && !chat.is_group) {
                     const chatData = await this.getChatName(user_id, chat);
                     chat.name = chatData?.name ? chatData?.name : chat.name;
                     chat.avatar = chatData?.avatar ? chatData?.avatar : chat.name;
