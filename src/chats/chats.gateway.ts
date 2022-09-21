@@ -93,7 +93,6 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     @SubscribeMessage('typingMessage')
     handleTypingMessage(client: any, payload: any) {
-        console.log(client, payload);
         const jwt = client.handshake?.headers?.authorization?.replace('Bearer ', '');
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
         if (json?.id) {
@@ -103,6 +102,7 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
             this.chatsService.getChat(json.id, chat_id).then((data: any) => {
                 console.log(data.data.users);
+                console.log(data.data);
                 data?.data?.users.map((userId) => {
                     if (userId !== json.id) {
                         this.usersService.getUser(userId).then((user) => {
