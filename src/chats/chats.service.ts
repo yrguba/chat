@@ -340,16 +340,18 @@ export class ChatsService {
             let filteredChats = chats;
 
             if (options.like) {
-                filteredChats = chats.filter(chat => chat.name.includes(options.like));
+                filteredChats = chats.filter(chat => chat.name.toLowerCase().includes(options.like.toLowerCase()));
             }
 
             const splicedChats = filteredChats.splice(offset, options.limit);
 
             for (const chat of splicedChats) {
-                const chatData = await this.getChatName(user_id, chat);
-                chat.name = chatData?.name ? chatData?.name : chat.name;
-                chat.avatar = chatData?.avatar ? chatData?.avatar : chat.name;
-                chat.message.splice(1, chat.message.length - 1);
+                if (user_id) {
+                    const chatData = await this.getChatName(user_id, chat);
+                    chat.name = chatData?.name ? chatData?.name : chat.name;
+                    chat.avatar = chatData?.avatar ? chatData?.avatar : chat.name;
+                    chat.message.splice(1, chat.message.length - 1);
+                }
             }
 
             if (splicedChats) {
