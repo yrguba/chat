@@ -340,7 +340,7 @@ export class ChatsService {
             let filteredChats = chats;
 
             if (options.like) {
-                filteredChats = chats.filter(chat => chat.users.includes(options.like));
+                filteredChats = chats.filter(chat => chat.name.includes(options.like));
             }
 
             const splicedChats = filteredChats.splice(offset, options.limit);
