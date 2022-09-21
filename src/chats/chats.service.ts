@@ -7,8 +7,6 @@ import { MessageEntity } from "../database/entities/message.entity";
 import { UserEntity } from "../database/entities/user.entity";
 import { ContactEntity } from "../database/entities/contact.entity";
 import { ChatDTO } from "./dto/chat.dto";
-import { ChatNameDTO } from "./dto/chatName.dto";
-import { ChatAvatarDTO } from "./dto/chatAvatar.dto";
 import * as admin from "firebase-admin";
 
 
@@ -29,7 +27,13 @@ export class ChatsService {
     public socket: Server = null;
 
     async getChatName(user_id, chat) {
-        const id = chat?.users[0] === user_id ? chat?.users[1] : chat?.users[0];
+        let id;
+        if (chat.users.length > 1) {
+            id = chat?.users[0] === user_id ? chat?.users[1] : chat?.users[0];
+        } else {
+            id = chat?.users[0];
+        }
+
         const user = await this.getUser(id);
 
         if (user) {
@@ -58,57 +62,59 @@ export class ChatsService {
 
     async createChat(user_id: number, data: ChatDTO) {
         let chat;
+        // Получаем теущие чаты с текущими пользователями
         const currentChats = await this.chatsRepository.createQueryBuilder('chats')
           .where('chats.users @> :users', {users: data.users})
           .getMany();
 
+        // Если чаты с данными пользователями существуют
         if (currentChats) {
-            const targetChat = currentChats.filter(chat => chat.users.sort().toString() === data.users.sort().toString());
-            data.updated_at = new Date();
-
-
-            if (targetChat && targetChat.length === 0) {
-                if (!data.is_group) {
-                    const id = data?.users[0] === user_id ? data?.users[1] : data?.users[0];
-                    const user = await this.getUser(id);
-                    if (user) {
-                        const contact = await this.contactsRepository.createQueryBuilder('contact')
-                            .where('contact.owner = :id', { id: user_id })
-                            .andWhere('contact.phone = :phone', { phone: user.phone })
-                            .getOne();
-
-                        data.name = contact?.name || user.name || user.nickname  || user.phone;
-                        data.avatar = user.avatar;
-                    }
-                }
+            // Если чат групповой то создаем создаем новый
+            if (data.is_group) {
                 chat = await this.chatsRepository.save(data);
             } else {
-                chat = Array.isArray(targetChat) ? targetChat[0] : targetChat;
+                // Иначе
+                const targetChat = currentChats.filter(chat => chat.users.sort().toString() === data.users.sort().toString());
 
-                if (chat.is_group) {
+                if (targetChat && targetChat.length === 0) {
                     chat = await this.chatsRepository.save(data);
+                } else {
+
                 }
             }
-        }
 
-        const users = await this.userRepository.createQueryBuilder('users')
-            .where("users.id IN (:...usersArray)", { usersArray: chat.users })
-            .getMany();
+            if (chat?.users) {
+                const users = await this.userRepository.createQueryBuilder('users')
+                    .where("users.id IN (:...usersArray)", { usersArray: chat.users })
+                    .getMany();
 
-        users.forEach(user => {
-            delete user['code'];
-            delete user['player_id'];
-            delete user['socket_id'];
-            delete user['refresh_token'];
-            delete user['fb_tokens'];
-        });
+                users.forEach(user => {
+                    delete user['code'];
+                    delete user['player_id'];
+                    delete user['socket_id'];
+                    delete user['refresh_token'];
+                    delete user['fb_tokens'];
+                });
 
-        return {
-            status: 201,
-            data: {
-                data: {
-                    ...chat,
-                    chatUsers: users
+
+                return {
+                    status: 201,
+                    data: {
+                        data: {
+                            ...chat,
+                            chatUsers: users
+                        }
+                    }
+                }
+            } else {
+                return {
+                    status: 201,
+                    data: {
+                        data: {
+                            ...chat,
+                            chatUsers: []
+                        }
+                    }
                 }
             }
         }
