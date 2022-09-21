@@ -10,7 +10,7 @@ import { ContactsService } from "../contacts/contacts.service";
 @Global()
 @Module({
     imports: [TypeOrmModule.forFeature([UserEntity, ContactEntity]), JwtModule],
-    providers: [UsersService, ContactsService],
+    providers: [UsersService, ContactsService, ContactEntity],
     controllers: [UsersController],
     exports: [UsersService],
 })

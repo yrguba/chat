@@ -20,4 +20,5 @@ export class ProfileDTO {
     @IsString()
     @ApiProperty()
     player_id: string;
+    contactName: string;
 }

@@ -2,13 +2,31 @@ import {Injectable} from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
 import {DeleteResult, Repository} from 'typeorm';
 import {UserEntity} from '../database/entities/user.entity';
+import {ContactEntity} from "../database/entities/contact.entity";
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(UserEntity)
     private usersRepository: Repository<UserEntity>,
+    @InjectRepository(ContactEntity)
+    private contactsRepository: Repository<ContactEntity>,
   ) {
+  }
+
+  async getContactName(user_id) {
+    const user = await this.getUser(user_id);
+
+    if (user) {
+      const contact = await this.contactsRepository.createQueryBuilder('contact')
+          .where('contact.owner = :id', { id: user_id })
+          .andWhere('contact.phone = :phone', { phone: user.phone })
+          .getOne();
+
+      return contact?.name || '';
+    }
+
+    return '';
   }
 
   async getUsers(id: number) {
@@ -17,11 +35,13 @@ export class UsersService {
       .where('users.id != :id', { id: Number(id) })
       .getMany();
 
-    users.map(user => {
+    for (const user of users) {
       delete user.code;
       delete user.refresh_token;
       delete user.socket_id;
-    })
+
+      user.contactName = await this.getContactName(user.id);
+    }
 
     return {
       status: 200,
