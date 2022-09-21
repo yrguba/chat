@@ -101,9 +101,8 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             } = payload;
 
             this.chatsService.getChat(json.id, chat_id).then((data: any) => {
-                console.log(data.data.users);
-                console.log(data.data);
-                data?.data?.users.map((userId) => {
+                console.log(data?.data?.data?.users);
+                data?.data?.data?.users.map((userId) => {
                     if (userId !== json.id) {
                         this.usersService.getUser(userId).then((user) => {
                             if (user && user.socket_id) {
