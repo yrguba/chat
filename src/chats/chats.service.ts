@@ -28,6 +28,28 @@ export class ChatsService {
 
     public socket: Server = null;
 
+    async getChatName(user_id, chat) {
+        const id = chat?.users[0] === user_id ? chat?.users[1] : chat?.users[0];
+        const user = await this.getUser(id);
+
+        if (user) {
+            const contact = await this.contactsRepository.createQueryBuilder('contact')
+                .where('contact.owner = :id', { id: user_id })
+                .andWhere('contact.phone = :phone', { phone: user.phone })
+                .getOne();
+
+            return {
+                name: contact?.name || user.name || user.nickname  || user.phone,
+                avatar: user.avatar,
+            }
+        }
+
+        return {
+            name: '',
+            avatar: '',
+        }
+    }
+
     async getUser(id) {
         return await this.userRepository.createQueryBuilder('users')
             .where('users.id = :id', { id: Number(id) })
@@ -118,18 +140,9 @@ export class ChatsService {
             }
 
             if (chat && !chat?.is_group) {
-                // const id = chat?.users[0] === user_id ? chat?.users[1] : chat?.users[0];
-                // const user = await this.getUser(id);
-                //
-                // if (user) {
-                //     const contact = await this.contactsRepository.createQueryBuilder('contact')
-                //         .where('contact.owner = :id', { id: user_id })
-                //         .andWhere('contact.phone = :phone', { phone: user.phone })
-                //         .getOne();
-                //
-                //     chat.name = contact?.name || user.name || user.nickname  || user.phone;
-                //     chat.avatar = user.avatar;
-                // }
+                const chatData = await this.getChatName(user_id, chat);
+                chat.name = chatData?.name ? chatData?.name : chat.name;
+                chat.avatar = chatData?.avatar ? chatData?.avatar : chat.name;
 
                 if (users) chat.chatUsers = users;
 
@@ -318,30 +331,24 @@ export class ChatsService {
         if (offset < count) {
             const chats = await this.chatsRepository.createQueryBuilder('chats')
                 .where('chats.users @> :users', {users: [user_id]})
-                .andWhere("LOWER(chats.name) like LOWER(:name)", { name:`%${options.like.toLowerCase()}%` })
+                //.andWhere("LOWER(chats.name) like LOWER(:name)", { name:`%${options.like.toLowerCase()}%` })
                 .leftJoinAndSelect('chats.message', 'message', null,{'order': 'asc'})
                 .orderBy('chats.updated_at', 'DESC')
                 .addOrderBy('message.created_at', 'DESC')
                 .getMany();
 
-            const splicedChats = chats.splice(offset, options.limit);
+            let filteredChats = chats;
+
+            if (options.like) {
+                filteredChats = chats.filter(chat => chat.users.includes(options.like));
+            }
+
+            const splicedChats = filteredChats.splice(offset, options.limit);
 
             for (const chat of splicedChats) {
-                // if (!chat.is_group) {
-                //     const id = chat?.users[0] === user_id ? chat?.users[1] : chat?.users[0];
-                //     if (id) {
-                //         const user = await this.getUser(id);
-                //         if (user) {
-                //             const contact = await this.contactsRepository.createQueryBuilder('contact')
-                //                 .where('contact.owner = :id', { id: user_id })
-                //                 .andWhere('contact.phone = :phone', { phone: user.phone })
-                //                 .getOne();
-                //
-                //             chat.name = contact?.name || user.name || user.nickname  || user.phone;
-                //             chat.avatar = user.avatar;
-                //         }
-                //     }
-                // }
+                const chatData = await this.getChatName(user_id, chat);
+                chat.name = chatData?.name ? chatData?.name : chat.name;
+                chat.avatar = chatData?.avatar ? chatData?.avatar : chat.name;
                 chat.message.splice(1, chat.message.length - 1);
             }
 
