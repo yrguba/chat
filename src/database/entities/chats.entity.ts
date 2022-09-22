@@ -15,7 +15,7 @@ export class ChatsEntity {
     name: string;
     @CreateDateColumn()
     created_at: Date;
-    @Column({ nullable: true })
+    @Column({ nullable: true, default: new Date() })
     updated_at: Date;
     @Column("int", { array: true })
     users: number[];
