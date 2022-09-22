@@ -348,7 +348,7 @@ export class ChatsService {
                 .where('chats.users @> :users', {users: [user_id]})
                 //.andWhere("LOWER(chats.name) like LOWER(:name)", { name:`%${options.like.toLowerCase()}%` })
                 .leftJoinAndSelect('chats.message', 'message', null,{'order': 'desc'})
-                .orderBy('chats.updated_at', 'ASC')
+                .orderBy('chats.updated_at', 'DESC')
                 //.addOrderBy('message.created_at', 'DESC')
                 .getMany();
 
