@@ -348,7 +348,7 @@ export class ChatsService {
                 //.andWhere("LOWER(chats.name) like LOWER(:name)", { name:`%${options.like.toLowerCase()}%` })
                 .leftJoinAndSelect('chats.message', 'message')
                 .orderBy('chats.updated_at', 'DESC')
-                //.addOrderBy('message.created_at', 'DESC')
+                .addOrderBy('message.created_at', 'DESC')
                 .getMany();
 
             let filteredChats = chats;
@@ -370,7 +370,6 @@ export class ChatsService {
             }
 
             if (splicedChats) {
-                console.log(splicedChats);
                 return {
                     status: 200,
                     data: {
