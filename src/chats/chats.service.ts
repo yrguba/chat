@@ -9,7 +9,6 @@ import { ContactEntity } from "../database/entities/contact.entity";
 import { ChatDTO } from "./dto/chat.dto";
 import * as admin from "firebase-admin";
 
-
 @Injectable()
 export class ChatsService {
     constructor(
@@ -370,6 +369,7 @@ export class ChatsService {
             }
 
             if (splicedChats) {
+                console.log(splicedChats);
                 return {
                     status: 200,
                     data: {
