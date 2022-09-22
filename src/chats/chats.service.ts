@@ -364,8 +364,9 @@ export class ChatsService {
                     const chatData = await this.getChatName(user_id, chat);
                     chat.name = chatData?.name ? chatData?.name : chat.name;
                     chat.avatar = chatData?.avatar ? chatData?.avatar : chat.name;
-                    chat.message = chat.message.reverse().splice(0, 1);
                 }
+
+                chat.message = chat.message.reverse().splice(0, 1);
             }
 
             if (splicedChats) {
