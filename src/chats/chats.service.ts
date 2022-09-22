@@ -366,7 +366,7 @@ export class ChatsService {
                     chat.avatar = chatData?.avatar ? chatData?.avatar : chat.name;
                 }
 
-                chat.message = chat.message.reverse().splice(0, 1);
+                chat.message = chat.message.splice(0, 1);
             }
 
             if (splicedChats) {
