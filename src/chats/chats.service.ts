@@ -85,7 +85,7 @@ export class ChatsService {
                 if (targetChat && targetChat.length === 0) {
                     chat = await this.chatsRepository.save(data);
                 } else {
-                    chat = targetChat;
+                    chat = Array.isArray(targetChat) ? targetChat[0] : targetChat;
                 }
             }
 
