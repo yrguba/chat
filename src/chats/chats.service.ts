@@ -347,7 +347,7 @@ export class ChatsService {
             const chats = await this.chatsRepository.createQueryBuilder('chats')
                 .where('chats.users @> :users', {users: [user_id]})
                 //.andWhere("LOWER(chats.name) like LOWER(:name)", { name:`%${options.like.toLowerCase()}%` })
-                .leftJoinAndSelect('chats.message', 'message', null,{'order': 'desc'})
+                .leftJoinAndSelect('chats.message', 'message')
                 .orderBy('chats.updated_at', 'DESC')
                 //.addOrderBy('message.created_at', 'DESC')
                 .getMany();
@@ -365,7 +365,7 @@ export class ChatsService {
                     const chatData = await this.getChatName(user_id, chat);
                     chat.name = chatData?.name ? chatData?.name : chat.name;
                     chat.avatar = chatData?.avatar ? chatData?.avatar : chat.name;
-                    chat.message.splice(1, chat.message.length - 1);
+                    chat.message = chat.message.reverse().splice(0, 1);
                 }
             }
 
