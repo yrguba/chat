@@ -60,6 +60,13 @@ export class ChatsService {
             .getOne();
     }
 
+    async getContact(user) {
+        return await this.contactsRepository.createQueryBuilder('contact')
+            .where('contact.owner = :id', { id: user.id })
+            .andWhere('contact.phone = :phone', { phone: user.phone })
+            .getOne();
+    }
+
     async createChat(user_id: number, data: ChatDTO) {
         let chat;
         // Получаем теущие чаты с текущими пользователями
@@ -286,15 +293,16 @@ export class ChatsService {
 
             const splicedMessages = messages.splice(offset, options.limit);
 
-            splicedMessages.forEach(message => {
+            for (const message of splicedMessages) {
                 if (message.user) {
                     delete message.user['code'];
                     delete message.user['player_id'];
                     delete message.user['socket_id'];
                     delete message.user['refresh_token'];
                     delete message.user['fb_tokens'];
+                    message.user.contactName = await this.getContact(message.user);
                 }
-            });
+            }
 
             return {
                 status: 200,
@@ -338,9 +346,9 @@ export class ChatsService {
             const chats = await this.chatsRepository.createQueryBuilder('chats')
                 .where('chats.users @> :users', {users: [user_id]})
                 //.andWhere("LOWER(chats.name) like LOWER(:name)", { name:`%${options.like.toLowerCase()}%` })
-                .leftJoinAndSelect('chats.message', 'message', null,{'order': 'asc'})
+                .leftJoinAndSelect('chats.message', 'message', null,{'order': 'desc'})
                 .orderBy('chats.updated_at', 'DESC')
-                .addOrderBy('message.created_at', 'DESC')
+                //.addOrderBy('message.created_at', 'DESC')
                 .getMany();
 
             let filteredChats = chats;
@@ -481,6 +489,16 @@ export class ChatsService {
         }
     }
 
+    getMessageContent(message) {
+        if (message.message_type === "image") {
+            return "Изображение";
+        } else if (message.message_type === "file") {
+            return "Файл";
+        } else {
+            return message.text;
+        }
+    }
+
     async createMessage(chat_id: number, user_id: number, data:any): Promise<any> {
         data.initiator_id = Number(user_id);
         const message = await this.messageRepository.save(data);
@@ -515,25 +533,28 @@ export class ChatsService {
                 if (user_id !== initiator.id) {
                     this.getUser(user_id).then(user => {
                         if (user && user?.fb_tokens) {
-                            user?.fb_tokens.map(token => {
-                                admin.messaging().sendToDevice(token, {
-                                    "notification": {
-                                        "title": initiator.name,
-                                        "body": message.text,
-                                        "priority": "max"
-                                    },
-                                    "data": {
-                                        "text": message.text,
-                                        "msg_type": message.message_type,
-                                        "chat_id": String(chat.id),
-                                        "chat_name": String(chat.name),
-                                        "user_id": String(initiator.id),
-                                        "user_name": initiator.name,
-                                        "user_nickname": initiator.nickname,
-                                        "user_avatar": initiator.avatar,
-                                        "chat_avatar": chat.avatar,
-                                        "is_group": chat.is_group ? "true" : "false"
-                                    },
+                            this.getContact(user).then(contact => {
+                                user?.fb_tokens.map(token => {
+                                    admin.messaging().sendToDevice(token, {
+                                        "notification": {
+                                            "title": initiator.name,
+                                            "body": message.text,
+                                            "priority": "max"
+                                        },
+                                        "data": {
+                                            "text": this.getMessageContent(message),
+                                            "msg_type": message.message_type,
+                                            "chat_id": String(chat.id),
+                                            "chat_name": String(chat.name),
+                                            "user_id": String(initiator.id),
+                                            "user_name": initiator.name,
+                                            "user_contact_name": contact?.name || "",
+                                            "user_nickname": initiator.nickname,
+                                            "user_avatar": initiator.avatar,
+                                            "chat_avatar": chat.avatar,
+                                            "is_group": chat.is_group ? "true" : "false"
+                                        },
+                                    });
                                 });
                             });
                         }
