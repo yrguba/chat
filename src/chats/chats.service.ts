@@ -295,12 +295,13 @@ export class ChatsService {
 
             for (const message of splicedMessages) {
                 if (message.user) {
+                    const contact = await this.getContact(message.user);
                     delete message.user['code'];
                     delete message.user['player_id'];
                     delete message.user['socket_id'];
                     delete message.user['refresh_token'];
                     delete message.user['fb_tokens'];
-                    message.user.contactName = await this.getContact(message.user);
+                    message.user.contactName =  contact?.name || "";
                 }
             }
 
