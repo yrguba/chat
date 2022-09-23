@@ -171,12 +171,12 @@ export class ChatsController {
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
         const message = await this.chatsService.createMessage(param.chat_id, Number(json.id), body);
         console.log(message);
-        // if (message?.status === 201) {
-        //     this.chatsGateway.handleEmit({
-        //         chat_id: param.chat_id,
-        //         ...message
-        //     });
-        // }
+        if (message?.status === 201) {
+            this.chatsGateway.handleEmit({
+                chat_id: param.chat_id,
+                ...message
+            });
+        }
         res.status(message.status).json(message.data);
     }
 
@@ -211,6 +211,10 @@ export class ChatsController {
 
         const chat = await this.chatsService.removeUserFromChat(json.id, users, params.chat_id);
         if (chat?.status === 201) {
+            this.chatsGateway.handleEmit({
+                chat_id: params.chat_id,
+                ...chat.data.message
+            });
             this.chatsGateway.handleEmitDeleteFromChat(chat?.data?.data || []);
         }
         res.status(chat.status).json(chat.data);

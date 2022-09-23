@@ -8,7 +8,6 @@ import { UserEntity } from "../database/entities/user.entity";
 import { ContactEntity } from "../database/entities/contact.entity";
 import { ChatDTO } from "./dto/chat.dto";
 import * as admin from "firebase-admin";
-import {ChatsGateway} from "./chats.gateway";
 
 @Injectable()
 export class ChatsService {
@@ -21,7 +20,6 @@ export class ChatsService {
         private userRepository: Repository<UserEntity>,
         @InjectRepository(ContactEntity)
         private contactsRepository: Repository<ContactEntity>,
-        private chatsGateway: ChatsGateway
     ) {}
 
 
@@ -497,6 +495,7 @@ export class ChatsService {
     }
 
     async removeUserFromChat(user_id: number, users: number[], chat_id: number) {
+        let message = [];
         const chat = await this.chatsRepository.createQueryBuilder('chat')
             .where('chat.id = :id', { id: chat_id })
             .getOne();
@@ -525,7 +524,7 @@ export class ChatsService {
             for (const user of users) {
                 const invitedUser = await this.getUser(user);
                 if (invitedUser && initiator) {
-                    await this.createMessage(chat_id, user_id, {
+                    message = await this.createMessage(chat_id, user_id, {
                         "text": `${this.getUserName(initiator)} удалил из чата ${this.getUserName(invitedUser)}`,
                         "message_type": "system"
                     });
@@ -549,6 +548,7 @@ export class ChatsService {
                 status: 200,
                 data: {
                     data: {...chat, chatUsers: chatUsers, users: updatedUsers},
+                    message: message,
                 }
             };
         }
@@ -630,12 +630,6 @@ export class ChatsService {
                         }
                     });
                 }
-            });
-
-            this.chatsGateway.handleEmit({
-                chat_id: chat_id,
-                ...message,
-                user: initiator
             });
 
             return {
