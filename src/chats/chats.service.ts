@@ -69,6 +69,7 @@ export class ChatsService {
     async createChat(user_id: number, data: ChatDTO) {
         let message = [];
         let chat;
+        let isNewChat = true;
         // Получаем теущие чаты с текущими пользователями
         const currentChats = await this.chatsRepository.createQueryBuilder('chats')
           .where('chats.users @> :users', {users: data.users})
@@ -82,11 +83,11 @@ export class ChatsService {
             } else {
                 // Иначе
                 const targetChat = currentChats.filter(chat => chat.users.sort().toString() === data.users.sort().toString());
-                console.log(targetChat);
                 if (targetChat && targetChat.length === 0) {
                     chat = await this.chatsRepository.save(data);
                 } else {
                     chat = Array.isArray(targetChat) ? targetChat[0] : targetChat;
+                    isNewChat = false;
                 }
             }
 
@@ -104,13 +105,14 @@ export class ChatsService {
                     delete user['fb_tokens'];
                 });
 
-
-                await this.createMessage(chat.id, user_id, {
-                    "text": "Создан новый чат",
-                    "message_type": "system"
-                }).then(data => {
-                    message = data;
-                });
+                if (isNewChat) {
+                    await this.createMessage(chat.id, user_id, {
+                        "text": "Создан новый чат",
+                        "message_type": "system"
+                    }).then(data => {
+                        message = data;
+                    });
+                }
 
                 return {
                     status: 201,
