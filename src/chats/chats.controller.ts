@@ -209,6 +209,7 @@ export class ChatsController {
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
 
         const chat = await this.chatsService.removeUserFromChat(json.id, users, params.chat_id);
+        console.log(chat);
         if (chat?.status === 201) {
             this.chatsGateway.handleEmit({
                 chat_id: params.chat_id,
