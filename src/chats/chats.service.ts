@@ -67,6 +67,7 @@ export class ChatsService {
     }
 
     async createChat(user_id: number, data: ChatDTO) {
+        let message = [];
         let chat;
         // Получаем теущие чаты с текущими пользователями
         const currentChats = await this.chatsRepository.createQueryBuilder('chats')
@@ -77,13 +78,32 @@ export class ChatsService {
         if (currentChats) {
             // Если чат групповой то создаем создаем новый
             if (data.is_group) {
-                chat = await this.chatsRepository.save(data);
+                chat = await this.chatsRepository.save(data).then((data) => {
+                    if (data?.id) {
+                        this.createMessage(data.id, user_id, {
+                            "text": "Имя чата обновлено",
+                            "message_type": "system"
+                        }).then(data => {
+                            message = data;
+                        });
+                    }
+                })
             } else {
                 // Иначе
                 const targetChat = currentChats.filter(chat => chat.users.sort().toString() === data.users.sort().toString());
 
                 if (targetChat && targetChat.length === 0) {
-                    chat = await this.chatsRepository.save(data);
+                    chat = await this.chatsRepository.save(data).then(data => {
+                        if (data?.id) {
+                            console.log(data.id);
+                            this.createMessage(data.id, user_id, {
+                                "text": "Имя чата обновлено",
+                                "message_type": "system"
+                            }).then(data => {
+                                message = data;
+                            });
+                        }
+                    });
                 } else {
                     chat = Array.isArray(targetChat) ? targetChat[0] : targetChat;
                 }
@@ -109,7 +129,8 @@ export class ChatsService {
                     data: {
                         data: {
                             ...chat,
-                            chatUsers: users
+                            chatUsers: users,
+                            message: message
                         }
                     }
                 }
@@ -119,35 +140,36 @@ export class ChatsService {
                     data: {
                         data: {
                             ...chat,
-                            chatUsers: []
+                            chatUsers: [],
+                            message: message
                         }
                     }
                 }
             }
         } else {
-            if (data.users) {
-                const users = await this.userRepository.createQueryBuilder('users')
-                    .where("users.id IN (:...usersArray)", { usersArray: data.users })
-                    .getMany();
-
-                users.forEach(user => {
-                    delete user['code'];
-                    delete user['player_id'];
-                    delete user['socket_id'];
-                    delete user['refresh_token'];
-                    delete user['fb_tokens'];
-                });
-
-                return {
-                    status: 201,
-                    data: {
-                        data: {
-                            ...chat,
-                            chatUsers: users
-                        }
-                    }
-                }
-            }
+            // if (data.users) {
+            //     const users = await this.userRepository.createQueryBuilder('users')
+            //         .where("users.id IN (:...usersArray)", { usersArray: data.users })
+            //         .getMany();
+            //
+            //     users.forEach(user => {
+            //         delete user['code'];
+            //         delete user['player_id'];
+            //         delete user['socket_id'];
+            //         delete user['refresh_token'];
+            //         delete user['fb_tokens'];
+            //     });
+            //
+            //     return {
+            //         status: 201,
+            //         data: {
+            //             data: {
+            //                 ...chat,
+            //                 chatUsers: users
+            //             }
+            //         }
+            //     }
+            // }
         }
     }
 

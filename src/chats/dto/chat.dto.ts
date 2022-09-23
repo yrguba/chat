@@ -2,6 +2,7 @@ import {IsString, IsArray, IsBoolean} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class ChatDTO {
+    id: number;
     @IsString()
     @ApiProperty()
     name: string;

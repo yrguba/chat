@@ -160,6 +160,10 @@ export class ChatsController {
         if (!body.users.includes(json.id)) chatUsers.push(json.id);
         const chat = await this.chatsService.createChat(json.id, body);
         if (chat?.status === 201) {
+            this.chatsGateway.handleEmit({
+                chat_id: chat?.data?.data.chat_id,
+                ...chat.data.data.message
+            });
             this.chatsGateway.handleEmitNewChat(chat?.data?.data || []);
         }
         res.status(chat.status).json(chat.data);
