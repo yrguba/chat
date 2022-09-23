@@ -8,6 +8,7 @@ import { UserEntity } from "../database/entities/user.entity";
 import { ContactEntity } from "../database/entities/contact.entity";
 import { ChatDTO } from "./dto/chat.dto";
 import * as admin from "firebase-admin";
+import {ChatsGateway} from "./chats.gateway";
 
 @Injectable()
 export class ChatsService {
@@ -20,6 +21,7 @@ export class ChatsService {
         private userRepository: Repository<UserEntity>,
         @InjectRepository(ContactEntity)
         private contactsRepository: Repository<ContactEntity>,
+        private chatsGateway: ChatsGateway
     ) {}
 
 
@@ -628,6 +630,12 @@ export class ChatsService {
                         }
                     });
                 }
+            });
+
+            this.chatsGateway.handleEmit({
+                chat_id: chat_id,
+                ...message,
+                user: initiator
             });
 
             return {
