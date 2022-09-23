@@ -78,34 +78,13 @@ export class ChatsService {
         if (currentChats) {
             // Если чат групповой то создаем создаем новый
             if (data.is_group) {
-                chat = await this.chatsRepository.save(data).then((data) => {
-                    if (data?.id) {
-                        console.log(data);
-                        this.createMessage(data.id, user_id, {
-                            "text": "Создан новый чат",
-                            "message_type": "system"
-                        }).then(data => {
-                            console.log(data);
-                            message = data;
-                        });
-                    }
-                })
+                chat = await this.chatsRepository.save(data);
             } else {
                 // Иначе
                 const targetChat = currentChats.filter(chat => chat.users.sort().toString() === data.users.sort().toString());
 
                 if (targetChat && targetChat.length === 0) {
-                    chat = await this.chatsRepository.save(data).then(data => {
-                        if (data?.id) {
-                            console.log(data.id);
-                            this.createMessage(data.id, user_id, {
-                                "text": "Создан новый чат",
-                                "message_type": "system"
-                            }).then(data => {
-                                message = data;
-                            });
-                        }
-                    });
+                    chat = await this.chatsRepository.save(data);
                 } else {
                     chat = Array.isArray(targetChat) ? targetChat[0] : targetChat;
                 }
@@ -125,6 +104,13 @@ export class ChatsService {
                     delete user['fb_tokens'];
                 });
 
+
+                await this.createMessage(chat.id, user_id, {
+                    "text": "Создан новый чат",
+                    "message_type": "system"
+                }).then(data => {
+                    message = data;
+                });
 
                 return {
                     status: 201,
