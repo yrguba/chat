@@ -641,7 +641,7 @@ export class ChatsService {
                                             "user_name": initiator.name,
                                             "user_contact_name": contact?.name || "",
                                             "user_nickname": initiator.nickname,
-                                            "user_avatar": initiator.avatar,
+                                            "user_avatar": initiator.avatar || "",
                                             "chat_avatar": chat.avatar,
                                             "is_group": chat.is_group ? "true" : "false"
                                         },
