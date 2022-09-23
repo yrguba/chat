@@ -81,7 +81,7 @@ export class ChatsService {
                 chat = await this.chatsRepository.save(data).then((data) => {
                     if (data?.id) {
                         this.createMessage(data.id, user_id, {
-                            "text": "Имя чата обновлено",
+                            "text": "Создан новый чат",
                             "message_type": "system"
                         }).then(data => {
                             message = data;
@@ -97,7 +97,7 @@ export class ChatsService {
                         if (data?.id) {
                             console.log(data.id);
                             this.createMessage(data.id, user_id, {
-                                "text": "Имя чата обновлено",
+                                "text": "Создан новый чат",
                                 "message_type": "system"
                             }).then(data => {
                                 message = data;
