@@ -642,7 +642,7 @@ export class ChatsService {
                                 user?.fb_tokens.map(token => {
                                     admin.messaging().sendToDevice(token, {
                                         "notification": {
-                                            "title": message.message_type === "system" ? chat.name : initiator.name,
+                                            "title": message.message_type === "system" ? chat.name : (contact?.name ? contact?.name : initiator.name),
                                             "body": this.getMessageContent(message),
                                             "priority": "max"
                                         },
