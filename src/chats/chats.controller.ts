@@ -212,7 +212,7 @@ export class ChatsController {
         if (chat?.status === 200) {
             this.chatsGateway.handleEmit({
                 chat_id: params.chat_id,
-                ...chat
+                ...chat.data
             });
             this.chatsGateway.handleEmitDeleteFromChat(chat?.data?.data || []);
         }
