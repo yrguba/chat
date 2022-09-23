@@ -564,6 +564,7 @@ export class ChatsService {
     }
 
     async createMessage(chat_id: number, user_id: number, data:any): Promise<any> {
+        console.log(data);
         data.initiator_id = Number(user_id);
         const message = await this.messageRepository.save(data);
 
