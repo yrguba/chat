@@ -594,11 +594,14 @@ export class ChatsService {
             delete initiator['fb_tokens'];
             delete initiator['message'];
 
+            console.log(chat.users);
+
             chat.users.forEach(user_id => {
                 if (user_id !== initiator.id) {
                     this.getUser(user_id).then(user => {
                         if (user && user?.fb_tokens) {
                             this.getContact(user).then(contact => {
+                                console.log(user);
                                 user?.fb_tokens.map(token => {
                                     admin.messaging().sendToDevice(token, {
                                         "notification": {
