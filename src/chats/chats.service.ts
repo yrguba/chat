@@ -264,6 +264,7 @@ export class ChatsService {
     }
 
     async updateChatName(user_id: number, chat_id: number, name: string) {
+        let message = [];
         const chat = await this.chatsRepository.createQueryBuilder('chat')
             .where('chat.id = :id', { id: chat_id })
             .getOne();
@@ -271,6 +272,8 @@ export class ChatsService {
         await this.createMessage(chat_id, user_id, {
             "text": "Имя чата обновлено",
             "message_type": "system"
+        }).then(data => {
+            message = data;
         });
         await this.chatsRepository.save(updatedChat);
 
@@ -278,17 +281,21 @@ export class ChatsService {
             status: 200,
             data: {
                 data: updatedChat,
+                message: message
             }
         }
     }
 
     async updateChatAvatar(user_id: number, chat_id: number, avatar: string) {
+        let message = [];
         const chat = await this.chatsRepository.createQueryBuilder('chat')
             .where('chat.id = :id', { id: chat_id })
             .getOne();
         await this.createMessage(chat_id, user_id, {
             "text": "У чата поменялся аватар",
             "message_type": "system"
+        }).then(data => {
+            message = data;
         });
         const updatedChat = {...chat, avatar: avatar, updated_at: new Date()}
         await this.chatsRepository.save(updatedChat);
@@ -297,6 +304,7 @@ export class ChatsService {
             status: 200,
             data: {
                 data: updatedChat,
+                message: message
             }
         }
     }

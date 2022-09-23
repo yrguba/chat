@@ -98,6 +98,12 @@ export class ChatsController {
         const jwt = req.headers.authorization.replace('Bearer ', '');
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
         const chat = await this.chatsService.updateChatName(json.id, param.chat_id, body.name);
+        if (chat.status === 200) {
+            this.chatsGateway.handleEmit({
+                chat_id: param.chat_id,
+                ...chat.data.message
+            });
+        }
         res.status(chat.status).json(chat.data);
     }
 
@@ -108,6 +114,12 @@ export class ChatsController {
         const jwt = req.headers.authorization.replace('Bearer ', '');
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
         const chat = await this.chatsService.updateChatAvatar(json.id, param.chat_id, body.avatar);
+        if (chat.status === 200) {
+            this.chatsGateway.handleEmit({
+                chat_id: param.chat_id,
+                ...chat.data.message
+            });
+        }
         res.status(chat.status).json(chat.data);
     }
 
