@@ -90,6 +90,7 @@ export class ChatsService {
             }
 
             if (chat?.users) {
+                chat = await this.chatsRepository.save(data);
                 const users = await this.userRepository.createQueryBuilder('users')
                     .where("users.id IN (:...usersArray)", { usersArray: chat.users })
                     .getMany();
@@ -119,6 +120,30 @@ export class ChatsService {
                         data: {
                             ...chat,
                             chatUsers: []
+                        }
+                    }
+                }
+            }
+        } else {
+            if (data.users) {
+                const users = await this.userRepository.createQueryBuilder('users')
+                    .where("users.id IN (:...usersArray)", { usersArray: data.users })
+                    .getMany();
+
+                users.forEach(user => {
+                    delete user['code'];
+                    delete user['player_id'];
+                    delete user['socket_id'];
+                    delete user['refresh_token'];
+                    delete user['fb_tokens'];
+                });
+
+                return {
+                    status: 201,
+                    data: {
+                        data: {
+                            ...chat,
+                            chatUsers: users
                         }
                     }
                 }
@@ -576,7 +601,7 @@ export class ChatsService {
                                 user?.fb_tokens.map(token => {
                                     admin.messaging().sendToDevice(token, {
                                         "notification": {
-                                            "title": initiator.name,
+                                            "title": message.message_type === "system" ? chat.name : initiator.name,
                                             "body": this.getMessageContent(message),
                                             "priority": "max"
                                         },
