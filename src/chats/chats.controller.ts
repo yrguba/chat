@@ -170,7 +170,7 @@ export class ChatsController {
         const jwt = req.headers.authorization.replace('Bearer ', '');
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
         const message = await this.chatsService.createMessage(param.chat_id, Number(json.id), body);
-
+        console.log(message);
         if (message?.status === 201) {
             this.chatsGateway.handleEmit({
                 chat_id: param.chat_id,
