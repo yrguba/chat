@@ -524,10 +524,12 @@ export class ChatsService {
             for (const user of users) {
                 const invitedUser = await this.getUser(user);
                 if (invitedUser && initiator) {
-                    message = await this.createMessage(chat_id, user_id, {
+                    await this.createMessage(chat_id, user_id, {
                         "text": `${this.getUserName(initiator)} удалил из чата ${this.getUserName(invitedUser)}`,
                         "message_type": "system"
-                    });
+                    }).then(data => {
+                        console.log(data);
+                    })
                 }
             }
 
