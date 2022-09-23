@@ -496,14 +496,12 @@ export class ChatsService {
             await this.chatsRepository.save(updatedChat);
 
             for (const user of users) {
-                if (!currentChatUsers.includes(user)) {
-                    const invitedUser = await this.getUser(user);
-                    if (invitedUser && initiator) {
-                        await this.createMessage(chat_id, user_id, {
-                            "text": `${this.getUserName(initiator)} удалил из чата ${this.getUserName(invitedUser)}`,
-                            "message_type": "system"
-                        });
-                    }
+                const invitedUser = await this.getUser(user);
+                if (invitedUser && initiator) {
+                    await this.createMessage(chat_id, user_id, {
+                        "text": `${this.getUserName(initiator)} удалил из чата ${this.getUserName(invitedUser)}`,
+                        "message_type": "system"
+                    });
                 }
             }
 
@@ -579,7 +577,7 @@ export class ChatsService {
                                     admin.messaging().sendToDevice(token, {
                                         "notification": {
                                             "title": initiator.name,
-                                            "body": message.text,
+                                            "body": this.getMessageContent(message),
                                             "priority": "max"
                                         },
                                         "data": {
