@@ -59,9 +59,9 @@ export class ChatsService {
             .getOne();
     }
 
-    async getContact(user) {
+    async getContact(initiator, user) {
         return await this.contactsRepository.createQueryBuilder('contact')
-            .where('contact.owner = :id', { id: user.id })
+            .where('contact.owner = :id', { id: initiator.id })
             .andWhere('contact.phone = :phone', { phone: user.phone })
             .getOne();
     }
@@ -339,6 +339,11 @@ export class ChatsService {
             .where('chat.id = :id', { id: chat_id })
             .getOne();
 
+        const initiator = await this.userRepository.findOne({
+            where: { id: user_id },
+            relations: ['message'],
+        });
+
         if (chat?.users.includes(user_id)) {
             const count = await this.messageRepository.createQueryBuilder('messages')
                 .where('messages.chat.id = :id', { id: chat_id })
@@ -356,7 +361,7 @@ export class ChatsService {
 
             for (const message of splicedMessages) {
                 if (message.user) {
-                    const contact = await this.getContact(message.user);
+                    const contact = await this.getContact(initiator, message.user);
                     delete message.user['code'];
                     delete message.user['player_id'];
                     delete message.user['socket_id'];
@@ -633,7 +638,7 @@ export class ChatsService {
                 if (user_id !== initiator.id) {
                     this.getUser(user_id).then(user => {
                         if (user && user?.fb_tokens) {
-                            this.getContact(user).then(contact => {
+                            this.getContact(initiator, user).then(contact => {
                                 user?.fb_tokens.map(token => {
                                     admin.messaging().sendToDevice(token, {
                                         "notification": {
