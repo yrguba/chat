@@ -167,7 +167,9 @@ export class ChatsController {
                     ...chat.data.data.message
                 });
             }
-            this.chatsGateway.handleEmitNewChat(chat?.data?.data || []);
+            if (chat?.data?.data) {
+                this.chatsGateway.handleEmitNewChat(chat?.data?.data || []);
+            }
         }
         res.status(chat.status).json(chat.data);
     }
