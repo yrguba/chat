@@ -547,8 +547,7 @@ export class ChatsService {
             return {
                 status: 200,
                 data: {
-                    data: {...chat, chatUsers: chatUsers, users: updatedUsers},
-                    removeMessage: message,
+                    data: {...chat, chatUsers: chatUsers, users: updatedUsers, ...message},
                 }
             };
         }
