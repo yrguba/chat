@@ -87,8 +87,12 @@ export class ChatsService {
                     chat = await this.chatsRepository.save(data);
                 } else {
                     if (Array.isArray(targetChat)) {
-                        targetChat = targetChat.filter(chat => !chat.is_group);
-                        chat = targetChat[0];
+                        if (targetChat.length === 1 && targetChat[0].is_group) {
+                            chat = await this.chatsRepository.save(data);
+                        } else {
+                            targetChat = targetChat.filter(chat => !chat.is_group);
+                            chat = targetChat[0];
+                        }
                     } else {
                         chat = targetChat;
                     }
