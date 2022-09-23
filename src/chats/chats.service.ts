@@ -401,10 +401,20 @@ export class ChatsService {
         }
     }
 
+    getUserName(user) {
+        if (user.contactName) {
+            return user.contactName
+        } else {
+            return user.name || user.nickname || user.phone;
+        }
+    }
+
     async addUserToChat(user_id: number, users: number[], chat_id: number) {
         const chat = await this.chatsRepository.createQueryBuilder('chat')
             .where('chat.id = :id', { id: chat_id })
             .getOne();
+
+        const initiator = await this.getUser(user_id);
 
         let currentChatUsers = Array.from(chat.users);
 
@@ -421,11 +431,18 @@ export class ChatsService {
         }
 
         if (currentChatUsers) {
-            users.forEach(user => {
+            for (const user of users) {
                 if (!currentChatUsers.includes(user)) {
+                    const invitedUser = await this.getUser(user);
+                    if (invitedUser && initiator) {
+                        await this.createMessage(chat_id, user_id, {
+                            "text": `${this.getUserName(initiator)} пригласил ${this.getUserName(invitedUser)}`,
+                            "message_type": "system"
+                        });
+                    }
                     currentChatUsers.push(user);
                 }
-            });
+            }
 
             const updatedChat = {...chat, users: currentChatUsers, updated_at: new Date()}
             await this.chatsRepository.save(updatedChat);
@@ -457,6 +474,8 @@ export class ChatsService {
             .where('chat.id = :id', { id: chat_id })
             .getOne();
 
+        const initiator = await this.getUser(user_id);
+
         let currentChatUsers = Array.from(chat.users);
 
         if (!currentChatUsers.includes(user_id)) {
@@ -475,6 +494,18 @@ export class ChatsService {
             const updatedUsers = currentChatUsers.filter(user => !users.includes(user));
             const updatedChat = {...chat, users: updatedUsers, updated_at: new Date()}
             await this.chatsRepository.save(updatedChat);
+
+            for (const user of users) {
+                if (!currentChatUsers.includes(user)) {
+                    const invitedUser = await this.getUser(user);
+                    if (invitedUser && initiator) {
+                        await this.createMessage(chat_id, user_id, {
+                            "text": `${this.getUserName(initiator)} удалил из чата ${this.getUserName(invitedUser)}`,
+                            "message_type": "system"
+                        });
+                    }
+                }
+            }
 
             const chatUsers = await this.userRepository.createQueryBuilder('users')
                 .where("users.id IN (:...usersArray)", { usersArray: updatedChat.users })
