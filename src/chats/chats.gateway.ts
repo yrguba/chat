@@ -47,8 +47,6 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     };
 
     handleEmitNewChat (chat) {
-        console.log('NEW CHAT!!!!!!!!!!!!')
-        console.log(chat);
         chat?.users.map((userId) => {
             this.usersService.getUser(userId).then((user) => {
                 if (user && user.socket_id) {

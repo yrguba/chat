@@ -82,7 +82,7 @@ export class ChatsService {
             } else {
                 // Иначе
                 const targetChat = currentChats.filter(chat => chat.users.sort().toString() === data.users.sort().toString());
-
+                console.log(targetChat);
                 if (targetChat && targetChat.length === 0) {
                     chat = await this.chatsRepository.save(data);
                 } else {
