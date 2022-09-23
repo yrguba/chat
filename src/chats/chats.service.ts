@@ -638,7 +638,7 @@ export class ChatsService {
                 if (user_id !== initiator.id) {
                     this.getUser(user_id).then(user => {
                         if (user && user?.fb_tokens) {
-                            this.getContact(initiator, user).then(contact => {
+                            this.getContact(user, initiator).then(contact => {
                                 user?.fb_tokens.map(token => {
                                     admin.messaging().sendToDevice(token, {
                                         "notification": {
