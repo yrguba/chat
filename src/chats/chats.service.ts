@@ -243,6 +243,10 @@ export class ChatsService {
             .where('chat.id = :id', { id: chat_id })
             .getOne();
         const updatedChat = {...chat, name: name, updated_at: new Date()}
+        await this.createMessage(chat_id, user_id, {
+            "text": "Имя чата обновлено",
+            "message_type": "system"
+        });
         await this.chatsRepository.save(updatedChat);
 
         return {
@@ -257,6 +261,10 @@ export class ChatsService {
         const chat = await this.chatsRepository.createQueryBuilder('chat')
             .where('chat.id = :id', { id: chat_id })
             .getOne();
+        await this.createMessage(chat_id, user_id, {
+            "text": "У чата поменялся аватар",
+            "message_type": "system"
+        });
         const updatedChat = {...chat, avatar: avatar, updated_at: new Date()}
         await this.chatsRepository.save(updatedChat);
 
@@ -491,6 +499,7 @@ export class ChatsService {
     }
 
     getMessageContent(message) {
+        console.log(message.message_type);
         if (message.message_type === "image") {
             return "Изображение";
         } else if (message.message_type === "file") {
