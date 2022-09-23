@@ -82,11 +82,16 @@ export class ChatsService {
                 chat = await this.chatsRepository.save(data);
             } else {
                 // Иначе
-                const targetChat = currentChats.filter(chat => chat.users.sort().toString() === data.users.sort().toString());
+                let targetChat = currentChats.filter(chat => chat.users.sort().toString() === data.users.sort().toString());
                 if (targetChat && targetChat.length === 0) {
                     chat = await this.chatsRepository.save(data);
                 } else {
-                    chat = Array.isArray(targetChat) ? targetChat[0] : targetChat;
+                    if (Array.isArray(targetChat)) {
+                        targetChat = targetChat.filter(chat => !chat.is_group);
+                        chat = targetChat[0];
+                    } else {
+                        chat = targetChat;
+                    }
                     isNewChat = false;
                 }
             }
