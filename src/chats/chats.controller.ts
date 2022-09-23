@@ -210,9 +210,10 @@ export class ChatsController {
 
         const chat = await this.chatsService.removeUserFromChat(json.id, users, params.chat_id);
         if (chat?.status === 200) {
-            // this.chatsGateway.handleEmit({
-            //     chat_id: params.chat_id,
-            // });
+            this.chatsGateway.handleEmit({
+                chat_id: params.chat_id,
+                ...chat
+            });
             this.chatsGateway.handleEmitDeleteFromChat(chat?.data?.data || []);
         }
         res.status(chat.status).json(chat.data);

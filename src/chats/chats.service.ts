@@ -528,7 +528,7 @@ export class ChatsService {
                         "text": `${this.getUserName(initiator)} удалил из чата ${this.getUserName(invitedUser)}`,
                         "message_type": "system"
                     }).then(data => {
-                        console.log(data);
+                        message = data;
                     })
                 }
             }
@@ -549,7 +549,7 @@ export class ChatsService {
             return {
                 status: 200,
                 data: {
-                    data: {...chat, chatUsers: chatUsers, users: updatedUsers, ...message},
+                    data: message,
                 }
             };
         }
