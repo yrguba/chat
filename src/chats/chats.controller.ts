@@ -22,6 +22,7 @@ import { ChatAvatarDTO } from "./dto/chatAvatar.dto";
 import { MessageDTO } from "./dto/message.dto";
 import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { JwtService } from '@nestjs/jwt';
+import {log} from "util";
 
 @ApiTags('chats')
 @Controller('chats')
@@ -160,6 +161,7 @@ export class ChatsController {
         if (!body.users.includes(json.id)) chatUsers.push(json.id);
         const chat = await this.chatsService.createChat(json.id, body);
         if (chat?.status === 201) {
+            console.log(chat);
             this.chatsGateway.handleEmit({
                 chat_id: chat?.data?.data.chat_id,
                 ...chat.data.data.message
