@@ -435,6 +435,7 @@ export class ChatsService {
     }
 
     async addUserToChat(user_id: number, users: number[], chat_id: number) {
+        let message = [];
         const chat = await this.chatsRepository.createQueryBuilder('chat')
             .where('chat.id = :id', { id: chat_id })
             .getOne();
@@ -463,7 +464,9 @@ export class ChatsService {
                         await this.createMessage(chat_id, user_id, {
                             "text": `${this.getUserName(initiator)} пригласил ${this.getUserName(invitedUser)}`,
                             "message_type": "system"
-                        });
+                        }).then(data => {
+                            message = data;
+                        })
                     }
                     currentChatUsers.push(user);
                 }
@@ -488,7 +491,8 @@ export class ChatsService {
             return {
                 status: 200,
                 data: {
-                    data: {...chat, chatUsers: chatUsers, users: currentChatUsers},
+                    data: {...chat, chatUsers: chatUsers, users: currentChatUsers, ...message},
+                    message: message,
                 }
             };
         }
