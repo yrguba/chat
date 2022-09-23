@@ -91,7 +91,7 @@ export class ChatsService {
             }
 
             if (chat?.users) {
-                chat = await this.chatsRepository.save(data);
+                //chat = await this.chatsRepository.save(data);
                 const users = await this.userRepository.createQueryBuilder('users')
                     .where("users.id IN (:...usersArray)", { usersArray: chat.users })
                     .getMany();
