@@ -80,10 +80,12 @@ export class ChatsService {
             if (data.is_group) {
                 chat = await this.chatsRepository.save(data).then((data) => {
                     if (data?.id) {
+                        console.log(data);
                         this.createMessage(data.id, user_id, {
                             "text": "Создан новый чат",
                             "message_type": "system"
                         }).then(data => {
+                            console.log(data);
                             message = data;
                         });
                     }
