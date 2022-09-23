@@ -340,8 +340,6 @@ export class AuthService {
         .where('users.id = :id', { id: userId })
         .getOne();
 
-    console.log(profile.fb_tokens);
-
     if (!Array.isArray(profile.fb_tokens)) {
       tokens.push(token);
     } else if (!profile?.fb_tokens?.includes(token)) {
