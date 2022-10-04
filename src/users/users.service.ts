@@ -3,6 +3,7 @@ import {InjectRepository} from '@nestjs/typeorm';
 import {DeleteResult, Repository} from 'typeorm';
 import {UserEntity} from '../database/entities/user.entity';
 import {ContactEntity} from "../database/entities/contact.entity";
+import {getUserSchema} from "../utils/schema";
 
 @Injectable()
 export class UsersService {
@@ -35,18 +36,17 @@ export class UsersService {
       .where('users.id != :id', { id: Number(id) })
       .getMany();
 
-    for (const user of users) {
-      delete user.code;
-      delete user.refresh_token;
-      delete user.socket_id;
+    let usersData = [];
 
+    for (let user of users) {
       user.contactName = await this.getContactName(user.id);
+      usersData.push(getUserSchema(user));
     }
 
     return {
       status: 200,
       data: {
-        data: users
+        data: usersData
       }
     }
   }

@@ -8,6 +8,7 @@ import { UserEntity } from "../database/entities/user.entity";
 import { ContactEntity } from "../database/entities/contact.entity";
 import { ChatDTO } from "./dto/chat.dto";
 import * as admin from "firebase-admin";
+import {getUserSchema} from "../utils/schema";
 
 @Injectable()
 export class ChatsService {
@@ -101,17 +102,14 @@ export class ChatsService {
             }
 
             if (chat?.users) {
-                //chat = await this.chatsRepository.save(data);
                 const users = await this.userRepository.createQueryBuilder('users')
                     .where("users.id IN (:...usersArray)", { usersArray: chat.users })
                     .getMany();
 
+                let usersData = [];
+
                 users.forEach(user => {
-                    delete user['code'];
-                    delete user['player_id'];
-                    delete user['socket_id'];
-                    delete user['refresh_token'];
-                    delete user['fb_tokens'];
+                    usersData.push(getUserSchema(user));
                 });
 
                 if (isNewChat) {
@@ -128,7 +126,7 @@ export class ChatsService {
                     data: {
                         data: {
                             ...chat,
-                            chatUsers: users,
+                            chatUsers: usersData,
                             message: message
                         }
                     }
@@ -146,29 +144,6 @@ export class ChatsService {
                 }
             }
         } else {
-            // if (data.users) {
-            //     const users = await this.userRepository.createQueryBuilder('users')
-            //         .where("users.id IN (:...usersArray)", { usersArray: data.users })
-            //         .getMany();
-            //
-            //     users.forEach(user => {
-            //         delete user['code'];
-            //         delete user['player_id'];
-            //         delete user['socket_id'];
-            //         delete user['refresh_token'];
-            //         delete user['fb_tokens'];
-            //     });
-            //
-            //     return {
-            //         status: 201,
-            //         data: {
-            //             data: {
-            //                 ...chat,
-            //                 chatUsers: users
-            //             }
-            //         }
-            //     }
-            // }
         }
     }
 
@@ -182,19 +157,16 @@ export class ChatsService {
                 .where("users.id IN (:...usersArray)", { usersArray: chat.users })
                 .getMany();
 
+            let usersData = [];
+
             for (const user of users) {
                 const contact = await this.contactsRepository.createQueryBuilder('contact')
                     .where('contact.owner = :id', { id: user_id })
                     .andWhere('contact.phone = :phone', { phone: user.phone })
                     .getOne();
 
-                delete user['code'];
-                delete user['player_id'];
-                delete user['socket_id'];
-                delete user['refresh_token'];
-                delete user['fb_tokens'];
-
                 user.contactName = contact?.name || '';
+                usersData.push(getUserSchema(user));
             }
 
             if (chat && !chat?.is_group) {
@@ -202,7 +174,7 @@ export class ChatsService {
                 chat.name = chatData?.name ? chatData?.name : chat.name;
                 chat.avatar = chatData?.avatar ? chatData?.avatar : chat.name;
 
-                if (users) chat.chatUsers = users;
+                if (users) chat.chatUsers = usersData;
 
                 return {
                     status: 200,
@@ -211,7 +183,7 @@ export class ChatsService {
                     }
                 };
             } else if (chat) {
-                if (users) chat.chatUsers = users;
+                if (users) chat.chatUsers = usersData;
                 return {
                     status: 200,
                     data: {
@@ -254,12 +226,10 @@ export class ChatsService {
                 .where("users.id IN (:...usersArray)", { usersArray: chat.users })
                 .getMany();
 
+            let usersData = [];
+
             users.forEach(user => {
-                delete user['code'];
-                delete user['player_id'];
-                delete user['socket_id'];
-                delete user['refresh_token'];
-                delete user['fb_tokens'];
+                usersData.push(getUserSchema(user));
             });
 
             return {
@@ -267,7 +237,7 @@ export class ChatsService {
                 data: {
                     data: {
                         ...chat || null,
-                        chatUsers: users
+                        chatUsers: usersData
                     }
                 }
             }
@@ -357,17 +327,13 @@ export class ChatsService {
                     .getMany();
             }
 
-            const splicedMessages = messages.splice(offset, options.limit);
+            let splicedMessages = messages.splice(offset, options.limit);
 
             for (const message of splicedMessages) {
                 if (message.user) {
                     const contact = await this.getContact(initiator, message.user);
-                    delete message.user['code'];
-                    delete message.user['player_id'];
-                    delete message.user['socket_id'];
-                    delete message.user['refresh_token'];
-                    delete message.user['fb_tokens'];
                     message.user.contactName =  contact?.name || "";
+                    message.user = getUserSchema(message.user)
                 }
             }
 
@@ -513,19 +479,16 @@ export class ChatsService {
                 .where("users.id IN (:...usersArray)", { usersArray: currentChatUsers })
                 .getMany();
 
+            let usersData = [];
+
             chatUsers.map(user => {
-                delete user['code'];
-                delete user['player_id'];
-                delete user['socket_id'];
-                delete user['refresh_token'];
-                delete user['fb_tokens'];
-                delete user['message'];
+                usersData.push(getUserSchema(user));
             });
 
             return {
                 status: 200,
                 data: {
-                    data: {...chat, chatUsers: chatUsers, users: currentChatUsers, ...message},
+                    data: {...chat, chatUsers: usersData, users: currentChatUsers, ...message},
                     message: message,
                 }
             };
@@ -575,19 +538,16 @@ export class ChatsService {
                 .where("users.id IN (:...usersArray)", { usersArray: updatedChat.users })
                 .getMany();
 
+            let usersData = [];
+
             chatUsers.map(user => {
-                delete user['code'];
-                delete user['player_id'];
-                delete user['socket_id'];
-                delete user['refresh_token'];
-                delete user['fb_tokens'];
-                delete user['message'];
+                usersData.push(getUserSchema(user));
             });
 
             return {
                 status: 200,
                 data: {
-                    data: {...chat, chatUsers: chatUsers, users: updatedUsers, ...message},
+                    data: {...chat, chatUsers: usersData, users: updatedUsers, ...message},
                     message: message,
                 }
             };
@@ -623,16 +583,13 @@ export class ChatsService {
             await this.userRepository.save(initiator);
         }
 
+        let userData;
+
         if (chat) {
             chat.message.push(message);
             chat.updated_at = new Date();
             await this.chatsRepository.save(chat);
-            delete initiator['code'];
-            delete initiator['player_id'];
-            delete initiator['socket_id'];
-            delete initiator['refresh_token'];
-            delete initiator['fb_tokens'];
-            delete initiator['message'];
+            userData = getUserSchema(initiator);
 
             chat.users.forEach(user_id => {
                 if (user_id !== initiator.id) {
@@ -670,9 +627,9 @@ export class ChatsService {
             return {
                 status: 201,
                 data: {
-                    message: {...message, user: initiator}
+                    message: {...message, user: userData}
                 },
-                message: {...message, user: initiator},
+                message: {...message, user: userData},
                 users: chat.users,
             }
         } else {

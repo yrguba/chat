@@ -11,8 +11,6 @@ import { Socket, Server } from 'socket.io';
 import { ChatsService } from "./chats.service";
 import { UsersService } from "../users/users.service";
 
-import * as admin from 'firebase-admin';
-
 
 @WebSocketGateway({
     cors: {
