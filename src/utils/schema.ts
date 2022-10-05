@@ -8,6 +8,7 @@ export const getUserSchema = (userData) => {
         birth: userData.birth || "",
         avatar: userData.avatar || "",
         contactName: userData.contactName || "",
-        last_active: userData.last_active || ""
+        last_active: userData.last_active || "",
+        is_online: userData.is_online || false;
     }
 };
