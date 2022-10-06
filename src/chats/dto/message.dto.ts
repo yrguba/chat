@@ -8,4 +8,10 @@ export class MessageDTO {
     @ApiProperty()
     @IsString()
     message_type: string;
+    @ApiProperty()
+    @IsNumber()
+    author_id: number;
+    @ApiProperty()
+    @IsNumber()
+    reply_message_id: number;
 }
