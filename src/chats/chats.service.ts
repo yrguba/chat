@@ -145,15 +145,19 @@ export class ChatsService {
     if (currentChats) {
       // Если чат групповой то создаем создаем новый
       if (data.is_group) {
+        console.log('Create Group Chat')
         chat = await this.chatsRepository.save(data);
       } else {
         // Иначе
         let targetChat = currentChats.filter(chat => chat.users.sort().toString() === data.users.sort().toString());
+        console.log('Check private chats')
         if (targetChat && targetChat.length === 0) {
+          console.log('Private chats not found')
           chat = await this.chatsRepository.save(data);
         } else {
           if (Array.isArray(targetChat)) {
             if (targetChat.length === 1 && targetChat[0].is_group) {
+              console.log('Create new private chat')
               chat = await this.chatsRepository.save(data);
             } else {
               targetChat = targetChat.filter(chat => !chat.is_group);
