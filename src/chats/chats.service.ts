@@ -477,6 +477,7 @@ export class ChatsService {
       let splicedChats = filteredChats.splice(offset, options.limit);
 
       for (const chat of splicedChats) {
+        console.log(chat.name);
         if (user_id && !chat.is_group) {
           const chatData = await this.getChatName(user_id, chat);
           chat.name = chatData?.name ? chatData?.name : chat.name;
@@ -866,8 +867,6 @@ export class ChatsService {
       const message = await this.messageRepository.findOne({
         where: {id: message_id}
       });
-
-      console.log(chat);
 
       const chatUsers = chat.users;
       const updatedAccessUsers = chatUsers.filter(user => user !== id);
