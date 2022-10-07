@@ -94,7 +94,9 @@ export class ChatsService {
       message.author = getUserSchema(author)
     }
 
-    return getMessageSchema(message);
+    if (message) {
+      return getMessageSchema(message)
+    } else return null;
   }
 
   async sendPushToChat(chat, initiator, message) {
