@@ -92,26 +92,23 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     @SubscribeMessage('typingMessage')
     handleTypingMessage(client: any, payload: any) {
-        console.log(payload);
         const jwt = client.handshake?.headers?.authorization?.replace('Bearer ', '');
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
-        console.log(json);
         if (json?.id) {
             const {
                 chat_id,
             } = payload;
-            console.log(json.id, chat_id);
-            this.chatsService.getChat(json.id, chat_id).then((data: any) => {
-                data?.data?.data?.users.map((userId) => {
-                    if (userId !== json.id) {
-                        this.usersService.getUser(userId).then((user) => {
+            this.usersService.getUser(json?.id).then((user) => {
+                this.chatsService.getChat(json.id, chat_id).then((data: any) => {
+                    data?.data?.data?.users.map((userId) => {
+                        if (userId !== json.id) {
                             if (user && user.socket_id) {
                                 this.server?.sockets?.to(user.socket_id)?.emit('receiveTypingMessage', {
                                     message: `${user.name || user.nickname  || user.phone} печатает`,
                                 });
                             }
-                        });
-                    }
+                        }
+                    });
                 });
             });
         }
