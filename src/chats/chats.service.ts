@@ -677,7 +677,7 @@ export class ChatsService {
     if (chat) {
       chat.message.push(message);
       chat.updated_at = new Date();
-      await this.chatsRepository.update(chat_id, chat);
+      await this.chatsRepository.save(chat);
       userData = getUserSchema(initiator);
 
       chat.users.forEach(user_id => {
