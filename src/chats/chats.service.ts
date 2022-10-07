@@ -335,7 +335,7 @@ export class ChatsService {
     }).then(data => {
       message = data;
     });
-    await this.chatsRepository.save(updatedChat);
+    await this.chatsRepository.update(chat_id, updatedChat)
 
     return {
       status: 200,
@@ -358,7 +358,7 @@ export class ChatsService {
       message = data;
     });
     const updatedChat = {...chat, avatar: avatar, updated_at: new Date()}
-    await this.chatsRepository.save(updatedChat);
+    await this.chatsRepository.update(chat_id, updatedChat);
 
     return {
       status: 200,
@@ -559,7 +559,7 @@ export class ChatsService {
       }
 
       const updatedChat = {...chat, users: currentChatUsers, updated_at: new Date()}
-      await this.chatsRepository.save(updatedChat);
+      await this.chatsRepository.update(chat_id, updatedChat);
 
       const chatUsers = await this.userRepository.createQueryBuilder('users')
         .where("users.id IN (:...usersArray)", { usersArray: currentChatUsers })
@@ -606,7 +606,7 @@ export class ChatsService {
     if (currentChatUsers) {
       const updatedUsers = currentChatUsers.filter(user => !users.includes(user));
       const updatedChat = {...chat, users: updatedUsers, updated_at: new Date()}
-      await this.chatsRepository.save(updatedChat);
+      await this.chatsRepository.update(chat_id, updatedChat);
 
       for (const user of users) {
         const invitedUser = await this.getUser(user);
@@ -675,7 +675,7 @@ export class ChatsService {
     if (chat) {
       chat.message.push(message);
       chat.updated_at = new Date();
-      await this.chatsRepository.save(chat);
+      await this.chatsRepository.update(chat_id, chat);
       userData = getUserSchema(initiator);
 
       chat.users.forEach(user_id => {
