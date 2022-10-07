@@ -79,14 +79,14 @@ export class ChatsService {
       relations: ['message'],
     });
 
-    if (message.user) {
+    if (message && message.user) {
       const contact = await this.getContact(initiator, message.user);
       message.user.contactName =  contact?.name || "";
       // @ts-ignore
       message.user = getUserSchema(message.user)
     }
 
-    if (message.author_id) {
+    if (message && message.author_id) {
       const author = await this.userRepository.findOne({
         where: { id: message.author_id },
       });
