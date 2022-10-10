@@ -9,6 +9,7 @@ import { ContactEntity } from "../database/entities/contact.entity";
 import { ChatDTO } from "./dto/chat.dto";
 import * as admin from "firebase-admin";
 import {getMessageSchema, getUserSchema} from "../utils/schema";
+import {DeleteMessageDto} from "./dto/deleteMessage.dto";
 
 @Injectable()
 export class ChatsService {
@@ -737,11 +738,11 @@ export class ChatsService {
       return {
         status: 201,
         data: {
-          message: {
-            ...getMessageSchema(message),
-            user: userData,
-            //access: chat.users,
-            //accessChats: [chat_id]
+          data: {
+            message: {
+              ...getMessageSchema(message),
+              user: userData,
+            }
           }
         },
         message: {...message, user: userData},
@@ -812,7 +813,9 @@ export class ChatsService {
         return {
           status: 200,
           data: {
-            message: {messages: messages, user: userData}
+            data: {
+              message: {messages: messages, user: userData}
+            }
           },
           message: {...forwardMessage, user: userData},
           users: targetChat.users,
@@ -884,7 +887,9 @@ export class ChatsService {
       return {
         status: 200,
         data: {
-          message: {...updatedMessage, user: userData}
+          data: {
+            message: {...getMessageSchema(updatedMessage), user: userData}
+          }
         },
         message: {...updatedMessage, user: userData},
         users: chat.users,
@@ -899,14 +904,23 @@ export class ChatsService {
     }
   }
 
-  async deleteMessage(id: number, chat_id: number, message_id: number, fromAll) {
-    if (fromAll) {
-      const deletedMessage = await this.messageRepository.delete(message_id);
-      return {
-        status: 200,
-        data: {
-          message: deletedMessage
-        },
+  async deleteMessage(id: number, chat_id: number, message_id: number, data: DeleteMessageDto) {
+    if (data.fromAll) {
+      const deletedMessages = [];
+      if (Array.isArray(data.messages)) {
+        for (const message of data.messages) {
+          const deletedMessage = await this.messageRepository.delete(message_id);
+          deletedMessages.push(getMessageSchema(deletedMessage));
+        }
+
+        return {
+          status: 200,
+          data: {
+            data: {
+              messages: deletedMessages
+            }
+          },
+        }
       }
     } else {
       const chat = await this.chatsRepository.findOne({
@@ -914,23 +928,32 @@ export class ChatsService {
         relations: ['message'],
       });
 
-      const message = await this.messageRepository.findOne({
-        where: {id: message_id}
-      });
+      if (Array.isArray(data.messages)) {
+        const updatedMessages = [];
+        for (const message of data.messages) {
+          const message = await this.messageRepository.findOne({
+            where: {id: message_id}
+          });
 
-      const chatUsers = chat.users;
-      const updatedAccessUsers = chatUsers.filter(user => user !== id);
+          const chatUsers = chat.users;
+          const updatedAccessUsers = chatUsers.filter(user => user !== id);
 
-      const updatedMessage = await this.messageRepository.save({
-        ...message,
-        access: updatedAccessUsers
-      });
+          const updatedMessage = await this.messageRepository.save({
+            ...message,
+            access: updatedAccessUsers
+          });
 
-      return {
-        status: 200,
-        data: {
-          message: updatedMessage
-        },
+          updatedMessages.push(getMessageSchema(updatedMessage));
+        }
+
+        return {
+          status: 200,
+          data: {
+            data: {
+              messages: updatedMessages
+            }
+          },
+        }
       }
     }
   }

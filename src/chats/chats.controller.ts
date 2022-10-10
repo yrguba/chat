@@ -263,7 +263,7 @@ export class ChatsController {
     async deleteMessage(@Res() res, @Req() req, @Param() params, @Body() body: DeleteMessageDto) {
         const jwt = req.headers.authorization.replace('Bearer ', '');
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
-        const result =  await this.chatsService.deleteMessage(json.id, params.chat_id, params.message_id, body.fromAll);
+        const result =  await this.chatsService.deleteMessage(json.id, params.chat_id, params.message_id, body);
         res.status(200).json({data: result});
     }
 
