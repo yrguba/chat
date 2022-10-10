@@ -258,12 +258,11 @@ export class ChatsController {
 
     @UseGuards(JwtAuthGuard)
     @ApiParam({ name: 'chat_id', required: true })
-    @ApiParam({ name: 'message_id', required: true })
     @Delete('/message/:chat_id/:message_id')
     async deleteMessage(@Res() res, @Req() req, @Param() params, @Body() body: DeleteMessageDto) {
         const jwt = req.headers.authorization.replace('Bearer ', '');
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
-        const result =  await this.chatsService.deleteMessage(json.id, params.chat_id, params.message_id, body);
+        const result =  await this.chatsService.deleteMessage(json.id, params.chat_id, body);
         res.status(200).json({data: result});
     }
 

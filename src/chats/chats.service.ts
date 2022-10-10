@@ -904,12 +904,12 @@ export class ChatsService {
     }
   }
 
-  async deleteMessage(id: number, chat_id: number, message_id: number, data: DeleteMessageDto) {
+  async deleteMessage(id: number, chat_id: number, data: DeleteMessageDto) {
     if (data.fromAll) {
       const deletedMessages = [];
       if (Array.isArray(data.messages)) {
         for (const message of data.messages) {
-          const deletedMessage = await this.messageRepository.delete(message_id);
+          const deletedMessage = await this.messageRepository.delete(Number(message));
           deletedMessages.push(getMessageSchema(deletedMessage));
         }
 
@@ -931,15 +931,15 @@ export class ChatsService {
       if (Array.isArray(data.messages)) {
         const updatedMessages = [];
         for (const message of data.messages) {
-          const message = await this.messageRepository.findOne({
-            where: {id: message_id}
+          const targetMessage = await this.messageRepository.findOne({
+            where: {id: Number(message)}
           });
 
           const chatUsers = chat.users;
           const updatedAccessUsers = chatUsers.filter(user => user !== id);
 
           const updatedMessage = await this.messageRepository.save({
-            ...message,
+            ...targetMessage,
             access: updatedAccessUsers
           });
 
