@@ -205,12 +205,30 @@ export class ChatsController {
     @UseGuards(JwtAuthGuard)
     @ApiParam({ name: 'chat_id', required: true })
     @ApiParam({ name: 'message_id', required: true })
-    @Post('/forward/message/:chat_id/:message_id')
+    @Post('/forward/message/:chat_id/')
     async forwardMessage(@Res() res, @Req() req, @Body() body: ForwardMessageDTO, @Param() param) {
         const jwt = req.headers.authorization.replace('Bearer ', '');
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
 
-        const message = await this.chatsService.forwardMessage(param.chat_id, param.message_id, Number(json.id), body);
+        const message = await this.chatsService.forwardMessage(param.chat_id, Number(json.id), body);
+        if (message?.status === 200) {
+            this.chatsGateway.handleEmit({
+                chat_id: param.chat_id,
+                ...message
+            });
+        }
+        res.status(message.status).json(message.data);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @ApiParam({ name: 'chat_id', required: true })
+    @ApiParam({ name: 'message_id', required: true })
+    @Post('/reply/message/:chat_id/:message_id')
+    async replyMessage(@Res() res, @Req() req, @Body() body: MessageDTO, @Param() param) {
+        const jwt = req.headers.authorization.replace('Bearer ', '');
+        const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
+
+        const message = await this.chatsService.replyMessage(param.chat_id, param.message_id, Number(json.id), body);
         if (message?.status === 200) {
             this.chatsGateway.handleEmit({
                 chat_id: param.chat_id,

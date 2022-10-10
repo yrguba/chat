@@ -94,6 +94,14 @@ export class ChatsService {
       message.author = getUserSchema(author)
     }
 
+    if (message.reply_message_id) {
+      const replyMessage = await this.messageRepository.findOne({
+        where: { id: message.reply_message_id }
+      });
+      // @ts-ignore
+      message.replyMessage = getMessageSchema(replyMessage);
+    }
+
     if (message) {
       return getMessageSchema(message)
     } else return null;
@@ -419,6 +427,14 @@ export class ChatsService {
 
           message.author = getUserSchema(author)
         }
+
+        if (message.reply_message_id) {
+          const replyMessage = await this.messageRepository.findOne({
+            where: { id: message.reply_message_id }
+          });
+
+          message.replyMessage = getMessageSchema(replyMessage);
+        }
       }
 
       splicedMessages = splicedMessages.map(message => getMessageSchema(message));
@@ -479,11 +495,10 @@ export class ChatsService {
       let splicedChats = filteredChats.splice(offset, options.limit);
 
       for (const chat of splicedChats) {
-        console.log(chat.name);
         if (user_id && !chat.is_group) {
           const chatData = await this.getChatName(user_id, chat);
           chat.name = chatData?.name ? chatData?.name : chat.name;
-          chat.avatar = chatData?.avatar ? chatData?.avatar : chat.name;
+          chat.avatar = chatData?.avatar ? chatData?.avatar : chat.avatar;
         }
         //chat.message = chat.message.splice(0, 1);
         // @ts-ignore
@@ -652,7 +667,7 @@ export class ChatsService {
     }
   }
 
-  async createMessage(chat_id: number, user_id: number, data:any): Promise<any> {
+  async createMessage(chat_id: number, user_id: number, data:any, replyMessageId: any = null): Promise<any> {
     data.initiator_id = Number(user_id);
 
     const chat = await this.chatsRepository.findOne({
@@ -660,7 +675,13 @@ export class ChatsService {
       relations: ['message'],
     });
 
-    const message = await this.messageRepository.save({...data, access: chat.users, accessChats: [chat_id]});
+    const message = await this.messageRepository.save(
+      {
+        ...data,
+        access: chat.users,
+        accessChats: [chat_id],
+        reply_message_id : replyMessageId
+      });
 
     const initiator = await this.userRepository.findOne({
       where: { id: user_id },
@@ -716,7 +737,12 @@ export class ChatsService {
       return {
         status: 201,
         data: {
-          message: {...message, user: userData, access: chat.users, accessChats: [chat_id]}
+          message: {
+            ...getMessageSchema(message),
+            user: userData,
+            //access: chat.users,
+            //accessChats: [chat_id]
+          }
         },
         message: {...message, user: userData},
         users: chat.users,
@@ -731,57 +757,79 @@ export class ChatsService {
     }
   }
 
-  async forwardMessage(chat_id: number, message_id: number, user_id: number, data:any): Promise<any> {
+  async forwardMessage(chat_id: number, user_id: number, data:any): Promise<any> {
     data.initiator_id = Number(user_id);
-    const message = await this.messageRepository.findOne({
-      where: { id: message_id }
-    });
+    let messages = [];
+    let targetChat = null;
 
-    const chat = await this.chatsRepository.findOne({
-      where: { id: chat_id },
-      relations: ['message'],
-    });
-
-    if (chat && message) {
-      const accessChats = message.accessChats;
-      const chatId = Number(chat_id);
-      if (!accessChats.includes(chatId)) {
-        accessChats.push(chatId);
-      }
-
-      const updatedMessage = await this.messageRepository.save(
-        {
-          ...message,
-          accessChats: accessChats,
-          author_id: data.author_id
+    if (data.messages) {
+      for (let messageItem of data.messages) {
+        const message = await this.messageRepository.findOne({
+          where: { id: messageItem.id }
         });
+
+        const chat = await this.chatsRepository.findOne({
+          where: { id: chat_id },
+          relations: ['message'],
+        });
+
+        if (chat && message) {
+          const accessChats = message.accessChats;
+          const chatId = Number(chat_id);
+          if (!accessChats.includes(chatId)) {
+            accessChats.push(chatId);
+          }
+
+          const updatedMessage = await this.messageRepository.save(
+            {
+              ...message,
+              accessChats: accessChats,
+              author_id: data.author_id
+            });
+
+          chat.updated_at = new Date();
+          await this.chatsRepository.save(chat);
+
+          messages.push(updatedMessage);
+          targetChat = chat;
+        }
+      }
 
       const initiator = await this.userRepository.findOne({
         where: { id: user_id },
         relations: ['message'],
       });
 
-      let userData;
-      chat.updated_at = new Date();
-      userData = getUserSchema(initiator);
-      await this.sendPushToChat(chat, initiator, message);
+      if (targetChat) {
+        const forwardMessage = {
+          message_type: "system",
+          message_text: "Пересланное сообщение"
+        };
+        let userData;
+        userData = getUserSchema(initiator);
+        await this.sendPushToChat(targetChat, initiator, forwardMessage);
 
-      return {
-        status: 200,
-        data: {
-          message: {...updatedMessage, user: userData}
-        },
-        message: {...updatedMessage, user: userData},
-        users: chat.users,
+        return {
+          status: 200,
+          data: {
+            message: {messages: messages, user: userData}
+          },
+          message: {...forwardMessage, user: userData},
+          users: targetChat.users,
+        }
+      } else {
+        return { status: 404, data: {
+            error: {
+              code: 404,
+              message: "Chat not found"
+            }
+          }};
       }
-    } else {
-      return { status: 404, data: {
-          error: {
-            code: 404,
-            message: "Chat not found"
-          }
-        }};
     }
+  }
+
+  async replyMessage(chat_id: number, message_id: number, user_id: number, data:any): Promise<any> {
+    return await this.createMessage(chat_id, user_id, data, message_id);
   }
 
   async updateMessage(chat_id: number, message_id: number, user_id: number, data:any): Promise<any> {

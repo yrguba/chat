@@ -23,5 +23,6 @@ export const getMessageSchema = (messageData) => {
         author: messageData.author || {},
         user: messageData.user || {},
         is_edited: messageData.is_edited || false,
+        replyMessage: messageData.replyMessage || null,
     }
 };
