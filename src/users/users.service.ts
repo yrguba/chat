@@ -74,7 +74,9 @@ export class UsersService {
       .createQueryBuilder('users')
       .where('users.id = :id', {id: id})
       .getOne();
-    const updated = Object.assign(user, {socket_id: socket_id, is_online: is_online, last_active: new Date()});
-    return await this.usersRepository.save(updated);
+    if (user) {
+      const updated = Object.assign(user, {socket_id: socket_id, is_online: is_online, last_active: new Date()});
+      return await this.usersRepository.save(updated);
+    }
   }
 }
