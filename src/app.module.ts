@@ -12,6 +12,7 @@ import { UserEntity } from './database/entities/user.entity';
 import { ChatsEntity } from "./database/entities/chats.entity";
 import { MessageEntity } from "./database/entities/message.entity";
 import { ContactEntity } from "./database/entities/contact.entity";
+import { AppEntity } from "./database/entities/app.entity";
 import { ChatGateway } from './chat.gateway';
 
 import { ServeStaticModule } from '@nestjs/serve-static';
@@ -38,7 +39,7 @@ import {FilesModule} from "./files/files.module";
     TypeOrmModule.forRoot({
       type: 'postgres',
       url: process.env.DATABASE_URI,
-      entities: [UserEntity, ChatsEntity, MessageEntity, ContactEntity],
+      entities: [UserEntity, ChatsEntity, MessageEntity, ContactEntity, AppEntity],
       synchronize: true,
     }),
     AuthModule,
