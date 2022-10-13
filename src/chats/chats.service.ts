@@ -10,6 +10,7 @@ import { ChatDTO } from "./dto/chat.dto";
 import * as admin from "firebase-admin";
 import {getMessageSchema, getUserSchema} from "../utils/schema";
 import {DeleteMessageDto} from "./dto/deleteMessage.dto";
+import {messageStatuses} from "./constants";
 
 @Injectable()
 export class ChatsService {
@@ -446,7 +447,8 @@ export class ChatsService {
           data: splicedMessages,
           page: options.page,
           limit: options.limit,
-          total: count
+          total: count,
+          chat: chat,
         }
       }
     } else {
@@ -904,10 +906,26 @@ export class ChatsService {
     }
   }
 
+  async updateMessageStatus(chat_id: number, message_id: number): Promise<any> {
+    const message = await this.messageRepository.findOne({
+      where: {id: message_id}
+    });
+
+    if (message) {
+      return await this.messageRepository.save({...message, message_status: messageStatuses.pending});
+    }
+  }
+
   async deleteMessage(id: number, chat_id: number, data: DeleteMessageDto) {
+    const chat = await this.chatsRepository.findOne({
+      where: { id: chat_id },
+      relations: ['message'],
+    });
+
     if (data.fromAll) {
       const deletedMessages = [];
       if (Array.isArray(data.messages)) {
+
         for (const message of data.messages) {
           const deletedMessage = await this.messageRepository.delete(Number(message));
           deletedMessages.push(getMessageSchema(deletedMessage));
@@ -917,17 +935,13 @@ export class ChatsService {
           status: 200,
           data: {
             data: {
-              messages: deletedMessages
+              messages: deletedMessages,
+              chat: chat
             }
           },
         }
       }
     } else {
-      const chat = await this.chatsRepository.findOne({
-        where: { id: chat_id },
-        relations: ['message'],
-      });
-
       if (Array.isArray(data.messages)) {
         const updatedMessages = [];
         for (const message of data.messages) {
@@ -950,7 +964,8 @@ export class ChatsService {
           status: 200,
           data: {
             data: {
-              messages: updatedMessages
+              messages: updatedMessages,
+              chat: chat
             }
           },
         }

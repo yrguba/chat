@@ -1,3 +1,5 @@
+import { messageStatuses } from "../chats/constants";
+
 export const getUserSchema = (userData) => {
     return {
         id: userData.id || "",
@@ -24,5 +26,6 @@ export const getMessageSchema = (messageData) => {
         user: messageData.user || {},
         is_edited: messageData.is_edited || false,
         replyMessage: messageData.replyMessage || null,
+        message_status: messageData.message_status || messageStatuses.sent,
     }
 };

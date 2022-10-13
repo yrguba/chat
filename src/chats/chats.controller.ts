@@ -25,6 +25,7 @@ import { JwtService } from '@nestjs/jwt';
 import {UpdateMessageDto} from "./dto/updateMessage.dto";
 import {DeleteMessageDto} from "./dto/deleteMessage.dto";
 import {ForwardMessageDTO} from "./dto/forwardMessage.dto";
+import {messageStatuses} from "./constants";
 
 @ApiTags('chats')
 @Controller('chats')
@@ -151,6 +152,24 @@ export class ChatsController {
         const jwt = req.headers.authorization.replace('Bearer ', '');
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
         const messages = await this.chatsService.getMessages(json.id, param.chat_id, {page, limit});
+        if (messages.status === 200) {
+            const updatedMessages = [];
+            for (const message of messages.data.data) {
+                if (message.user.id !== json.id && message.message_status !== messageStatuses.read) {
+                    await this.chatsService.updateMessageStatus(param.chat_id, message.id);
+                    updatedMessages.push(message.id);
+                }
+            }
+
+            if (updatedMessages.length > 0) {
+                this.chatsGateway.handleChangeMessageStatus({
+                    chat_id: param.chat_id,
+                    status: messageStatuses.read,
+                    messages: updatedMessages,
+                    ...messages.data.chat
+                });
+            }
+        }
         res.status(messages.status).json(messages.data);
     }
 
@@ -198,6 +217,15 @@ export class ChatsController {
                 chat_id: param.chat_id,
                 ...message
             });
+
+            this.chatsService.updateMessageStatus(param.chat_id, message.id).then(() => {
+                this.chatsGateway.handleChangeMessageStatus({
+                    chat_id: param.chat_id,
+                    status: messageStatuses.pending,
+                    messages: [message.id],
+                    ...message
+                });
+            })
         }
         res.status(message.status).json(message.data);
     }
@@ -258,11 +286,21 @@ export class ChatsController {
 
     @UseGuards(JwtAuthGuard)
     @ApiParam({ name: 'chat_id', required: true })
-    @Delete('/message/:chat_id/:message_id')
+    @Delete('/message/:chat_id')
     async deleteMessage(@Res() res, @Req() req, @Param() params, @Body() body: DeleteMessageDto) {
         const jwt = req.headers.authorization.replace('Bearer ', '');
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
         const result =  await this.chatsService.deleteMessage(json.id, params.chat_id, body);
+
+        if (result.data.data.messages && result.data.data.messages.length > 0) {
+            result.data.data.messages.map(message => {
+                this.chatsGateway.handleEmitDeleteMessage({
+                    chat: result.data.data.chat,
+                    message: message,
+                });
+            })
+        }
+
         res.status(200).json({data: result});
     }
 

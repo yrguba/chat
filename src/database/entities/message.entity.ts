@@ -7,6 +7,7 @@ import {
 } from 'typeorm';
 import { ChatsEntity } from "./chats.entity";
 import { UserEntity } from "./user.entity";
+import { messageStatuses } from "../../chats/constants";
 
 @Entity()
 export class MessageEntity {
@@ -26,6 +27,8 @@ export class MessageEntity {
     created_at: Date;
     @Column({ nullable: false, default: false })
     is_edited: boolean;
+    @Column({ nullable: false, default: messageStatuses.sent })
+    message_status: string;
     @Column("int", { array: true, default: [] })
     access: number[];
     @Column("int", { array: true, default: [] })
