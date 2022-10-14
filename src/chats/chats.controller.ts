@@ -260,7 +260,7 @@ export class ChatsController {
         if (message?.status === 200) {
             this.chatsGateway.handleEmit({
                 chat_id: param.chat_id,
-                ...message
+                ...message.data
             });
         }
         res.status(message.status).json(message.data);
