@@ -464,6 +464,12 @@ export class ChatsService {
     }
   }
 
+  async getMessage(id: number) {
+    return await this.messageRepository.find({
+      where: {id: id}
+    });
+  }
+
   async deleteChat(id: number, chat_id: number): Promise<DeleteResult> {
     const chat = await this.chatsRepository.createQueryBuilder('chat')
       .where('chat.id = :id', { id: chat_id })
@@ -737,6 +743,11 @@ export class ChatsService {
         }
       });
 
+      let replyMessage = null;
+      if (message.reply_message_id) {
+        replyMessage = await this.getMessage(message.reply_message_id);
+      }
+
       return {
         status: 201,
         data: {
@@ -744,6 +755,7 @@ export class ChatsService {
             message: {
               ...getMessageSchema(message),
               user: userData,
+              replyMessage: replyMessage ? getMessageSchema(replyMessage) : null,
             }
           }
         },
