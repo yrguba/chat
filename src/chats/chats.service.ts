@@ -724,9 +724,9 @@ export class ChatsService {
                       "user_id": String(initiator.id),
                       "user_name": String(initiator.name),
                       "user_contact_name": contact?.name || "",
-                      "user_nickname": initiator.nickname,
-                      "user_avatar": initiator.avatar || "",
-                      "chat_avatar": chat.avatar,
+                      "user_nickname": String(initiator.nickname),
+                      "user_avatar": String(initiator.avatar) || "",
+                      "chat_avatar": String(chat.avatar),
                       "is_group": chat.is_group ? "true" : "false"
                     },
                   });
