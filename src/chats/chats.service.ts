@@ -722,7 +722,7 @@ export class ChatsService {
                       "chat_id": String(chat.id),
                       "chat_name": String(chat.name),
                       "user_id": String(initiator.id),
-                      "user_name": initiator.name,
+                      "user_name": String(initiator.name),
                       "user_contact_name": contact?.name || "",
                       "user_nickname": initiator.nickname,
                       "user_avatar": initiator.avatar || "",
