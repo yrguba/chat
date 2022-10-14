@@ -257,10 +257,10 @@ export class ChatsController {
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
 
         const message = await this.chatsService.replyMessage(param.chat_id, param.message_id, Number(json.id), body);
-        if (message?.status === 200) {
+        if (message?.status === 201) {
             this.chatsGateway.handleEmit({
                 chat_id: param.chat_id,
-                ...message.data
+                ...message
             });
         }
         res.status(message.status).json(message.data);
