@@ -940,6 +940,7 @@ export class ChatsService {
 
         for (const message of data.messages) {
           const deletedMessage = await this.messageRepository.delete(Number(message));
+          console.log(deletedMessage);
           deletedMessages.push(getMessageSchema(deletedMessage));
         }
 
@@ -968,7 +969,7 @@ export class ChatsService {
             ...targetMessage,
             access: updatedAccessUsers
           });
-
+          console.log(updatedMessage);
           updatedMessages.push(getMessageSchema(updatedMessage));
         }
 
