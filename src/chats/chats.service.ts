@@ -744,11 +744,13 @@ export class ChatsService {
       });
 
       let replyMessage = null;
-      console.log(message);
       if (message.reply_message_id) {
-        console.log(message.reply_message_id);
         replyMessage = await this.getMessage(message.reply_message_id);
-        console.log(replyMessage);
+        console.log({
+          ...getMessageSchema(message),
+          user: userData,
+          replyMessage: replyMessage ? getMessageSchema(replyMessage) : null,
+        });
       }
 
       return {
