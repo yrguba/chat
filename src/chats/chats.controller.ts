@@ -292,6 +292,8 @@ export class ChatsController {
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
         const result =  await this.chatsService.deleteMessage(json.id, params.chat_id, body);
 
+        console.log(result.data.data.messages);
+
         if (result.data.data.messages && result.data.data.messages.length > 0) {
             result.data.data.messages.map(message => {
                 this.chatsGateway.handleEmitDeleteMessage({
