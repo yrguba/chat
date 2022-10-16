@@ -116,7 +116,6 @@ export class ChatsService {
           if (user && user?.fb_tokens) {
             this.getContact(user, initiator).then(contact => {
               user?.fb_tokens.map(token => {
-                console.log(message);
                 admin.messaging().sendToDevice(token, {
                   "notification": {
                     "title": message.message_type === "system" ? chat.name : (contact?.name ? contact?.name : initiator.name),
@@ -819,7 +818,7 @@ export class ChatsService {
       if (targetChat) {
         const forwardMessage = {
           message_type: "system",
-          message_text: "Пересланное сообщение"
+          text: "Пересланное сообщение"
         };
         let userData;
         userData = getUserSchema(initiator);
