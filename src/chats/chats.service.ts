@@ -939,9 +939,9 @@ export class ChatsService {
       if (Array.isArray(data.messages)) {
 
         for (const message of data.messages) {
-          const deletedMessage = await this.messageRepository.delete(Number(message));
-          console.log(deletedMessage);
-          deletedMessages.push(getMessageSchema(deletedMessage));
+          const targetMessage = await this.getMessage(Number(message));
+          deletedMessages.push(getMessageSchema(targetMessage));
+          await this.messageRepository.delete(Number(message));
         }
 
         return {
