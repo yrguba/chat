@@ -746,11 +746,6 @@ export class ChatsService {
       let replyMessage = null;
       if (message.reply_message_id) {
         replyMessage = await this.getMessage(message.reply_message_id);
-        console.log({
-          ...getMessageSchema(message),
-          user: userData,
-          replyMessage: replyMessage ? getMessageSchema(replyMessage) : null,
-        });
       }
 
       return {
@@ -764,7 +759,7 @@ export class ChatsService {
             }
           }
         },
-        message: {...message, user: userData},
+        message: {...message, user: userData, replyMessage: replyMessage ? getMessageSchema(replyMessage) : null },
         users: chat.users,
       }
     } else {
