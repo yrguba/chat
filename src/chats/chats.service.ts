@@ -116,24 +116,24 @@ export class ChatsService {
           if (user && user?.fb_tokens) {
             this.getContact(user, initiator).then(contact => {
               user?.fb_tokens.map(token => {
-                console.log(message);
+                console.log(this.getMessageContent(message));
                 admin.messaging().sendToDevice(token, {
                   "notification": {
                     "title": message.message_type === "system" ? chat.name : (contact?.name ? contact?.name : initiator.name),
-                    "body": this.getMessageContent(message),
+                    "body": String(this.getMessageContent(message)),
                     "priority": "max"
                   },
                   "data": {
-                    "text": this.getMessageContent(message),
-                    "msg_type": message.message_type,
+                    "text": String(this.getMessageContent(message)),
+                    "msg_type": String(message.message_type),
                     "chat_id": String(chat.id),
                     "chat_name": String(chat.name),
                     "user_id": String(initiator.id),
-                    "user_name": initiator.name,
-                    "user_contact_name": contact?.name || "",
-                    "user_nickname": initiator.nickname,
-                    "user_avatar": initiator.avatar || "",
-                    "chat_avatar": chat.avatar,
+                    "user_name": String(initiator.name),
+                    "user_contact_name": String(contact?.name) || "",
+                    "user_nickname": String(initiator.nickname),
+                    "user_avatar": String(initiator.avatar) || "",
+                    "chat_avatar": String(chat.avatar),
                     "is_group": chat.is_group ? "true" : "false"
                   },
                 });
