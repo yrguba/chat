@@ -465,7 +465,7 @@ export class ChatsService {
   }
 
   async getMessage(id: number): Promise<any> {
-    return await this.messageRepository.find({
+    return await this.messageRepository.findOne({
       where: {id: id}
     });
   }
