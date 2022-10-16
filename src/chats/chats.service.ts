@@ -969,7 +969,6 @@ export class ChatsService {
             ...targetMessage,
             access: updatedAccessUsers
           });
-          console.log(updatedMessage);
           updatedMessages.push(getMessageSchema(updatedMessage));
         }
 
@@ -999,10 +998,10 @@ export class ChatsService {
               "title": "Test Push",
               "body": "Body of test push"
             },
-            data: {
-              text: "Test Push",
-              chat_id : "1",
-              body: "Body of test push"
+            "data": {
+              "text": "Test Push",
+              "chat_id" : "1",
+              "body": "Body of test push"
             }
           });
         });
