@@ -6,56 +6,42 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from '../database/entities/user.entity';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { HttpService } from '@nestjs/axios';
 import * as https from 'https';
 import * as argon2 from 'argon2';
+
+import { badRequestResponse, internalErrorResponse, successResponse, unAuthorizeResponse } from '../utils/response';
 
 @Injectable()
 export class AuthService {
   constructor(
-    //private logger: LoggerService,
     private jwtService: JwtService,
     @InjectRepository(UserEntity)
     private usersRepository: Repository<UserEntity>,
-    private readonly httpService: HttpService,
   ) {}
 
   async login(user: any): Promise<Record<string, any>> {
-    // Validation Flag
-    let isOk = false;
+    let isValid = false;
 
-    // Transform body into DTO
     const userData = new LoginDTO();
     userData.phone = user.phone;
     userData.code = user.code;
 
-    // Validate DTO against validate function from class-validator
     await validate(userData).then((errors) => {
-      if (errors.length > 0) {
-        //this.logger.debug(`${errors}`, AuthService.name);
-      } else {
-        isOk = true;
+      if (errors.length === 0) {
+        isValid = true;
       }
     });
 
-    if (isOk) {
-      // Get user information
-
+    if (isValid) {
       const userDetails = await this.usersRepository
         .createQueryBuilder('users')
         .where('users.phone = :phone', { phone: user.phone })
         .getOne();
 
       if (userDetails == null) {
-        return { status: 401, data: {
-          error: {
-            code: 401,
-            message: "Invalid credentials"
-          }
-        }};
+        return unAuthorizeResponse();
       }
 
-      // Check if the given password match with saved password
       const isValid = bcrypt.compareSync(user.code, userDetails.code);
       if (isValid) {
         delete userDetails.code;
@@ -67,48 +53,28 @@ export class AuthService {
           expiresIn: '7d',
         });
         await this.updateRefreshToken(userDetails.id, refreshToken)
-        return {
-          status: 200,
-          data: {
-            data: {
-              access_token: this.jwtService.sign({
-                phone: user.phone,
-                id: userDetails.id,
-              },{
-                    secret: `${process.env.SECRET.replace(/\\\\n/gm, '\\n')}`,
-                    expiresIn: '15m',
-                  }),
-              ...userDetails,
-              refresh_token: refreshToken,
-            }
-          },
-        };
+        return successResponse({
+          access_token: this.jwtService.sign({
+            phone: user.phone,
+            id: userDetails.id,
+          },{
+                secret: `${process.env.SECRET.replace(/\\\\n/gm, '\\n')}`,
+                expiresIn: '15m',
+              }),
+          ...userDetails,
+          refresh_token: refreshToken,
+        });
       } else {
-        return { status: 401, data: {
-          error: {
-            code: 401,
-            message: "Invalid credentials"
-          }
-        }};
+        return unAuthorizeResponse();
       }
     } else {
-      return { status: 400, data: {
-        error: {
-          code: 400,
-          message: "Invalid fields"
-        }
-      }};
+      return badRequestResponse("Invalid fields");
     }
   }
 
   async send_code(phone: string): Promise<Record<string, any>> {
     if (!phone) {
-      return { status: 400, data: {
-        error: {
-          code: 400,
-          message: "Invalid phone"
-        }
-      }};
+      return badRequestResponse("Invalid phone")
     }
 
     const userDetails = await this.usersRepository
@@ -126,20 +92,10 @@ export class AuthService {
       await this.usersRepository
         .save(userData)
         .then(() => {
-          return {
-            status: 200,
-            data: {
-              data: 'Code sent successfully'
-            }
-          };
+          return successResponse("Code sent successfully")
         })
         .catch((error) => {
-          return { status: 500, data: {
-            error: {
-              code: 500,
-              message: error
-            }
-          }};
+          return internalErrorResponse(error);
         });
     } else {
       phone = userDetails.phone;
@@ -147,23 +103,14 @@ export class AuthService {
       await this.usersRepository
         .save(newUserData)
         .then(() => {
-          return {
-            status: 200,
-            data: {
-              data: 'Code sent successfully'
-            }
-          };
+          return successResponse("Code sent successfully");
         })
         .catch((error) => {
-          return { status: 500, data: {
-              error: {
-                code: 500,
-                message: error
-              }
-            }};
+          return internalErrorResponse(error);
         });
     }
 
+    // TODO Вынести в константы
     const data = await this.post('https://online.sigmasms.ru/api/login', {
       username: 'Cheresergey@gmail.com',
       password: 'JMv0d9',
@@ -185,12 +132,7 @@ export class AuthService {
       );
     }
 
-    return {
-      status: 200,
-      data: {
-        data: 'Code sent successfully'
-      }
-    };
+    return successResponse("Code sent successfully");
   }
 
   makeTemporaryPass(length) {
@@ -216,7 +158,6 @@ export class AuthService {
 
   async post(url, data, token = null) {
     const dataString = JSON.stringify(data);
-
     const options = {
       method: 'POST',
       headers: token
@@ -229,7 +170,7 @@ export class AuthService {
             'Content-Type': 'application/json',
             'Content-Length': dataString.length,
           },
-      timeout: 5000, // in ms
+      timeout: 5000,
     };
 
     return new Promise((resolve, reject) => {
@@ -267,12 +208,7 @@ export class AuthService {
         .getOne();
 
     if (user == null || !user.refresh_token) {
-      return { status: 401, data: {
-          error: {
-            code: 401,
-            message: "Invalid credentials"
-          }
-        }};
+      return unAuthorizeResponse();
     }
 
     const refreshTokenMatches = await argon2.verify(
@@ -281,24 +217,16 @@ export class AuthService {
     );
 
     if (!refreshTokenMatches) {
-      return { status: 403, data: {
-          error: {
-            code: 401,
-            message: "refresh token invalid"
-          }
-        }};
+      return badRequestResponse("Refresh token invalid");
     }
     const tokens = await this.getTokens(user.id, user.phone);
     await this.updateRefreshToken(user.id, tokens.refresh_token);
-    return {
-      status: 200,
-      data: {
-        data: {
-          access_token: tokens.access_token,
-          refresh_token: tokens.refresh_token,
-        }
-      },
-    };
+    return successResponse(
+      {
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+      }
+    );
   }
 
   async updateRefreshToken(userId: number, refreshToken: string) {
@@ -350,12 +278,7 @@ export class AuthService {
     const profileUpdated = {...profile, fb_tokens: tokens}
     await this.usersRepository.save(profileUpdated);
 
-    return {
-      status: 200,
-      data: {
-        data: tokens
-      }
-    };
+    return successResponse(tokens);
   }
 
   async deleteFirebaseToken(userId: number, token: string) {
@@ -371,13 +294,7 @@ export class AuthService {
 
       const profileUpdated = {...profile, fb_tokens: tokens}
       await this.usersRepository.save(profileUpdated);
-
-      return {
-        status: 200,
-        data: {
-          data: tokens
-        }
-      };
+      return successResponse(tokens);
     }
   }
 
