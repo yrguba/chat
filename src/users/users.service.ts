@@ -4,6 +4,7 @@ import {DeleteResult, Repository} from 'typeorm';
 import {UserEntity} from '../database/entities/user.entity';
 import {ContactEntity} from "../database/entities/contact.entity";
 import {getUserSchema} from "../utils/schema";
+import {log} from "util";
 
 @Injectable()
 export class UsersService {
@@ -60,6 +61,8 @@ export class UsersService {
     if (user) {
       user.contactName = await this.getContactName(id);
     }
+
+    console.log(user);
 
     return user;
   }
