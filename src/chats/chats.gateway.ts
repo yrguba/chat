@@ -10,7 +10,6 @@ import { JwtService } from "@nestjs/jwt";
 import { Socket, Server } from 'socket.io';
 import { ChatsService } from "./chats.service";
 import { UsersService } from "../users/users.service";
-import { messageStatuses } from "./constants";
 import { getUserSchema } from "../utils/schema";
 
 
@@ -25,22 +24,17 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         private chatsService: ChatsService,
         private usersService: UsersService,
         private readonly jwtService: JwtService
-    ) {
-        this.usersPool = [];
-    }
+    ) {}
 
     @WebSocketServer() server: Server;
-    private usersPool: any[];
 
-    handleEmit(data) {
-        data?.users.map((userId) => {
+    handleEmitNewMessage(chat) {
+        chat?.users.map((userId) => {
             this.usersService.getUser(userId).then((user) => {
                 if (user && user.socket_id) {
                     this.server?.sockets?.to(user.socket_id)?.emit('receiveMessage', {
-                        message: {...data?.message, chat_id: data.chat_id},
+                        message: {...chat?.message, chat_id: chat.chat_id},
                     });
-                } else {
-                    //send push
                 }
             });
         });
@@ -77,11 +71,8 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                     this.server?.sockets?.to(user.socket_id)?.emit('receiveChat', {
                         message: chat,
                     });
-                } else {
-                    //send push
                 }
             });
-
         });
     };
 
@@ -92,11 +83,8 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                     this.server?.sockets?.to(user.socket_id)?.emit('addedToChat', {
                         message: chat,
                     });
-                } else {
-                    //send push
                 }
             });
-
         });
     };
 
@@ -107,8 +95,6 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                     this.server?.sockets?.to(user.socket_id)?.emit('removedFromChat', {
                         message: chat,
                     });
-                } else {
-                    //send push
                 }
             });
 
@@ -138,7 +124,6 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                                                 chat_id: chat_id,
                                             }
                                         });
-
                                     }
                                 }
                             }
@@ -160,14 +145,13 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     afterInit(server: Server) {
         this.chatsService.socket = server;
-        //Do stuffs
     }
 
     handleDisconnect(client: Socket) {
         const jwt = client.handshake?.headers?.authorization?.replace('Bearer ', '');
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
         if (json?.id) {
-            this.usersService.updateUserSocket(json.id, client.id, true).then(initiator => {
+            this.usersService.updateUserStatus(json.id, true).then(initiator => {
                 this.chatsService.getUserChats(json.id).then(chats => {
                     if (chats) {
                         chats.map(chat => {
@@ -185,7 +169,7 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                             });
                         });
                     }
-                })
+                });
             });
         }
 
