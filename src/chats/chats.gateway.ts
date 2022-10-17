@@ -117,6 +117,7 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     @SubscribeMessage('messageAction')
     handleMessageAction(client: any, payload: any) {
+        console.log(111111);
         const jwt = client.handshake?.headers?.authorization?.replace('Bearer ', '');
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
         if (json?.id) {
