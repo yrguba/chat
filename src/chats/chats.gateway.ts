@@ -175,7 +175,7 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                                 if (user && user.socket_id) {
                                     this.server?.sockets?.to(user.socket_id)?.emit('receiveUserStatus', {
                                         user: getUserSchema(initiator),
-                                        status: "online",
+                                        status: "offline",
                                     });
                                 }
                             });
