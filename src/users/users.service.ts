@@ -1,5 +1,6 @@
 import {Injectable} from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
+import {JwtService} from "@nestjs/jwt";
 import {DeleteResult, Repository} from 'typeorm';
 import {UserEntity} from '../database/entities/user.entity';
 import {ContactEntity} from "../database/entities/contact.entity";
@@ -12,6 +13,7 @@ export class UsersService {
     private usersRepository: Repository<UserEntity>,
     @InjectRepository(ContactEntity)
     private contactsRepository: Repository<ContactEntity>,
+    private readonly jwtService: JwtService,
   ) {
   }
 
@@ -89,5 +91,12 @@ export class UsersService {
       const updated = Object.assign(user, {is_online: is_online, last_active: new Date()});
       return await this.usersRepository.save(updated);
     }
+  }
+
+  async getUserIdFromToken(req): Promise<number> {
+    const jwt = req.headers.authorization.replace('Bearer ', '');
+    const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
+
+    return json.id;
   }
 }
