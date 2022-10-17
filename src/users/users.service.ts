@@ -52,10 +52,14 @@ export class UsersService {
   }
 
   async getUser(id: number): Promise<UserEntity> {
-    return await this.usersRepository
+    const user = await this.usersRepository
       .createQueryBuilder('users')
       .where('users.id = :id', {id: id})
       .getOne();
+
+    user.contactName = await this.getContactName(user.id);
+
+    return user;
   }
 
   async getUserWithContacts(id: number): Promise<UserEntity> {
