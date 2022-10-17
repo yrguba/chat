@@ -57,7 +57,9 @@ export class UsersService {
       .where('users.id = :id', {id: id})
       .getOne();
 
-    user.contactName = await this.getContactName(user.id);
+    if (user) {
+      user.contactName = await this.getContactName(id);
+    }
 
     return user;
   }
