@@ -167,21 +167,25 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         const jwt = client.handshake?.headers?.authorization?.replace('Bearer ', '');
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
         if (json?.id) {
-            this.usersService.updateUserStatus(json.id, false).then(initiator => {
-                this.chatsService.getUserChats(json.id).then(data => {
-                    data?.users.map((userId) => {
-                        if (userId !== json?.id) {
-                            this.usersService.getUser(userId).then((user) => {
-                                if (user && user.socket_id) {
-                                    this.server?.sockets?.to(user.socket_id)?.emit('receiveUserStatus', {
-                                        user: getUserSchema(initiator),
-                                        status: "offline",
+            this.usersService.updateUserSocket(json.id, client.id, true).then(initiator => {
+                this.chatsService.getUserChats(json.id).then(chats => {
+                    if (chats) {
+                        chats.map(chat => {
+                            chat?.users.map((userId) => {
+                                if (userId !== json?.id) {
+                                    this.usersService.getUser(userId).then((user) => {
+                                        if (user && user.socket_id) {
+                                            this.server?.sockets?.to(user.socket_id)?.emit('receiveUserStatus', {
+                                                user: getUserSchema(initiator),
+                                                status: "offline",
+                                            });
+                                        }
                                     });
                                 }
                             });
-                        }
-                    });
-                });
+                        });
+                    }
+                })
             });
         }
 
@@ -193,23 +197,23 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
         if (json?.id) {
             this.usersService.updateUserSocket(json.id, client.id, true).then(initiator => {
-                this.chatsService.getUserChats(json.id).then(data => {
-                    console.log(data);
-                    if (data) {
-                        data?.users.map((userId) => {
-                            if (userId !== json?.id) {
-                                this.usersService.getUser(userId).then((user) => {
-                                    if (user && user.socket_id) {
-                                        this.server?.sockets?.to(user.socket_id)?.emit('receiveUserStatus', {
-                                            user: getUserSchema(initiator),
-                                            status: "online",
-                                        });
-                                    }
-                                });
-                            }
+                this.chatsService.getUserChats(json.id).then(chats => {
+                    if (chats) {
+                        chats.map(chat => {
+                            chat?.users.map((userId) => {
+                                if (userId !== json?.id) {
+                                    this.usersService.getUser(userId).then((user) => {
+                                        if (user && user.socket_id) {
+                                            this.server?.sockets?.to(user.socket_id)?.emit('receiveUserStatus', {
+                                                user: getUserSchema(initiator),
+                                                status: "online",
+                                            });
+                                        }
+                                    });
+                                }
+                            });
                         });
                     }
-
                 })
             });
         }
