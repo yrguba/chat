@@ -483,6 +483,12 @@ export class ChatsService {
     return await this.chatsRepository.delete(chat_id);
   }
 
+  async getUserChats(user_id): Promise<any> {
+    return await this.chatsRepository.createQueryBuilder('chats')
+      .where('chats.users @> :users', {users: [user_id]})
+      .getMany();
+  }
+
   async getChats(user_id: number, options) {
     let offset = 0;
     if (options.page > 1) offset = (options.page - 1) * options.limit;
