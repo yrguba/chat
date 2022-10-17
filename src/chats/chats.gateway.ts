@@ -128,15 +128,17 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                     this.chatsService.getChat(json.id, chat_id).then((data: any) => {
                         data?.data?.data?.users.map((userId) => {
                             this.usersService.getUser(userId).then((user) => {
-                                if (user.id !== json.id) {
-                                    if (user && user.socket_id) {
-                                        this.server?.sockets?.to(user.socket_id)?.emit('receiveMessageAction', {
-                                            message: {
-                                                user: getUserSchema(initiator),
-                                                action: action,
-                                                chat_id: chat_id,
-                                            }
-                                        });
+                                if (user && user?.id) {
+                                    if (user.id !== json.id) {
+                                        if (user && user.socket_id) {
+                                            this.server?.sockets?.to(user.socket_id)?.emit('receiveMessageAction', {
+                                                message: {
+                                                    user: getUserSchema(initiator),
+                                                    action: action,
+                                                    chat_id: chat_id,
+                                                }
+                                            });
+                                        }
                                     }
                                 }
                             });
