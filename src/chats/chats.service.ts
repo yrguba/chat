@@ -753,6 +753,7 @@ export class ChatsService {
       let replyMessage = null;
       if (message.reply_message_id) {
         replyMessage = await this.getMessageWithUser(message.reply_message_id);
+        console.log(replyMessage);
         replyMessage.user = getUserSchema(replyMessage.user);
       }
 
