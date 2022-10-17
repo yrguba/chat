@@ -470,6 +470,13 @@ export class ChatsService {
     });
   }
 
+  async getMessageWithUser(id: number): Promise<any> {
+    return await this.messageRepository.findOne({
+      where: {id: id},
+      relations: ['user'],
+    });
+  }
+
   async deleteChat(id: number, chat_id: number): Promise<DeleteResult> {
     const chat = await this.chatsRepository.createQueryBuilder('chat')
       .where('chat.id = :id', { id: chat_id })
@@ -745,7 +752,8 @@ export class ChatsService {
 
       let replyMessage = null;
       if (message.reply_message_id) {
-        replyMessage = await this.getMessage(message.reply_message_id);
+        replyMessage = await this.getMessageWithUser(message.reply_message_id);
+        replyMessage.user = getUserSchema(replyMessage.user);
       }
 
       return {
