@@ -124,25 +124,26 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                 chat_id,
                 action,
             } = payload;
-                const initiator = this.usersService.getUser(json.id);
+                this.usersService.getUser(json.id).then((initiator) => {
+                    this.chatsService.getChat(json.id, chat_id).then((data: any) => {
+                        data?.data?.data?.users.map((userId) => {
+                            this.usersService.getUser(userId).then((user) => {
+                                if (user.id !== json.id) {
+                                    if (user && user.socket_id) {
 
-                this.chatsService.getChat(json.id, chat_id).then((data: any) => {
-                    data?.data?.data?.users.map((userId) => {
-                        this.usersService.getUser(userId).then((user) => {
-                            if (user.id !== json.id) {
-                                if (user && user.socket_id) {
-
-                                    this.server?.sockets?.to(user.socket_id)?.emit('receiveMessageAction', {
-                                        message: {
-                                            user: getUserSchema(initiator),
-                                            action: action,
-                                        }
-                                    });
+                                        this.server?.sockets?.to(user.socket_id)?.emit('receiveMessageAction', {
+                                            message: {
+                                                user: getUserSchema(initiator),
+                                                action: action,
+                                                chat_id: chat_id,
+                                            }
+                                        });
+                                    }
                                 }
-                            }
+                            });
+                        });
                     });
                 });
-            });
         }
         return '';
     }
