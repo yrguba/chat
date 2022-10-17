@@ -79,4 +79,15 @@ export class UsersService {
       return await this.usersRepository.save(updated);
     }
   }
+
+  async updateUserStatus(id: number, is_online: boolean = false) {
+    const user = await this.usersRepository
+      .createQueryBuilder('users')
+      .where('users.id = :id', {id: id})
+      .getOne();
+    if (user) {
+      const updated = Object.assign(user, {is_online: is_online, last_active: new Date()});
+      return await this.usersRepository.save(updated);
+    }
+  }
 }

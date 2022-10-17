@@ -33,7 +33,6 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     private usersPool: any[];
 
     handleEmit(data) {
-        console.log(data);
         data?.users.map((userId) => {
             this.usersService.getUser(userId).then((user) => {
                 if (user && user.socket_id) {
@@ -159,13 +158,13 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     }
 
     handleDisconnect(client: Socket) {
-        // const jwt = client.handshake?.headers?.authorization?.replace('Bearer ', '');
-        // const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
-        // if (json?.id) {
-        //     this.usersService.updateUserSocket(json.id, client.id, false).then(data => {
-        //         console.log('disconnect client');
-        //     });
-        // }
+        const jwt = client.handshake?.headers?.authorization?.replace('Bearer ', '');
+        const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
+        if (json?.id) {
+            this.usersService.updateUserStatus(json.id, false).then(data => {
+                console.log('disconnect client');
+            });
+        }
 
         console.log('disconnect client');
     }
