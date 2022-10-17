@@ -117,7 +117,6 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     @SubscribeMessage('messageAction')
     handleMessageAction(client: any, payload: any) {
-        console.log(111111);
         const jwt = client.handshake?.headers?.authorization?.replace('Bearer ', '');
         const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
         if (json?.id) {
@@ -125,27 +124,28 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                 chat_id,
                 action,
             } = payload;
-                this.usersService.getUser(json.id).then((initiator) => {
-                    this.chatsService.getChat(json.id, chat_id).then((data: any) => {
-                        data?.data?.data?.users.map((userId) => {
-                            this.usersService.getUser(userId).then((user) => {
-                                if (user && user?.id) {
-                                    if (user.id !== json.id) {
-                                        if (user && user.socket_id) {
-                                            this.server?.sockets?.to(user.socket_id)?.emit('receiveMessageAction', {
-                                                message: {
-                                                    user: getUserSchema(initiator),
-                                                    action: action,
-                                                    chat_id: chat_id,
-                                                }
-                                            });
-                                        }
+            this.usersService.getUser(json.id).then((initiator) => {
+                this.chatsService.getChat(json.id, chat_id).then((data: any) => {
+                    data?.data?.data?.users.map((userId) => {
+                        this.usersService.getUser(userId).then((user) => {
+                            if (user && user?.id) {
+                                if (user.id !== json.id) {
+                                    if (user && user.socket_id) {
+                                        this.server?.sockets?.to(user.socket_id)?.emit('receiveMessageAction', {
+                                            message: {
+                                                user: getUserSchema(initiator),
+                                                action: action,
+                                                chat_id: chat_id,
+                                            }
+                                        });
+
                                     }
                                 }
-                            });
+                            }
                         });
                     });
                 });
+            });
         }
         return '';
     }
