@@ -277,14 +277,8 @@ export class ChatsController {
     async deleteMessage(@Res() res, @Req() req, @Param() params, @Body() body: DeleteMessageDto) {
         const userId = await this.usersService.getUserIdFromToken(req);
         const result =  await this.chatsService.deleteMessage(userId, params.chat_id, body);
-
         if (result.data.data.messages && result.data.data.messages.length > 0) {
-            result.data.data.messages.map(message => {
-                this.chatsGateway.handleEmitDeleteMessage({
-                    chat: result.data.data.chat,
-                    message: message,
-                });
-            })
+            this.chatsGateway.handleEmitDeleteMessage(result.data.data);
         }
 
         res.status(200).json({data: result});
