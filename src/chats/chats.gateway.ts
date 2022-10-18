@@ -10,6 +10,7 @@ import { JwtService } from "@nestjs/jwt";
 import { Socket, Server } from 'socket.io';
 import { ChatsService } from "./chats.service";
 import { UsersService } from "../users/users.service";
+import { ContactsService } from "../contacts/contacts.service";
 import { getUserSchema } from "../utils/schema";
 
 
@@ -23,8 +24,10 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     constructor(
         private chatsService: ChatsService,
         private usersService: UsersService,
+        private contactsService: ContactsService,
         private readonly jwtService: JwtService
-    ) {}
+    ) {
+    }
 
     @WebSocketServer() server: Server;
 
@@ -34,6 +37,26 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                 if (user && user.socket_id) {
                     this.server?.sockets?.to(user.socket_id)?.emit('receiveMessage', {
                         message: {...chat?.message, chat_id: chat.chat_id},
+                    });
+                }
+            });
+        });
+    };
+
+    handleEmitForwardMessage(data) {
+        const messages = data.data.message.messages
+        data?.users.map((userId) => {
+            this.usersService.getUser(userId).then(async (user) => {
+                const contacts = await this.contactsService.getContacts(user.id)
+                messages.forEach(msg => {
+                    const foundContact = contacts?.data.data.find(cont => cont.user.id === msg.author_id)
+                    if (foundContact) msg.author.contactName = foundContact.name;
+                })
+                if (user && user.socket_id) {
+                    this.server?.sockets?.to(user.socket_id)?.emit('receiveForwardMessage', {
+                        chat_id: Number(data.chat_id),
+                        user: data.data.message.user,
+                        messages
                     });
                 }
             });
@@ -105,7 +128,7 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     @SubscribeMessage('messageAction')
     handleMessageAction(client: any, payload: any) {
         const jwt = client.handshake?.headers?.authorization?.replace('Bearer ', '');
-        const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
+        const json = this.jwtService.decode(jwt, {json: true}) as {id: number};
         if (json?.id) {
             const {
                 chat_id,
@@ -150,7 +173,7 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     handleDisconnect(client: Socket) {
         const jwt = client.handshake?.headers?.authorization?.replace('Bearer ', '');
-        const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
+        const json = this.jwtService.decode(jwt, {json: true}) as {id: number};
         if (json?.id) {
             this.usersService.updateUserStatus(json.id, true).then(initiator => {
                 this.chatsService.getUserChats(json.id).then(chats => {
@@ -179,7 +202,7 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     handleConnection(client: Socket, ...args: any[]) {
         const jwt = client.handshake?.headers?.authorization?.replace('Bearer ', '');
-        const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
+        const json = this.jwtService.decode(jwt, {json: true}) as {id: number};
         if (json?.id) {
             this.usersService.updateUserSocket(json.id, client.id, true).then(initiator => {
                 this.chatsService.getUserChats(json.id).then(chats => {

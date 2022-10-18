@@ -231,9 +231,10 @@ export class ChatsController {
         const userId = await this.usersService.getUserIdFromToken(req);
         const message = await this.chatsService.forwardMessage(param.chat_id, Number(userId), body);
         if (message?.status === 200) {
-            this.chatsGateway.handleEmitNewMessage({
+            this.chatsGateway.handleEmitForwardMessage({
                 chat_id: param.chat_id,
-                ...message
+                data: message.data.data,
+                users: message.users
             });
         }
         res.status(message.status).json(message.data);
