@@ -152,7 +152,7 @@ export class ChatsController {
             const updatedMessages = [];
             for (const message of messages.data.data) {
                 if (message.user.id !== userId && message.message_status !== messageStatuses.read) {
-                    await this.chatsService.updateMessageStatus(param.chat_id, message.id);
+                    await this.chatsService.updateMessageStatus(param.chat_id, message.id, messageStatuses.read);
                     updatedMessages.push(message.id);
                 }
             }

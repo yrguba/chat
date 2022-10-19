@@ -930,13 +930,13 @@ export class ChatsService {
     }
   }
 
-  async updateMessageStatus(chat_id: number, message_id: number): Promise<any> {
+  async updateMessageStatus(chat_id: number, message_id: number, status: string = messageStatuses.pending): Promise<any> {
     const message = await this.messageRepository.findOne({
       where: {id: message_id}
     });
 
     if (message) {
-      return await this.messageRepository.save({...message, message_status: messageStatuses.pending});
+      return await this.messageRepository.save({...message, message_status: status});
     }
   }
 
