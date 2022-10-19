@@ -94,9 +94,14 @@ export class UsersService {
   }
 
   async getUserIdFromToken(req): Promise<number> {
-    const jwt = req.headers.authorization.replace('Bearer ', '');
-    const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
+    if (req.headers && req.headers.authorization) {
+      const jwt = req.headers.authorization.replace('Bearer ', '');
+      const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
 
-    return json.id;
+      return json.id;
+    } else {
+      return null;
+    }
+
   }
 }

@@ -30,12 +30,12 @@ export class AuthController {
       res.status(auth.status).json(auth.data);
     }
 
-    @Post('refresh')
-    async refreshTokens(@Res() res, @Req() req, @Body() body: RefreshDTO) {
-      const userId = await this.usersService.getUserIdFromToken(req);
-      const tokens = await this.authService.refreshTokens(userId, body.refresh_token);
-      res.status(tokens.status).json(tokens.data);
-    }
+  @Post('refresh')
+  async refreshTokens(@Res() res, @Req() req, @Body() body: RefreshDTO) {
+    const user = this.jwtService.decode(body.access_token, { json: true }) as { id: number };
+    const tokens = await this.authService.refreshTokens(user.id, body.refresh_token);
+    res.status(tokens.status).json(tokens.data);
+  }
 
   @UseGuards(JwtAuthGuard)
   @Post('firebase_token')
