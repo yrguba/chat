@@ -16,9 +16,9 @@ export class MessageEntity {
   @Column({ nullable: true })
   initiator_id: number;
   @Column({ nullable: true })
-  author_id: number;
+  author_id?: number;
   @Column({ nullable: true })
-  reply_message_id: number;
+  reply_message_id?: number;
   @Column({ nullable: false })
   text: string;
   @Column({ nullable: false, default: "text" })
@@ -30,15 +30,16 @@ export class MessageEntity {
   @Column({ nullable: false, default: messageStatuses.sent })
   message_status: string;
   @Column("int", { array: true, default: [] })
-  access: number[];
+  access?: number[];
   @Column("int", { array: true, default: [] })
-  accessChats: number[];
+  accessChats?: number[];
   @ManyToOne(() => ChatsEntity, (chat) => chat.message, {
     onDelete: "CASCADE",
   })
-  chat: ChatsEntity;
+  chat?: ChatsEntity;
   @ManyToOne(() => UserEntity, (user) => user.message, {
     onDelete: "CASCADE",
   })
   user: UserEntity;
+  replyMessage?: MessageEntity
 }

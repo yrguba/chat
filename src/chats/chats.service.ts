@@ -77,38 +77,39 @@ export class ChatsService {
       .leftJoinAndSelect("messages.user", "user")
       .where("messages.chat.id = :id", { id: chat_id })
       .orderBy("messages.created_at", "DESC")
-      .getOne();
+      .limit(1)
+      .getMany();
 
     const initiator = await this.userRepository.findOne({
       where: { id: user_id },
       relations: ["message"],
     });
 
-    if (message && message.user) {
-      const contact = await this.getContact(initiator, message.user);
-      message.user.contactName = contact?.name || "";
-      // @ts-ignore
-      message.user = getUserSchema(message.user);
+    let targetMessage = message[0];
+    targetMessage = getMessageSchema(targetMessage);
+
+    if (targetMessage && targetMessage.user) {
+      const contact = await this.getContact(initiator, targetMessage.user);
+      targetMessage.user.contactName = contact?.name || "";
+      targetMessage.user = getUserSchema(targetMessage);
     }
 
-    if (message && message.author_id) {
-      const author = await this.userRepository.findOne({
-        where: { id: message.author_id },
-      });
-      // @ts-ignore
-      message.author = getUserSchema(author);
-    }
+    // if (targetMessage && targetMessage.author_id) {
+    //   const author = await this.userRepository.findOne({
+    //     where: { id: targetMessage.author_id },
+    //   });
+    //   targetMessage.author = getUserSchema(author);
+    // }
 
-    if (message && message?.reply_message_id) {
+    if (targetMessage && targetMessage?.reply_message_id) {
       const replyMessage = await this.messageRepository.findOne({
-        where: { id: message.reply_message_id },
+        where: { id: targetMessage.reply_message_id },
       });
-      // @ts-ignore
-      message.replyMessage = getMessageSchema(replyMessage);
+      targetMessage.replyMessage = getMessageSchema(replyMessage);
     }
 
     if (message) {
-      return getMessageSchema(message);
+      return message;
     } else return null;
   }
 
@@ -237,7 +238,6 @@ export class ChatsService {
           },
         };
       }
-    } else {
     }
   }
 
@@ -560,8 +560,6 @@ export class ChatsService {
           chat.name = chatData?.name ? chatData?.name : chat.name;
           chat.avatar = chatData?.avatar ? chatData?.avatar : chat.avatar;
         }
-        //chat.message = chat.message.splice(0, 1);
-        // @ts-ignore
         chat.message = await this.getLastMessageFromChat(chat.id, user_id);
       }
 
@@ -923,8 +921,7 @@ export class ChatsService {
           message_type: "system",
           text: "Пересланное сообщение",
         };
-        let userData;
-        userData = getUserSchema(initiator);
+        const userData = getUserSchema(initiator);
         await this.sendPushToChat(targetChat, initiator, forwardMessage);
 
         return {

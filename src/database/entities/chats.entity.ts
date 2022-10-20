@@ -20,10 +20,11 @@ export class ChatsEntity {
   @Column("int", { array: true })
   users: number[];
   @OneToMany(() => MessageEntity, (message) => message.chat)
-  message: MessageEntity[];
+  message?: MessageEntity[];
   @Column({ nullable: true, default: "" })
   avatar: string;
   @Column({ nullable: true, default: false })
   is_group: boolean;
   chatUsers: any;
+  replyMessage?: MessageEntity
 }
