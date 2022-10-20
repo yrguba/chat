@@ -255,6 +255,12 @@ export class ChatsService {
 
       const usersData = [];
 
+      chat.pending_messages = await this.messageRepository
+        .createQueryBuilder("messages")
+        .where("messages.chat.id = :id", { id: chat.id })
+        .where("messages.message_status != :statusRead", {statusRead : messageStatuses.read })
+        .getCount();
+
       for (const user of users) {
         const contact = await this.contactsRepository
           .createQueryBuilder("contact")
