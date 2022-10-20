@@ -188,7 +188,7 @@ export class ChatsController {
       if (updatedMessages.length > 0) {
         this.chatsGateway.handleChangeMessageStatus({
           messages: updatedMessages,
-          chatUsers: messages.users
+          chatUsers: messages.users,
         });
       }
     }
@@ -261,7 +261,6 @@ export class ChatsController {
 
   @UseGuards(JwtAuthGuard)
   @ApiParam({ name: "chat_id", required: true })
-  @ApiParam({ name: "message_id", required: true })
   @Post("/forward/message/:chat_id/")
   async forwardMessage(
     @Res() res,
@@ -276,9 +275,10 @@ export class ChatsController {
       body
     );
     if (message?.status === 200) {
-      this.chatsGateway.handleEmitNewMessage({
+      this.chatsGateway.handleEmitForwardMessage({
         chat_id: param.chat_id,
-        ...message,
+        data: message.data.data,
+        users: message.users,
       });
     }
     res.status(message.status).json(message.data);

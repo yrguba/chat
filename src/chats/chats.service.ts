@@ -8,7 +8,11 @@ import { UserEntity } from "../database/entities/user.entity";
 import { ContactEntity } from "../database/entities/contact.entity";
 import { ChatDTO } from "./dto/chat.dto";
 import * as admin from "firebase-admin";
-import { getMessageSchema, getUserSchema } from "../utils/schema";
+import {
+  getForwardedMsgChatSchema,
+  getMessageSchema,
+  getUserSchema,
+} from "../utils/schema";
 import { DeleteMessageDto } from "./dto/deleteMessage.dto";
 import { messageStatuses } from "./constants";
 
@@ -85,8 +89,11 @@ export class ChatsService {
       relations: ["message"],
     });
 
-    let targetMessage = message[0];
-    targetMessage = getMessageSchema(targetMessage);
+    let targetMessage: any = message[0];
+
+    if (targetMessage) {
+      targetMessage = getMessageSchema(targetMessage);
+    }
 
     if (targetMessage && targetMessage.user) {
       const contact = await this.getContact(initiator, targetMessage.user);
@@ -258,8 +265,12 @@ export class ChatsService {
       chat.pending_messages = await this.messageRepository
         .createQueryBuilder("messages")
         .where("messages.chat.id = :id", { id: chat.id })
-        .andWhere("messages.message_status != :statusRead", {statusRead : messageStatuses.read })
-        .andWhere("messages.initiator_id != :initiator_id", {initiator_id : user_id })
+        .andWhere("messages.message_status != :statusRead", {
+          statusRead: messageStatuses.read,
+        })
+        .andWhere("messages.initiator_id != :initiator_id", {
+          initiator_id: user_id,
+        })
         .getCount();
 
       for (const user of users) {
@@ -457,21 +468,36 @@ export class ChatsService {
 
       let splicedMessages = messages.splice(offset, options.limit);
 
-      for (const message of splicedMessages) {
+      for (let message of splicedMessages) {
         if (message.user) {
           const contact = await this.getContact(initiator, message.user);
           message.user.contactName = contact?.name || "";
           message.user = getUserSchema(message.user);
         }
 
-        if (message.author_id) {
-          const author = await this.userRepository.findOne({
-            where: { id: message.author_id },
-          });
-
-          message.author = getUserSchema(author);
+        if (message.forwarded_messages?.length) {
+          const messages = [];
+          for (let msgId of message.forwarded_messages) {
+            const foundMsg = await this.messageRepository.findOne({
+              where: { id: msgId },
+            });
+            if (foundMsg) {
+              const user = await this.userRepository.findOne({
+                where: { id: foundMsg.initiator_id },
+              });
+              foundMsg.user = getUserSchema(user);
+              messages.push(getMessageSchema(foundMsg));
+            }
+          }
+          message.forwarded_messages = {
+            chat: getForwardedMsgChatSchema(
+              await this.chatsRepository.findOne({
+                where: { id: messages[0]?.chatId },
+              })
+            ),
+            messages,
+          };
         }
-
         if (message.reply_message_id) {
           const replyMessage = await this.getMessageWithUser(
             message.reply_message_id
@@ -566,8 +592,12 @@ export class ChatsService {
         const countPendingMessages = await this.messageRepository
           .createQueryBuilder("messages")
           .where("messages.chat.id = :id", { id: chat.id })
-          .andWhere("messages.message_status != :statusRead", {statusRead : messageStatuses.read })
-          .andWhere("messages.initiator_id != :initiator_id", {initiator_id : user_id })
+          .andWhere("messages.message_status != :statusRead", {
+            statusRead: messageStatuses.read,
+          })
+          .andWhere("messages.initiator_id != :initiator_id", {
+            initiator_id: user_id,
+          })
           .getCount();
 
         if (user_id && !chat.is_group) {
@@ -895,34 +925,24 @@ export class ChatsService {
     const messages = [];
     let targetChat = null;
 
-    if (data.messages) {
-      for (const messageItem of data.messages) {
-        const message = await this.messageRepository.findOne({
-          where: { id: messageItem.id },
-        });
+    const chat = await this.chatsRepository.findOne({
+      where: { id: chat_id },
+      relations: ["message"],
+    });
 
-        const chat = await this.chatsRepository.findOne({
-          where: { id: chat_id },
-          relations: ["message"],
+    if (data.messages) {
+      for (let messageId of data.messages) {
+        const message = await this.messageRepository.findOne({
+          where: { id: messageId },
         });
 
         if (chat && message) {
-          const accessChats = message.accessChats;
-          const chatId = Number(chat_id);
-          if (!accessChats.includes(chatId)) {
-            accessChats.push(chatId);
-          }
-
-          const updatedMessage = await this.messageRepository.save({
-            ...message,
-            accessChats: accessChats,
-            author_id: data.author_id,
+          const author = await this.userRepository.findOne({
+            where: { id: message.initiator_id },
+            relations: ["message"],
           });
-
-          chat.updated_at = new Date();
-          await this.chatsRepository.save(chat);
-
-          messages.push(updatedMessage);
+          const userSchema = getUserSchema(author);
+          messages.push({ ...getMessageSchema(message), user: userSchema });
           targetChat = chat;
         }
       }
@@ -931,6 +951,19 @@ export class ChatsService {
         where: { id: user_id },
         relations: ["message"],
       });
+
+      const newMmg = await this.messageRepository.save({
+        text: "Пересланное сообщение",
+        message_type: "text",
+        initiator_id: user_id,
+        forwarded_messages: data.messages,
+      });
+
+      chat.updated_at = new Date();
+      chat.message.push(newMmg);
+      initiator.message.push(newMmg);
+      await this.userRepository.save(initiator);
+      await this.chatsRepository.save(chat);
 
       if (targetChat) {
         const forwardMessage = {
@@ -944,7 +977,18 @@ export class ChatsService {
           status: 200,
           data: {
             data: {
-              message: { messages: messages, user: userData },
+              message: {
+                ...getMessageSchema(newMmg),
+                user: getUserSchema(initiator),
+                forwarded_messages: {
+                  chat: getForwardedMsgChatSchema(
+                    await this.chatsRepository.findOne({
+                      where: { id: messages[0]?.chatId },
+                    })
+                  ),
+                  messages,
+                },
+              },
             },
           },
           message: { ...forwardMessage, user: userData },

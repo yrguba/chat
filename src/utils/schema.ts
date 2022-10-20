@@ -17,7 +17,7 @@ export const getUserSchema = (userData) => {
 
 export const getMessageSchema = (messageData) => {
   return {
-    id: messageData.id || "",
+    id: messageData?.id || "",
     initiator_id: messageData.initiator_id || "",
     text: messageData.text || "",
     message_type: messageData.message_type || "",
@@ -27,5 +27,13 @@ export const getMessageSchema = (messageData) => {
     is_edited: messageData.is_edited || false,
     replyMessage: messageData.replyMessage || null,
     message_status: messageData.message_status || messageStatuses.sent,
+    forwarded_messages: messageData.forwarded_messages,
   };
 };
+
+export const getForwardedMsgChatSchema = (chatData) => ({
+  is_group: chatData.is_group,
+  chat_id: chatData.id,
+  chat_name: chatData.name,
+  chat_avatar: chatData.avatar,
+});
