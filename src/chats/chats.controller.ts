@@ -240,6 +240,7 @@ export class ChatsController {
       Number(userId),
       body
     );
+
     if (message?.status === 201) {
       this.chatsGateway.handleEmitNewMessage({
         chat_id: param.chat_id,
@@ -248,10 +249,10 @@ export class ChatsController {
 
       this.chatsService
         .updateMessageStatus(param.chat_id, message.id)
-        .then((message) => {
+        .then((updatedMessage) => {
           this.chatsGateway.handleChangeMessageStatus({
             chatUsers: message.users,
-            messages: [message],
+            messages: [updatedMessage],
           });
         });
     }

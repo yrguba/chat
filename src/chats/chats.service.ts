@@ -258,7 +258,8 @@ export class ChatsService {
       chat.pending_messages = await this.messageRepository
         .createQueryBuilder("messages")
         .where("messages.chat.id = :id", { id: chat.id })
-        .where("messages.message_status != :statusRead", {statusRead : messageStatuses.read })
+        .andWhere("messages.message_status != :statusRead", {statusRead : messageStatuses.read })
+        .andWhere("messages.initiator_id != :initiator_id", {initiator_id : user_id })
         .getCount();
 
       for (const user of users) {
@@ -565,7 +566,8 @@ export class ChatsService {
         const countPendingMessages = await this.messageRepository
           .createQueryBuilder("messages")
           .where("messages.chat.id = :id", { id: chat.id })
-          .where("messages.message_status != :statusRead", {statusRead : messageStatuses.read })
+          .andWhere("messages.message_status != :statusRead", {statusRead : messageStatuses.read })
+          .andWhere("messages.initiator_id != :initiator_id", {initiator_id : user_id })
           .getCount();
 
         if (user_id && !chat.is_group) {
