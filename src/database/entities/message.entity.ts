@@ -14,6 +14,8 @@ export class MessageEntity {
   @PrimaryGeneratedColumn()
   id: number;
   @Column({ nullable: true })
+  chatId: number;
+  @Column({ nullable: true })
   initiator_id: number;
   @Column({ nullable: true })
   author_id?: number;
@@ -33,6 +35,8 @@ export class MessageEntity {
   access?: number[];
   @Column("int", { array: true, default: [] })
   accessChats?: number[];
+  @Column("int", { array: true, default: null })
+  forwarded_messages: number[];
   @ManyToOne(() => ChatsEntity, (chat) => chat.message, {
     onDelete: "CASCADE",
   })
@@ -41,5 +45,5 @@ export class MessageEntity {
     onDelete: "CASCADE",
   })
   user: UserEntity;
-  replyMessage?: MessageEntity
+  replyMessage?: MessageEntity;
 }
