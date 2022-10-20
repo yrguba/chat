@@ -35,7 +35,6 @@ export class ChatsGateway
       ""
     );
     const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
-    console.log(json);
     return json?.id;
   }
 

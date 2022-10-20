@@ -30,10 +30,3 @@ export const getMessageSchema = (messageData) => {
     forwarded_messages: messageData.forwarded_messages,
   };
 };
-
-export const getForwardedMsgChatSchema = (chatData) => ({
-  is_group: chatData.is_group,
-  chat_id: chatData.id,
-  chat_name: chatData.name,
-  chat_avatar: chatData.avatar,
-});

@@ -8,11 +8,7 @@ import { UserEntity } from "../database/entities/user.entity";
 import { ContactEntity } from "../database/entities/contact.entity";
 import { ChatDTO } from "./dto/chat.dto";
 import * as admin from "firebase-admin";
-import {
-  getForwardedMsgChatSchema,
-  getMessageSchema,
-  getUserSchema,
-} from "../utils/schema";
+import { getMessageSchema, getUserSchema } from "../utils/schema";
 import { DeleteMessageDto } from "./dto/deleteMessage.dto";
 import { messageStatuses } from "./constants";
 
@@ -509,14 +505,7 @@ export class ChatsService {
               messages.push(getMessageSchema(foundMsg));
             }
           }
-          message.forwarded_messages = {
-            chat: getForwardedMsgChatSchema(
-              await this.chatsRepository.findOne({
-                where: { id: messages[0]?.chatId },
-              })
-            ),
-            messages,
-          };
+          message.forwarded_messages = messages;
         }
         if (message.reply_message_id) {
           const replyMessage = await this.getMessageWithUser(
@@ -943,27 +932,37 @@ export class ChatsService {
   ): Promise<any> {
     data.initiator_id = Number(user_id);
     const messages = [];
-    let targetChat = null;
 
     const chat = await this.chatsRepository.findOne({
       where: { id: chat_id },
       relations: ["message"],
     });
 
+    const fn = async (message) => {
+      const author = await this.userRepository.findOne({
+        where: { id: message.initiator_id },
+        relations: ["message"],
+      });
+      const userSchema = getUserSchema(author);
+      messages.push({ ...getMessageSchema(message), user: userSchema });
+    };
+
     if (data.messages) {
       for (let messageId of data.messages) {
         const message = await this.messageRepository.findOne({
           where: { id: messageId },
         });
-
         if (chat && message) {
-          const author = await this.userRepository.findOne({
-            where: { id: message.initiator_id },
-            relations: ["message"],
-          });
-          const userSchema = getUserSchema(author);
-          messages.push({ ...getMessageSchema(message), user: userSchema });
-          targetChat = chat;
+          if (message.forwarded_messages?.length) {
+            for (let messageId of message.forwarded_messages) {
+              const message = await this.messageRepository.findOne({
+                where: { id: messageId },
+              });
+              await fn(message);
+            }
+          } else {
+            await fn(message);
+          }
         }
       }
 
@@ -972,11 +971,14 @@ export class ChatsService {
         relations: ["message"],
       });
 
+      const text =
+        messages.length > 1 ? "Пересланные сообщения" : "Пересланное сообщение";
+
       const newMmg = await this.messageRepository.save({
-        text: "Пересланное сообщение",
+        text: text,
         message_type: "text",
         initiator_id: user_id,
-        forwarded_messages: data.messages,
+        forwarded_messages: messages.map((msg) => msg.id),
       });
 
       chat.updated_at = new Date();
@@ -985,13 +987,13 @@ export class ChatsService {
       await this.userRepository.save(initiator);
       await this.chatsRepository.save(chat);
 
-      if (targetChat) {
+      if (chat) {
         const forwardMessage = {
           message_type: "system",
-          text: "Пересланное сообщение",
+          text: text,
         };
         const userData = getUserSchema(initiator);
-        await this.sendPushToChat(targetChat, initiator, forwardMessage);
+        await this.sendPushToChat(chat, initiator, forwardMessage);
 
         return {
           status: 200,
@@ -1000,19 +1002,12 @@ export class ChatsService {
               message: {
                 ...getMessageSchema(newMmg),
                 user: getUserSchema(initiator),
-                forwarded_messages: {
-                  chat: getForwardedMsgChatSchema(
-                    await this.chatsRepository.findOne({
-                      where: { id: messages[0]?.chatId },
-                    })
-                  ),
-                  messages,
-                },
+                forwarded_messages: messages,
               },
             },
           },
           message: { ...forwardMessage, user: userData },
-          users: targetChat.users,
+          users: chat.users,
         };
       } else {
         return {
