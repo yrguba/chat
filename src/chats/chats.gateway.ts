@@ -11,6 +11,7 @@ import { Socket, Server } from "socket.io";
 import { ChatsService } from "./chats.service";
 import { UsersService } from "../users/users.service";
 import { getUserSchema } from "../utils/schema";
+import { messageStatuses } from "./constants";
 
 @WebSocketGateway({
   cors: {
@@ -27,6 +28,16 @@ export class ChatsGateway
   ) {}
 
   @WebSocketServer() server: Server;
+
+  private getUserId(client) {
+    const jwt = client.handshake?.headers?.authorization?.replace(
+      "Bearer ",
+      ""
+    );
+    const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
+
+    return json.id;
+  }
 
   handleEmitNewMessage(chat) {
     chat?.users.map((userId) => {
@@ -120,21 +131,36 @@ export class ChatsGateway
     });
   }
 
+  handleEmitChatPendingMessagesCount(initiator_id, chat) {
+    this.chatsService
+      .getChatUnreadMessages(initiator_id, chat.id)
+      .then((count) => {
+        chat?.users.map((userId) => {
+          this.usersService.getUser(userId).then((user) => {
+            if (user && user.socket_id) {
+              this.server?.sockets
+                ?.to(user.socket_id)
+                ?.emit("chatPendingMessages", {
+                  chat_id: chat.id,
+                  pending_messages: count,
+                });
+            }
+          });
+        });
+      });
+  }
+
   @SubscribeMessage("messageAction")
   handleMessageAction(client: any, payload: any) {
-    const jwt = client.handshake?.headers?.authorization?.replace(
-      "Bearer ",
-      ""
-    );
-    const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
-    if (json?.id) {
+    const clientUserId = this.getUserId(client);
+    if (clientUserId) {
       const { chat_id, action } = payload;
-      this.usersService.getUser(json.id).then((initiator) => {
-        this.chatsService.getChat(json.id, chat_id).then((data: any) => {
+      this.usersService.getUser(clientUserId).then((initiator) => {
+        this.chatsService.getChat(clientUserId, chat_id).then((data: any) => {
           data?.data?.data?.users.map((userId) => {
             this.usersService.getUser(userId).then((user) => {
               if (user && user?.id) {
-                if (user.id !== json.id) {
+                if (user.id !== clientUserId) {
                   if (user && user.socket_id) {
                     this.server?.sockets
                       ?.to(user.socket_id)
@@ -156,6 +182,36 @@ export class ChatsGateway
     return "";
   }
 
+  @SubscribeMessage("messageRead")
+  handleMessageReadAction(
+    client: any,
+    payload: { chat_id: number; messages: number[] }
+  ) {
+    const clientUserId = this.getUserId(client);
+    const { chat_id, messages } = payload;
+
+    const updatedMessages = [];
+
+    for (const message of messages) {
+      this.chatsService
+        .updateMessageStatus(message, messageStatuses.read)
+        .then((updatedMessage) => {
+          updatedMessages.push(updatedMessage);
+        });
+    }
+
+    this.chatsService.getChatById(chat_id).then((chat) => {
+      if (chat) {
+        this.handleChangeMessageStatus({
+          chatUsers: chat.users,
+          messages: updatedMessages,
+        });
+
+        this.handleEmitChatPendingMessagesCount(clientUserId, chat);
+      }
+    });
+  }
+
   @SubscribeMessage("ping")
   handlePing(client: any, payload: any): string {
     client?.socket?.emit("pong", {
@@ -169,54 +225,48 @@ export class ChatsGateway
   }
 
   handleDisconnect(client: Socket) {
-    const jwt = client.handshake?.headers?.authorization?.replace(
-      "Bearer ",
-      ""
-    );
-    const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
-    if (json?.id) {
-      this.usersService.updateUserStatus(json.id, true).then((initiator) => {
-        this.chatsService.getUserChats(json.id).then((chats) => {
-          if (chats) {
-            chats.map((chat) => {
-              chat?.users.map((userId) => {
-                if (userId !== json?.id) {
-                  this.usersService.getUser(userId).then((user) => {
-                    if (user && user.socket_id) {
-                      this.server?.sockets
-                        ?.to(user.socket_id)
-                        ?.emit("receiveUserStatus", {
-                          user: getUserSchema(initiator),
-                          status: "offline",
-                        });
-                    }
-                  });
-                }
+    const clientUserId = this.getUserId(client);
+    if (clientUserId) {
+      this.usersService
+        .updateUserStatus(clientUserId, true)
+        .then((initiator) => {
+          this.chatsService.getUserChats(clientUserId).then((chats) => {
+            if (chats) {
+              chats.map((chat) => {
+                chat?.users.map((userId) => {
+                  if (userId !== clientUserId) {
+                    this.usersService.getUser(userId).then((user) => {
+                      if (user && user.socket_id) {
+                        this.server?.sockets
+                          ?.to(user.socket_id)
+                          ?.emit("receiveUserStatus", {
+                            user: getUserSchema(initiator),
+                            status: "offline",
+                          });
+                      }
+                    });
+                  }
+                });
               });
-            });
-          }
+            }
+          });
         });
-      });
     }
 
     console.log("disconnect client");
   }
 
   handleConnection(client: Socket, ...args: any[]) {
-    const jwt = client.handshake?.headers?.authorization?.replace(
-      "Bearer ",
-      ""
-    );
-    const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
-    if (json?.id) {
+    const clientUserId = this.getUserId(client);
+    if (clientUserId) {
       this.usersService
-        .updateUserSocket(json.id, client.id, true)
+        .updateUserSocket(clientUserId, client.id, true)
         .then((initiator) => {
-          this.chatsService.getUserChats(json.id).then((chats) => {
+          this.chatsService.getUserChats(clientUserId).then((chats) => {
             if (chats) {
               chats.map((chat) => {
                 chat?.users.map((userId) => {
-                  if (userId !== json?.id) {
+                  if (userId !== clientUserId) {
                     this.usersService.getUser(userId).then((user) => {
                       if (user && user.socket_id) {
                         this.server?.sockets

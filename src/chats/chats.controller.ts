@@ -169,29 +169,6 @@ export class ChatsController {
       param.chat_id,
       { page, limit }
     );
-    if (messages.status === 200) {
-      const updatedMessages = [];
-      for (const message of messages.data.data) {
-        if (
-          message.initiator_id !== userId &&
-          message.message_status !== messageStatuses.read
-        ) {
-          const updatedMessage = await this.chatsService.updateMessageStatus(
-            param.chat_id,
-            message.id,
-            messageStatuses.read
-          );
-          updatedMessages.push(updatedMessage);
-        }
-      }
-
-      if (updatedMessages.length > 0) {
-        this.chatsGateway.handleChangeMessageStatus({
-          messages: updatedMessages,
-          chatUsers: messages.users,
-        });
-      }
-    }
     res.status(messages.status).json(messages.data);
   }
 
@@ -248,7 +225,7 @@ export class ChatsController {
       });
 
       this.chatsService
-        .updateMessageStatus(param.chat_id, message.id)
+        .updateMessageStatus(message.id)
         .then((updatedMessage) => {
           this.chatsGateway.handleChangeMessageStatus({
             chatUsers: message.users,

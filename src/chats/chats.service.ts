@@ -248,6 +248,26 @@ export class ChatsService {
     }
   }
 
+  async getChatById(chat_id: number) {
+    return await this.chatsRepository
+      .createQueryBuilder("chat")
+      .where("chat.id = :id", { id: chat_id })
+      .getOne();
+  }
+
+  async getChatUnreadMessages(initiator_id: number, chat_id: number) {
+    return await this.messageRepository
+      .createQueryBuilder("messages")
+      .where("messages.chat.id = :id", { id: chat_id })
+      .andWhere("messages.message_status != :statusRead", {
+        statusRead: messageStatuses.read,
+      })
+      .andWhere("messages.initiator_id != :initiator_id", {
+        initiator_id: initiator_id,
+      })
+      .getCount();
+  }
+
   async getChat(user_id: number, chat_id: number) {
     const chat = await this.chatsRepository
       .createQueryBuilder("chat")
@@ -1098,7 +1118,6 @@ export class ChatsService {
   }
 
   async updateMessageStatus(
-    chat_id: number,
     message_id: number,
     status: string = messageStatuses.pending
   ): Promise<any> {
