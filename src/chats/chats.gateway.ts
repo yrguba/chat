@@ -54,11 +54,11 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     }
 
     handleChangeMessageStatus(data) {
-        data?.users.map((userId) => {
+        data?.chatUsers.map((userId) => {
             this.usersService.getUser(userId).then((user) => {
                 if (user && user.socket_id) {
                     this.server?.sockets?.to(user.socket_id)?.emit('receiveMessageStatus', {
-                        messages: {messages: data?.messages, chat_id: data.chat_id, status: data.status},
+                        messages: data?.messages,
                     });
                 }
             });

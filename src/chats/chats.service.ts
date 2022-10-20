@@ -487,6 +487,7 @@ export class ChatsService {
           total: count,
           chat: chat,
         },
+        users: chat.users,
       };
     } else {
       return {
@@ -555,12 +556,19 @@ export class ChatsService {
       const splicedChats = filteredChats.splice(offset, options.limit);
 
       for (const chat of splicedChats) {
+        const countPendingMessages = await this.messageRepository
+          .createQueryBuilder("messages")
+          .where("messages.chat.id = :id", { id: chat.id })
+          .where("messages.message_status != :statusRead", {statusRead : messageStatuses.read })
+          .getCount();
+
         if (user_id && !chat.is_group) {
           const chatData = await this.getChatName(user_id, chat);
           chat.name = chatData?.name ? chatData?.name : chat.name;
           chat.avatar = chatData?.avatar ? chatData?.avatar : chat.avatar;
         }
         chat.message = await this.getLastMessageFromChat(chat.id, user_id);
+        chat.pending_messages = countPendingMessages;
       }
 
       if (splicedChats) {
