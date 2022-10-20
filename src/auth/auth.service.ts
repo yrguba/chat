@@ -1,22 +1,27 @@
-import { Injectable } from '@nestjs/common';
-import { LoginDTO } from './dto/login.dto';
-import { validate } from 'class-validator';
-import { JwtService } from '@nestjs/jwt';
-import { InjectRepository } from '@nestjs/typeorm';
-import { UserEntity } from '../database/entities/user.entity';
-import { Repository } from 'typeorm';
-import * as bcrypt from 'bcrypt';
-import * as https from 'https';
-import * as argon2 from 'argon2';
+import { Injectable } from "@nestjs/common";
+import { LoginDTO } from "./dto/login.dto";
+import { validate } from "class-validator";
+import { JwtService } from "@nestjs/jwt";
+import { InjectRepository } from "@nestjs/typeorm";
+import { UserEntity } from "../database/entities/user.entity";
+import { Repository } from "typeorm";
+import * as bcrypt from "bcrypt";
+import * as https from "https";
+import * as argon2 from "argon2";
 
-import { badRequestResponse, internalErrorResponse, successResponse, unAuthorizeResponse } from '../utils/response';
+import {
+  badRequestResponse,
+  internalErrorResponse,
+  successResponse,
+  unAuthorizeResponse,
+} from "../utils/response";
 
 @Injectable()
 export class AuthService {
   constructor(
     private jwtService: JwtService,
     @InjectRepository(UserEntity)
-    private usersRepository: Repository<UserEntity>,
+    private usersRepository: Repository<UserEntity>
   ) {}
 
   async login(user: any): Promise<Record<string, any>> {
@@ -34,8 +39,8 @@ export class AuthService {
 
     if (isValid) {
       const userDetails = await this.usersRepository
-        .createQueryBuilder('users')
-        .where('users.phone = :phone', { phone: user.phone })
+        .createQueryBuilder("users")
+        .where("users.phone = :phone", { phone: user.phone })
         .getOne();
 
       if (userDetails == null) {
@@ -45,22 +50,28 @@ export class AuthService {
       const isValid = bcrypt.compareSync(user.code, userDetails.code);
       if (isValid) {
         delete userDetails.code;
-        const refreshToken = this.jwtService.sign({
-          phone: user.phone,
-          id: userDetails.id,
-        }, {
-          secret: `${process.env.SECRET_REFRESH.replace(/\\\\n/gm, '\\n')}`,
-          expiresIn: '7d',
-        });
-        await this.updateRefreshToken(userDetails.id, refreshToken)
-        return successResponse({
-          access_token: this.jwtService.sign({
+        const refreshToken = this.jwtService.sign(
+          {
             phone: user.phone,
             id: userDetails.id,
-          },{
-                secret: `${process.env.SECRET.replace(/\\\\n/gm, '\\n')}`,
-                expiresIn: '15m',
-              }),
+          },
+          {
+            secret: `${process.env.SECRET_REFRESH.replace(/\\\\n/gm, "\\n")}`,
+            expiresIn: "7d",
+          }
+        );
+        await this.updateRefreshToken(userDetails.id, refreshToken);
+        return successResponse({
+          access_token: this.jwtService.sign(
+            {
+              phone: user.phone,
+              id: userDetails.id,
+            },
+            {
+              secret: `${process.env.SECRET.replace(/\\\\n/gm, "\\n")}`,
+              expiresIn: "15m",
+            }
+          ),
           ...userDetails,
           refresh_token: refreshToken,
         });
@@ -74,12 +85,12 @@ export class AuthService {
 
   async send_code(phone: string): Promise<Record<string, any>> {
     if (!phone) {
-      return badRequestResponse("Invalid phone")
+      return badRequestResponse("Invalid phone");
     }
 
     const userDetails = await this.usersRepository
-      .createQueryBuilder('users')
-      .where('users.phone = :phone', { phone: phone })
+      .createQueryBuilder("users")
+      .where("users.phone = :phone", { phone: phone })
       .getOne();
 
     const code = this.makeCode(4);
@@ -92,7 +103,7 @@ export class AuthService {
       await this.usersRepository
         .save(userData)
         .then(() => {
-          return successResponse("Code sent successfully")
+          return successResponse("Code sent successfully");
         })
         .catch((error) => {
           return internalErrorResponse(error);
@@ -111,24 +122,24 @@ export class AuthService {
     }
 
     // TODO Вынести в константы
-    const data = await this.post('https://online.sigmasms.ru/api/login', {
-      username: 'Cheresergey@gmail.com',
-      password: 'JMv0d9',
+    const data = await this.post("https://online.sigmasms.ru/api/login", {
+      username: "Cheresergey@gmail.com",
+      password: "JMv0d9",
     });
 
     if (data) {
       const token = JSON.parse(<string>data).token;
       await this.post(
-        'https://online.sigmasms.ru/api/sendings',
+        "https://online.sigmasms.ru/api/sendings",
         {
           recipient: phone,
-          type: 'sms',
+          type: "sms",
           payload: {
-            sender: 'B-Media',
+            sender: "B-Media",
             text: code,
           },
         },
-        token,
+        token
       );
     }
 
@@ -136,9 +147,9 @@ export class AuthService {
   }
 
   makeTemporaryPass(length) {
-    let result = '';
+    let result = "";
     const characters =
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     const charactersLength = characters.length;
     for (let i = 0; i < length; i++) {
       result += characters.charAt(Math.floor(Math.random() * charactersLength));
@@ -147,8 +158,8 @@ export class AuthService {
   }
 
   makeCode(length) {
-    let result = '';
-    const characters = '0123456789';
+    let result = "";
+    const characters = "0123456789";
     const charactersLength = characters.length;
     for (let i = 0; i < length; i++) {
       result += characters.charAt(Math.floor(Math.random() * charactersLength));
@@ -159,16 +170,16 @@ export class AuthService {
   async post(url, data, token = null) {
     const dataString = JSON.stringify(data);
     const options = {
-      method: 'POST',
+      method: "POST",
       headers: token
         ? {
             Authorization: token,
-            'Content-Type': 'application/json',
-            'Content-Length': dataString.length,
+            "Content-Type": "application/json",
+            "Content-Length": dataString.length,
           }
         : {
-            'Content-Type': 'application/json',
-            'Content-Length': dataString.length,
+            "Content-Type": "application/json",
+            "Content-Length": dataString.length,
           },
       timeout: 5000,
     };
@@ -180,20 +191,20 @@ export class AuthService {
         }
 
         const body = [];
-        res.on('data', (chunk) => body.push(chunk));
-        res.on('end', () => {
+        res.on("data", (chunk) => body.push(chunk));
+        res.on("end", () => {
           const resString = Buffer.concat(body).toString();
           resolve(resString);
         });
       });
 
-      req.on('error', (err) => {
+      req.on("error", (err) => {
         reject(err);
       });
 
-      req.on('timeout', () => {
+      req.on("timeout", () => {
         req.destroy();
-        reject(new Error('Request time out'));
+        reject(new Error("Request time out"));
       });
 
       req.write(dataString);
@@ -201,19 +212,22 @@ export class AuthService {
     });
   }
 
-  async refreshTokens(id: number, refresh_token: string): Promise<Record<string, any>> {
+  async refreshTokens(
+    id: number,
+    refresh_token: string
+  ): Promise<Record<string, any>> {
     const user = await this.usersRepository
-        .createQueryBuilder('users')
-        .where('users.id = :id', { id: id })
-        .getOne();
+      .createQueryBuilder("users")
+      .where("users.id = :id", { id: id })
+      .getOne();
 
     if (user == null || !user.refresh_token) {
       return unAuthorizeResponse();
     }
 
     const refreshTokenMatches = await argon2.verify(
-        user.refresh_token,
-        refresh_token,
+      user.refresh_token,
+      refresh_token
     );
 
     if (!refreshTokenMatches) {
@@ -221,12 +235,10 @@ export class AuthService {
     }
     const tokens = await this.getTokens(user.id, user.phone);
     await this.updateRefreshToken(user.id, tokens.refresh_token);
-    return successResponse(
-      {
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token,
-      }
-    );
+    return successResponse({
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+    });
   }
 
   async updateRefreshToken(userId: number, refreshToken: string) {
@@ -239,34 +251,34 @@ export class AuthService {
   async getTokens(userId: number, phone: string) {
     return {
       access_token: this.jwtService.sign(
-          {
-            phone: phone,
-            id: userId,
-          },
-          {
-            secret: `${process.env.SECRET.replace(/\\\\n/gm, '\\n')}`,
-            expiresIn: '15m',
-          },
+        {
+          phone: phone,
+          id: userId,
+        },
+        {
+          secret: `${process.env.SECRET.replace(/\\\\n/gm, "\\n")}`,
+          expiresIn: "15m",
+        }
       ),
       refresh_token: this.jwtService.sign(
-          {
-            phone: phone,
-            id: userId,
-          },
-          {
-            secret: `${process.env.SECRET_REFRESH.replace(/\\\\n/gm, '\\n')}`,
-            expiresIn: '7d',
-          },
-      )
-    }
+        {
+          phone: phone,
+          id: userId,
+        },
+        {
+          secret: `${process.env.SECRET_REFRESH.replace(/\\\\n/gm, "\\n")}`,
+          expiresIn: "7d",
+        }
+      ),
+    };
   }
 
   async addFirebaseToken(userId: number, token: string) {
     let tokens = [];
     const profile = await this.usersRepository
-        .createQueryBuilder('users')
-        .where('users.id = :id', { id: userId })
-        .getOne();
+      .createQueryBuilder("users")
+      .where("users.id = :id", { id: userId })
+      .getOne();
 
     if (!Array.isArray(profile.fb_tokens)) {
       tokens.push(token);
@@ -275,7 +287,7 @@ export class AuthService {
       tokens.push(token);
     }
 
-    const profileUpdated = {...profile, fb_tokens: tokens}
+    const profileUpdated = { ...profile, fb_tokens: tokens };
     await this.usersRepository.save(profileUpdated);
 
     return successResponse(tokens);
@@ -283,16 +295,16 @@ export class AuthService {
 
   async deleteFirebaseToken(userId: number, token: string) {
     const profile = await this.usersRepository
-        .createQueryBuilder('users')
-        .where('users.id = :id', { id: userId })
-        .getOne();
+      .createQueryBuilder("users")
+      .where("users.id = :id", { id: userId })
+      .getOne();
 
     if (profile.fb_tokens.includes(token)) {
       const tokens = profile.fb_tokens;
       const targetTokenIndex = tokens.indexOf(token);
       tokens.splice(targetTokenIndex, 1);
 
-      const profileUpdated = {...profile, fb_tokens: tokens}
+      const profileUpdated = { ...profile, fb_tokens: tokens };
       await this.usersRepository.save(profileUpdated);
       return successResponse(tokens);
     }

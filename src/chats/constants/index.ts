@@ -1,5 +1,5 @@
 export const messageStatuses = {
-  sent: 'sent',
-  pending: 'pending',
-  read: 'read',
-}
+  sent: "sent",
+  pending: "pending",
+  read: "read",
+};

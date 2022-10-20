@@ -1,10 +1,10 @@
-import {Injectable} from '@nestjs/common';
-import {InjectRepository} from '@nestjs/typeorm';
-import {JwtService} from "@nestjs/jwt";
-import {DeleteResult, Repository} from 'typeorm';
-import {UserEntity} from '../database/entities/user.entity';
-import {ContactEntity} from "../database/entities/contact.entity";
-import {getUserSchema} from "../utils/schema";
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { JwtService } from "@nestjs/jwt";
+import { DeleteResult, Repository } from "typeorm";
+import { UserEntity } from "../database/entities/user.entity";
+import { ContactEntity } from "../database/entities/contact.entity";
+import { getUserSchema } from "../utils/schema";
 
 @Injectable()
 export class UsersService {
@@ -13,34 +13,34 @@ export class UsersService {
     private usersRepository: Repository<UserEntity>,
     @InjectRepository(ContactEntity)
     private contactsRepository: Repository<ContactEntity>,
-    private readonly jwtService: JwtService,
-  ) {
-  }
+    private readonly jwtService: JwtService
+  ) {}
 
   async getContactName(user_id) {
     const user = await this.getUser(user_id);
 
     if (user) {
-      const contact = await this.contactsRepository.createQueryBuilder('contact')
-          .where('contact.owner = :id', { id: user_id })
-          .andWhere('contact.phone = :phone', { phone: user.phone })
-          .getOne();
+      const contact = await this.contactsRepository
+        .createQueryBuilder("contact")
+        .where("contact.owner = :id", { id: user_id })
+        .andWhere("contact.phone = :phone", { phone: user.phone })
+        .getOne();
 
-      return contact?.name || '';
+      return contact?.name || "";
     }
 
-    return '';
+    return "";
   }
 
   async getUsers(id: number) {
     const users = await this.usersRepository
-      .createQueryBuilder('users')
-      .where('users.id != :id', { id: Number(id) })
+      .createQueryBuilder("users")
+      .where("users.id != :id", { id: Number(id) })
       .getMany();
 
-    let usersData = [];
+    const usersData = [];
 
-    for (let user of users) {
+    for (const user of users) {
       user.contactName = await this.getContactName(user.id);
       usersData.push(getUserSchema(user));
     }
@@ -48,60 +48,68 @@ export class UsersService {
     return {
       status: 200,
       data: {
-        data: usersData
-      }
-    }
+        data: usersData,
+      },
+    };
   }
 
   async getUser(id: number): Promise<UserEntity> {
     return await this.usersRepository
-      .createQueryBuilder('users')
-      .where('users.id = :id', {id: id})
+      .createQueryBuilder("users")
+      .where("users.id = :id", { id: id })
       .getOne();
   }
 
   async getUserWithContacts(id: number): Promise<UserEntity> {
     return await this.usersRepository.findOne({
       where: { id: id },
-      relations: ['contact'],
-    })
-  };
+      relations: ["contact"],
+    });
+  }
 
   async deleteUser(user_id: number): Promise<DeleteResult> {
     return await this.usersRepository.delete(user_id);
   }
 
-  async updateUserSocket(id: number, socket_id: any, is_online: boolean = false,) {
+  async updateUserSocket(id: number, socket_id: any, is_online = false) {
     const user = await this.usersRepository
-      .createQueryBuilder('users')
-      .where('users.id = :id', {id: id})
+      .createQueryBuilder("users")
+      .where("users.id = :id", { id: id })
       .getOne();
     if (user) {
-      const updated = Object.assign(user, {socket_id: socket_id, is_online: is_online, last_active: new Date()});
+      const updated = Object.assign(user, {
+        socket_id: socket_id,
+        is_online: is_online,
+        last_active: new Date(),
+      });
       return await this.usersRepository.save(updated);
     }
   }
 
-  async updateUserStatus(id: number, is_online: boolean = false) {
+  async updateUserStatus(id: number, is_online = false) {
     const user = await this.usersRepository
-      .createQueryBuilder('users')
-      .where('users.id = :id', {id: id})
+      .createQueryBuilder("users")
+      .where("users.id = :id", { id: id })
       .getOne();
     if (user) {
-      const updated = Object.assign(user, {is_online: is_online, last_active: new Date()});
+      const updated = Object.assign(user, {
+        is_online: is_online,
+        last_active: new Date(),
+      });
       return await this.usersRepository.save(updated);
     }
   }
 
   async getUserIdFromToken(req): Promise<number> {
     if (req.headers && req.headers.authorization) {
-      const jwt = req.headers.authorization.replace('Bearer ', '');
-      const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
+      const jwt = req.headers.authorization.replace("Bearer ", "");
+      const json = this.jwtService.decode(jwt, { json: true }) as {
+        id: number;
+      };
 
       return json.id;
     } else {
       return null;
     }
-
   }
 }

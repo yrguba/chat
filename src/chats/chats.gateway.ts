@@ -38,7 +38,7 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                 }
             });
         });
-    };
+    }
 
     handleEmitDeleteMessage(data) {
         data?.chat?.users.map((userId) => {
@@ -51,7 +51,7 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                 }
             });
         });
-    };
+    }
 
     handleChangeMessageStatus(data) {
         data?.users.map((userId) => {
@@ -63,7 +63,7 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                 }
             });
         });
-    };
+    }
 
     handleEmitNewChat(chat) {
         chat?.users.map((userId) => {
@@ -75,7 +75,7 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                 }
             });
         });
-    };
+    }
 
     handleEmitAddToChat(chat) {
         chat?.users.map((userId) => {
@@ -87,7 +87,7 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                 }
             });
         });
-    };
+    }
 
     handleEmitDeleteFromChat(chat) {
         chat?.users.map((userId) => {
@@ -100,7 +100,7 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             });
 
         });
-    };
+    }
 
     @SubscribeMessage('messageAction')
     handleMessageAction(client: any, payload: any) {

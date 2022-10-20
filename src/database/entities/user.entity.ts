@@ -1,6 +1,6 @@
-import {Entity, Column, PrimaryGeneratedColumn, OneToMany} from 'typeorm';
-import {ContactEntity} from "./contact.entity";
-import {MessageEntity} from "./message.entity";
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from "typeorm";
+import { ContactEntity } from "./contact.entity";
+import { MessageEntity } from "./message.entity";
 
 @Entity()
 export class UserEntity {
