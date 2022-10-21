@@ -938,7 +938,7 @@ export class ChatsService {
       relations: ["message"],
     });
 
-    const fn = async (message) => {
+    const findAuthorAndPushInArr = async (message) => {
       const author = await this.userRepository.findOne({
         where: { id: message.initiator_id },
         relations: ["message"],
@@ -958,10 +958,10 @@ export class ChatsService {
               const message = await this.messageRepository.findOne({
                 where: { id: messageId },
               });
-              await fn(message);
+              await findAuthorAndPushInArr(message);
             }
           } else {
-            await fn(message);
+            await findAuthorAndPushInArr(message);
           }
         }
       }
