@@ -28,5 +28,6 @@ export class ChatsEntity {
   @Column({ nullable: true, default: 0 })
   pending_messages: number;
   chatUsers: any;
-  replyMessage?: MessageEntity
+  replyMessage?: MessageEntity;
+  totalMessages: number;
 }

@@ -27,6 +27,7 @@ export const getMessageSchema = (messageData) => {
     is_edited: messageData.is_edited || false,
     replyMessage: messageData.replyMessage || null,
     message_status: messageData.message_status || messageStatuses.sent,
-    forwarded_messages: messageData.forwarded_messages,
+    forwarded_messages: messageData.forwarded_messages || [],
+    totalMessages: messageData?.totalMessages || 0,
   };
 };

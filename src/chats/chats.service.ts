@@ -609,6 +609,12 @@ export class ChatsService {
           })
           .getCount();
 
+        const countTotalMessages = await this.messageRepository
+          .createQueryBuilder("messages")
+          .where("messages.chat.id = :id", { id: chat.id })
+          .getCount();
+
+
         if (user_id && !chat.is_group) {
           const chatData = await this.getChatName(user_id, chat);
           chat.name = chatData?.name ? chatData?.name : chat.name;
@@ -616,6 +622,7 @@ export class ChatsService {
         }
         chat.message = await this.getLastMessageFromChat(chat.id, user_id);
         chat.pending_messages = countPendingMessages;
+        chat.totalMessages = countTotalMessages;
       }
 
       if (splicedChats) {
