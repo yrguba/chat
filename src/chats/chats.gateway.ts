@@ -10,8 +10,12 @@ import { JwtService } from "@nestjs/jwt";
 import { Socket, Server } from "socket.io";
 import { ChatsService } from "./chats.service";
 import { UsersService } from "../users/users.service";
-import { getUserSchema } from "../utils/schema";
+import { getMessageSchema, getUserSchema } from "../utils/schema";
 import { messageStatuses } from "./constants";
+import { InjectRepository } from "@nestjs/typeorm";
+import { ChatsEntity } from "../database/entities/chats.entity";
+import { Repository } from "typeorm";
+import { UserEntity } from "../database/entities/user.entity";
 
 @WebSocketGateway({
   cors: {
@@ -22,6 +26,10 @@ export class ChatsGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
   constructor(
+    @InjectRepository(ChatsEntity)
+    private chatsRepository: Repository<ChatsEntity>,
+    @InjectRepository(UserEntity)
+    private userRepository: Repository<UserEntity>,
     private chatsService: ChatsService,
     private usersService: UsersService,
     private readonly jwtService: JwtService
@@ -147,6 +155,55 @@ export class ChatsGateway
           });
         });
       });
+  }
+
+  @SubscribeMessage("searchMessages")
+  async handleSearchMessages(
+    client: any,
+    payload: { chat_id: number; limit: number; value: string }
+  ) {
+    let foundMessages = [];
+
+    const getSortArr = (arr) => {
+      return arr.sort(
+        (a, b) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+    };
+
+    const chat = await this.chatsRepository.findOne({
+      where: { id: Number(payload.chat_id) },
+      relations: ["message"],
+    });
+    if (payload.value && chat.message.length) {
+      let index = 0;
+      let page = Math.ceil(chat.message.length / payload.limit);
+      for (let msg of getSortArr(chat.message)) {
+        if (index && index % payload.limit === 0) {
+          page -= 1;
+        }
+        if (msg.text.toLowerCase().includes(payload.value.toLowerCase())) {
+          const initiator = await this.userRepository.findOne({
+            where: { id: msg.initiator_id },
+          });
+          console.log(page);
+          foundMessages.push({
+            message: {
+              ...getMessageSchema(msg),
+              user: getUserSchema(initiator),
+            },
+            page,
+          });
+        }
+        index += 1;
+      }
+    } else {
+      foundMessages = [];
+    }
+    this.server?.sockets?.to(client.id)?.emit("receiveFoundMessages", {
+      chat_id: payload.chat_id,
+      messages: foundMessages,
+    });
   }
 
   @SubscribeMessage("messageAction")
