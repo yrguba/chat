@@ -82,8 +82,6 @@ export class ChatsGateway
   }
 
   handleChangeMessageStatus(data) {
-    console.log(85)
-    console.log(data)
     data?.chatUsers.map((userId) => {
       this.usersService.getUser(userId).then((user) => {
         if (user && user.socket_id) {
@@ -192,10 +190,6 @@ export class ChatsGateway
     const clientUserId = this.getUserId(client);
     const { chat_id, messages } = payload;
 
-    console.log(195)
-    console.log(payload)
-
-    console.log('init upd messages')
     const updatedMessages = [];
 
     for (const message of messages) {
@@ -205,11 +199,8 @@ export class ChatsGateway
         .then((updatedMessage) => {
           updatedMessages.push(updatedMessage);
 
-          console.log(messages.length, updatedMessages.length)
-
           if (messages.length === updatedMessages.length) {
             this.chatsService.getChatById(chat_id).then((chat) => {
-              console.log(updatedMessages);
               if (chat) {
                 this.handleChangeMessageStatus({
                   chatUsers: chat.users,
