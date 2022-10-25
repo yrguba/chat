@@ -150,52 +150,12 @@ export class ChatsGateway
   }
 
   @SubscribeMessage("searchMessages")
-  async handleSearchMessages(
-    client: any,
-    payload: { chat_id: number; limit: number; value: string }
-  ) {
-    let foundMessages = [];
-
-    const getSortArr = (arr) => {
-      return arr.sort(
-        (a, b) =>
-          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-      );
-    };
-
-    // const chat = await this.chatsRepository.findOne({
-    //   where: { id: Number(payload.chat_id) },
-    //   relations: ["message"],
-    // });
-    // if (payload.value && chat.message.length) {
-    //   let index = 0;
-    //   let page = Math.ceil(chat.message.length / payload.limit);
-    //   for (let msg of getSortArr(chat.message)) {
-    //     if (index && index % payload.limit === 0) {
-    //       page -= 1;
-    //     }
-    //     if (msg.text.toLowerCase().includes(payload.value.toLowerCase())) {
-    // const initiator = await this.userRepository.findOne({
-    //   where: { id: msg.initiator_id },
-    // });
-    // console.log(page);
-    // foundMessages.push({
-    //   message: {
-    // ...getMessageSchema(msg),
-    // user: getUserSchema(initiator),
-    //         },
-    //         page,
-    //       });
-    //     }
-    //     index += 1;
-    //   }
-    // } else {
-    //   foundMessages = [];
-    // }
-    // this.server?.sockets?.to(client.id)?.emit("receiveFoundMessages", {
-    //   chat_id: payload.chat_id,
-    //   messages: foundMessages,
-    // });
+  async handleSearchMessages(client: any, payload: any) {
+    const foundMessages = await this.chatsService.getSearchMessages(payload);
+    this.server?.sockets?.to(client.id)?.emit("receiveFoundMessages", {
+      chat_id: payload.chat_id,
+      messages: foundMessages,
+    });
   }
 
   @SubscribeMessage("messageAction")

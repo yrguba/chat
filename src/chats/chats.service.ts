@@ -544,6 +544,51 @@ export class ChatsService {
     }
   }
 
+  async getSearchMessages(payload: {
+    chat_id: number;
+    limit: number;
+    value: string;
+  }): Promise<any> {
+    let foundMessages = [];
+
+    const getSortArr = (arr) => {
+      return arr.sort(
+        (a, b) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+    };
+
+    const chat = await this.chatsRepository.findOne({
+      where: { id: Number(payload.chat_id) },
+      relations: ["message"],
+    });
+    if (payload.value && chat.message.length) {
+      let index = 0;
+      let page = Math.ceil(chat.message.length / payload.limit);
+      for (let msg of getSortArr(chat.message)) {
+        if (index && index % payload.limit === 0) {
+          page -= 1;
+        }
+        if (msg.text.toLowerCase().includes(payload.value.toLowerCase())) {
+          const initiator = await this.userRepository.findOne({
+            where: { id: msg.initiator_id },
+          });
+          foundMessages.push({
+            message: {
+              ...getMessageSchema(msg),
+              user: getUserSchema(initiator),
+            },
+            page,
+          });
+        }
+        index += 1;
+      }
+    } else {
+      foundMessages = [];
+    }
+    return foundMessages;
+  }
+
   async getMessage(id: number): Promise<any> {
     return await this.messageRepository.findOne({
       where: { id: id },
@@ -613,7 +658,6 @@ export class ChatsService {
           .createQueryBuilder("messages")
           .where("messages.chat.id = :id", { id: chat.id })
           .getCount();
-
 
         if (user_id && !chat.is_group) {
           const chatData = await this.getChatName(user_id, chat);
