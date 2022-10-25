@@ -192,14 +192,18 @@ export class ChatsGateway
     const updatedMessages = [];
 
     for (const message of messages) {
+      console.log(message);
       this.chatsService
         .updateMessageStatus(message, messageStatuses.read)
         .then((updatedMessage) => {
+          console.log(updatedMessage);
           updatedMessages.push(updatedMessage);
         });
     }
 
     this.chatsService.getChatById(chat_id).then((chat) => {
+      console.log(chat);
+      console.log(updatedMessages);
       if (chat) {
         this.handleChangeMessageStatus({
           chatUsers: chat.users,
