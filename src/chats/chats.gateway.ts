@@ -12,6 +12,7 @@ import { ChatsService } from "./chats.service";
 import { UsersService } from "../users/users.service";
 import { getUserSchema } from "../utils/schema";
 import { messageStatuses } from "./constants";
+import {log} from "util";
 
 @WebSocketGateway({
   cors: {
@@ -81,6 +82,8 @@ export class ChatsGateway
   }
 
   handleChangeMessageStatus(data) {
+    console.log(85)
+    console.log(data)
     data?.chatUsers.map((userId) => {
       this.usersService.getUser(userId).then((user) => {
         if (user && user.socket_id) {
@@ -189,20 +192,26 @@ export class ChatsGateway
     const clientUserId = this.getUserId(client);
     const { chat_id, messages } = payload;
 
+    console.log(195)
+    console.log(payload)
+
+    console.log('init upd messages')
     const updatedMessages = [];
 
     for (const message of messages) {
-      console.log(message);
       this.chatsService
         .updateMessageStatus(message, messageStatuses.read)
         .then((updatedMessage) => {
+          console.log(198);
           console.log(updatedMessage);
           updatedMessages.push(updatedMessage);
         });
     }
 
     this.chatsService.getChatById(chat_id).then((chat) => {
+      console.log(205);
       console.log(chat);
+      console.log(208);
       console.log(updatedMessages);
       if (chat) {
         this.handleChangeMessageStatus({
