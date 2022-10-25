@@ -199,29 +199,29 @@ export class ChatsGateway
     const updatedMessages = [];
 
     for (const message of messages) {
+
       this.chatsService
         .updateMessageStatus(message, messageStatuses.read)
         .then((updatedMessage) => {
-          console.log(198);
-          console.log(updatedMessage);
           updatedMessages.push(updatedMessage);
+
+          console.log(messages.length, updatedMessages.length)
+
+          if (messages.length === updatedMessages.length) {
+            this.chatsService.getChatById(chat_id).then((chat) => {
+              console.log(updatedMessages);
+              if (chat) {
+                this.handleChangeMessageStatus({
+                  chatUsers: chat.users,
+                  messages: updatedMessages,
+                });
+
+                this.handleEmitChatPendingMessagesCount(clientUserId, chat);
+              }
+            });
+          }
         });
     }
-
-    this.chatsService.getChatById(chat_id).then((chat) => {
-      console.log(205);
-      console.log(chat);
-      console.log(208);
-      console.log(updatedMessages);
-      if (chat) {
-        this.handleChangeMessageStatus({
-          chatUsers: chat.users,
-          messages: updatedMessages,
-        });
-
-        this.handleEmitChatPendingMessagesCount(clientUserId, chat);
-      }
-    });
   }
 
   @SubscribeMessage("ping")
