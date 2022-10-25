@@ -12,7 +12,6 @@ import { ChatsService } from "./chats.service";
 import { UsersService } from "../users/users.service";
 import { getUserSchema } from "../utils/schema";
 import { messageStatuses } from "./constants";
-import {log} from "util";
 
 @WebSocketGateway({
   cors: {
@@ -150,6 +149,15 @@ export class ChatsGateway
       });
   }
 
+  @SubscribeMessage("searchMessages")
+  async handleSearchMessages(client: any, payload: any) {
+    const foundMessages = await this.chatsService.getSearchMessages(payload);
+    this.server?.sockets?.to(client.id)?.emit("receiveFoundMessages", {
+      chat_id: payload.chat_id,
+      messages: foundMessages,
+    });
+  }
+
   @SubscribeMessage("messageAction")
   handleMessageAction(client: any, payload: any) {
     const clientUserId = this.getUserId(client);
@@ -193,7 +201,6 @@ export class ChatsGateway
     const updatedMessages = [];
 
     for (const message of messages) {
-
       this.chatsService
         .updateMessageStatus(message, messageStatuses.read)
         .then((updatedMessage) => {
