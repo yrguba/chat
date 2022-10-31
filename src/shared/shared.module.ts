@@ -1,5 +1,4 @@
 import { Module } from "@nestjs/common";
-import { SharedService } from "./shared.service";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ChatsEntity } from "../database/entities/chats.entity";
 import { MessageEntity } from "../database/entities/message.entity";

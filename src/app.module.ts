@@ -60,6 +60,6 @@ import { SharedModule } from "./shared/shared.module";
     SharedModule,
   ],
   controllers: [AppController],
-  providers: [AppService, SharedService],
+  providers: [AppService],
 })
 export class AppModule {}
