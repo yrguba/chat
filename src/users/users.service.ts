@@ -16,16 +16,15 @@ export class UsersService {
     private readonly jwtService: JwtService
   ) {}
 
-  async getContactName(user_id) {
+  async getContactName(user_id, ownerId) {
     const user = await this.getUser(user_id);
 
     if (user) {
       const contact = await this.contactsRepository
         .createQueryBuilder("contact")
-        .where("contact.owner = :id", { id: user_id })
+        .where("contact.owner = :id", { id: ownerId })
         .andWhere("contact.phone = :phone", { phone: user.phone })
         .getOne();
-
       return contact?.name || "";
     }
 
@@ -41,7 +40,7 @@ export class UsersService {
     const usersData = [];
 
     for (const user of users) {
-      user.contactName = await this.getContactName(user.id);
+      user.contactName = await this.getContactName(user.id, id);
       usersData.push(getUserSchema(user));
     }
 
