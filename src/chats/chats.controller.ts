@@ -28,7 +28,6 @@ import { UpdateMessageDto } from "./dto/updateMessage.dto";
 import { DeleteMessageDto } from "./dto/deleteMessage.dto";
 import { ForwardMessageDTO } from "./dto/forwardMessage.dto";
 import { messageStatuses } from "./constants";
-import {log} from "util";
 
 @ApiTags("Chats")
 @Controller("chats")

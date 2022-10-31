@@ -11,6 +11,7 @@ import * as admin from "firebase-admin";
 import { getMessageSchema, getUserSchema } from "../utils/schema";
 import { DeleteMessageDto } from "./dto/deleteMessage.dto";
 import { messageStatuses } from "./constants";
+import { SharedService } from "../shared/shared.service";
 
 @Injectable()
 export class ChatsService {
@@ -22,12 +23,14 @@ export class ChatsService {
     @InjectRepository(UserEntity)
     private userRepository: Repository<UserEntity>,
     @InjectRepository(ContactEntity)
-    private contactsRepository: Repository<ContactEntity>
+    private contactsRepository: Repository<ContactEntity>,
+    private sharedService: SharedService
   ) {}
 
   public socket: Server = null;
 
   async getChatName(user_id, chat) {
+    console.log(this.sharedService.getHello());
     let id;
     if (chat.users.length > 1) {
       id = chat?.users[0] === user_id ? chat?.users[1] : chat?.users[0];
