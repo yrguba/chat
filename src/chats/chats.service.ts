@@ -264,6 +264,25 @@ export class ChatsService {
       .getCount();
   }
 
+  async getChatUsers(user_id, chat) {
+    const usersData = [];
+    const users = await this.userRepository
+      .createQueryBuilder("users")
+      .where("users.id IN (:...usersArray)", { usersArray: chat.users })
+      .getMany();
+    for (const user of users) {
+      const contact = await this.contactsRepository
+        .createQueryBuilder("contact")
+        .where("contact.owner = :id", { id: user_id })
+        .andWhere("contact.phone = :phone", { phone: user.phone })
+        .getOne();
+
+      user.contactName = contact?.name || "";
+      usersData.push(getUserSchema(user));
+    }
+    return usersData;
+  }
+
   async getChat(user_id: number, chat_id: number) {
     const chat = await this.chatsRepository
       .createQueryBuilder("chat")
@@ -271,13 +290,6 @@ export class ChatsService {
       .getOne();
 
     if (chat) {
-      const users = await this.userRepository
-        .createQueryBuilder("users")
-        .where("users.id IN (:...usersArray)", { usersArray: chat.users })
-        .getMany();
-
-      const usersData = [];
-
       chat.pending_messages = await this.messageRepository
         .createQueryBuilder("messages")
         .where("messages.chat.id = :id", { id: chat.id })
@@ -289,23 +301,14 @@ export class ChatsService {
         })
         .getCount();
 
-      for (const user of users) {
-        const contact = await this.contactsRepository
-          .createQueryBuilder("contact")
-          .where("contact.owner = :id", { id: user_id })
-          .andWhere("contact.phone = :phone", { phone: user.phone })
-          .getOne();
-
-        user.contactName = contact?.name || "";
-        usersData.push(getUserSchema(user));
-      }
+      const chatUsers = await this.getChatUsers(user_id, chat);
 
       if (chat && !chat?.is_group) {
         const chatData = await this.getChatName(user_id, chat);
         chat.name = chatData?.name ? chatData?.name : chat.name;
         chat.avatar = chatData?.avatar ? chatData?.avatar : chat.name;
 
-        if (users) chat.chatUsers = usersData;
+        if (chatUsers) chat.chatUsers = chatUsers;
 
         return {
           status: 200,
@@ -314,7 +317,7 @@ export class ChatsService {
           },
         };
       } else if (chat) {
-        if (users) chat.chatUsers = usersData;
+        if (chatUsers) chat.chatUsers = chatUsers;
         return {
           status: 200,
           data: {
@@ -659,6 +662,8 @@ export class ChatsService {
           .where("messages.chat.id = :id", { id: chat.id })
           .getCount();
 
+        const chatUsers = await this.getChatUsers(user_id, chat);
+
         if (user_id && !chat.is_group) {
           const chatData = await this.getChatName(user_id, chat);
           chat.name = chatData?.name ? chatData?.name : chat.name;
@@ -667,6 +672,7 @@ export class ChatsService {
         chat.message = await this.getLastMessageFromChat(chat.id, user_id);
         chat.pending_messages = countPendingMessages;
         chat.totalMessages = countTotalMessages;
+        chat.chatUsers = chatUsers;
       }
 
       if (splicedChats) {
