@@ -19,6 +19,8 @@ import { ServeStaticModule } from "@nestjs/serve-static";
 import { join } from "path";
 import { ContactsModule } from "./contacts/contacts.module";
 import { FilesModule } from "./files/files.module";
+import { SharedService } from "./shared/shared.service";
+import { SharedModule } from "./shared/shared.module";
 
 @Module({
   imports: [
@@ -55,6 +57,7 @@ import { FilesModule } from "./files/files.module";
     ContactsModule,
     FilesModule,
     ChatGateway,
+    SharedModule,
   ],
   controllers: [AppController],
   providers: [AppService],

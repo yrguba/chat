@@ -5,6 +5,7 @@ import { DeleteResult, Repository } from "typeorm";
 import { UserEntity } from "../database/entities/user.entity";
 import { ContactEntity } from "../database/entities/contact.entity";
 import { getUserSchema } from "../utils/schema";
+import { SharedService } from "../shared/shared.service";
 
 @Injectable()
 export class UsersService {
@@ -13,24 +14,9 @@ export class UsersService {
     private usersRepository: Repository<UserEntity>,
     @InjectRepository(ContactEntity)
     private contactsRepository: Repository<ContactEntity>,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
+    private sharedService: SharedService
   ) {}
-
-  async getContactName(user_id) {
-    const user = await this.getUser(user_id);
-
-    if (user) {
-      const contact = await this.contactsRepository
-        .createQueryBuilder("contact")
-        .where("contact.owner = :id", { id: user_id })
-        .andWhere("contact.phone = :phone", { phone: user.phone })
-        .getOne();
-
-      return contact?.name || "";
-    }
-
-    return "";
-  }
 
   async getUsers(id: number) {
     const users = await this.usersRepository
@@ -41,7 +27,8 @@ export class UsersService {
     const usersData = [];
 
     for (const user of users) {
-      user.contactName = await this.getContactName(user.id);
+      const contact = await this.sharedService.getContact(id, user.phone);
+      user.contactName = contact.name || "";
       usersData.push(getUserSchema(user));
     }
 

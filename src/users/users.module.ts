@@ -6,11 +6,16 @@ import { UserEntity } from "../database/entities/user.entity";
 import { ContactEntity } from "../database/entities/contact.entity";
 import { JwtModule } from "@nestjs/jwt";
 import { ContactsService } from "../contacts/contacts.service";
+import { SharedService } from "../shared/shared.service";
+import { ChatsEntity } from "../database/entities/chats.entity";
 
 @Global()
 @Module({
-  imports: [TypeOrmModule.forFeature([UserEntity, ContactEntity]), JwtModule],
-  providers: [UsersService, ContactsService, ContactEntity],
+  imports: [
+    TypeOrmModule.forFeature([UserEntity, ContactEntity, ChatsEntity]),
+    JwtModule,
+  ],
+  providers: [UsersService, ContactsService, SharedService],
   controllers: [UsersController],
   exports: [UsersService],
 })

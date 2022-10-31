@@ -12,6 +12,7 @@ import { ChatsService } from "./chats.service";
 import { UsersService } from "../users/users.service";
 import { getUserSchema } from "../utils/schema";
 import { messageStatuses } from "./constants";
+import { SharedService } from "../shared/shared.service";
 
 @WebSocketGateway({
   cors: {
@@ -24,7 +25,8 @@ export class ChatsGateway
   constructor(
     private chatsService: ChatsService,
     private usersService: UsersService,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
+    private sharedService: SharedService
   ) {}
 
   @WebSocketServer() server: Server;
@@ -159,33 +161,32 @@ export class ChatsGateway
   }
 
   @SubscribeMessage("messageAction")
-  handleMessageAction(client: any, payload: any) {
+  async handleMessageAction(client: any, payload: any) {
     const clientUserId = this.getUserId(client);
     if (clientUserId) {
       const { chat_id, action } = payload;
-      this.usersService.getUser(clientUserId).then((initiator) => {
-        this.chatsService.getChat(clientUserId, chat_id).then((data: any) => {
-          data?.data?.data?.users.map((userId) => {
-            this.usersService.getUser(userId).then((user) => {
-              if (user && user?.id) {
-                if (user.id !== clientUserId) {
-                  if (user && user.socket_id) {
-                    this.server?.sockets
-                      ?.to(user.socket_id)
-                      ?.emit("receiveMessageAction", {
-                        message: {
-                          user: getUserSchema(initiator),
-                          action: action,
-                          chat_id: chat_id,
-                        },
-                      });
-                  }
-                }
-              }
+      const initiator = await this.sharedService.getUser(clientUserId);
+      const chat = await this.sharedService.getChatWithChatUsers(chat_id);
+      for (let user of chat.chatUsers) {
+        if (user.id !== clientUserId) {
+          const contact = await this.sharedService.getContact(
+            user.id,
+            initiator.phone
+          );
+          this.server?.sockets
+            ?.to(user.socket_id)
+            ?.emit("receiveMessageAction", {
+              message: {
+                user: getUserSchema({
+                  ...initiator,
+                  contactName: contact?.name || "",
+                }),
+                action: action,
+                chat_id: chat_id,
+              },
             });
-          });
-        });
-      });
+        }
+      }
     }
     return "";
   }

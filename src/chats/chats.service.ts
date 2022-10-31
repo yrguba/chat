@@ -11,6 +11,7 @@ import * as admin from "firebase-admin";
 import { getMessageSchema, getUserSchema } from "../utils/schema";
 import { DeleteMessageDto } from "./dto/deleteMessage.dto";
 import { messageStatuses } from "./constants";
+import { SharedService } from "../shared/shared.service";
 
 @Injectable()
 export class ChatsService {
@@ -22,7 +23,8 @@ export class ChatsService {
     @InjectRepository(UserEntity)
     private userRepository: Repository<UserEntity>,
     @InjectRepository(ContactEntity)
-    private contactsRepository: Repository<ContactEntity>
+    private contactsRepository: Repository<ContactEntity>,
+    private sharedService: SharedService
   ) {}
 
   public socket: Server = null;
@@ -35,7 +37,7 @@ export class ChatsService {
       id = chat?.users[0];
     }
 
-    const user = await this.getUser(id);
+    const user = await this.sharedService.getUser(id);
 
     if (user) {
       const contact = await this.contactsRepository
@@ -54,21 +56,6 @@ export class ChatsService {
       name: "",
       avatar: "",
     };
-  }
-
-  async getUser(id) {
-    return await this.userRepository
-      .createQueryBuilder("users")
-      .where("users.id = :id", { id: Number(id) })
-      .getOne();
-  }
-
-  async getContact(initiator, user) {
-    return await this.contactsRepository
-      .createQueryBuilder("contact")
-      .where("contact.owner = :id", { id: initiator.id })
-      .andWhere("contact.phone = :phone", { phone: user.phone })
-      .getOne();
   }
 
   async getLastMessageFromChat(chat_id, user_id) {
@@ -92,7 +79,10 @@ export class ChatsService {
     }
 
     if (targetMessage && targetMessage.user) {
-      const contact = await this.getContact(initiator, targetMessage.user);
+      const contact = await this.sharedService.getContact(
+        initiator.id,
+        targetMessage.user.phone
+      );
       targetMessage.user.contactName = contact?.name || "";
       targetMessage.user = getUserSchema(targetMessage);
     }
@@ -119,37 +109,39 @@ export class ChatsService {
   async sendPushToChat(chat, initiator, message) {
     chat.users.forEach((user_id) => {
       if (user_id !== initiator.id) {
-        this.getUser(user_id).then((user) => {
+        this.sharedService.getUser(user_id).then((user) => {
           if (user && user?.fb_tokens) {
-            this.getContact(user, initiator).then((contact) => {
-              user?.fb_tokens.map((token) => {
-                admin.messaging().sendToDevice(token, {
-                  notification: {
-                    title:
-                      message.message_type === "system"
-                        ? chat.name
-                        : contact?.name
-                        ? contact?.name
-                        : initiator.name,
-                    body: String(this.getMessageContent(message)),
-                    priority: "max",
-                  },
-                  data: {
-                    text: String(this.getMessageContent(message)),
-                    msg_type: String(message.message_type),
-                    chat_id: String(chat.id),
-                    chat_name: String(chat.name),
-                    user_id: String(initiator.id),
-                    user_name: String(initiator.name),
-                    user_contact_name: String(contact?.name) || "",
-                    user_nickname: String(initiator.nickname),
-                    user_avatar: String(initiator.avatar) || "",
-                    chat_avatar: String(chat.avatar),
-                    is_group: chat.is_group ? "true" : "false",
-                  },
+            this.sharedService
+              .getContact(user.id, initiator.phone)
+              .then((contact) => {
+                user?.fb_tokens.map((token) => {
+                  admin.messaging().sendToDevice(token, {
+                    notification: {
+                      title:
+                        message.message_type === "system"
+                          ? chat.name
+                          : contact?.name
+                          ? contact?.name
+                          : initiator.name,
+                      body: String(this.getMessageContent(message)),
+                      priority: "max",
+                    },
+                    data: {
+                      text: String(this.getMessageContent(message)),
+                      msg_type: String(message.message_type),
+                      chat_id: String(chat.id),
+                      chat_name: String(chat.name),
+                      user_id: String(initiator.id),
+                      user_name: String(initiator.name),
+                      user_contact_name: String(contact?.name) || "",
+                      user_nickname: String(initiator.nickname),
+                      user_avatar: String(initiator.avatar) || "",
+                      chat_avatar: String(chat.avatar),
+                      is_group: chat.is_group ? "true" : "false",
+                    },
+                  });
                 });
               });
-            });
           }
         });
       }
@@ -489,7 +481,10 @@ export class ChatsService {
 
       for (let message of splicedMessages) {
         if (message.user) {
-          const contact = await this.getContact(initiator, message.user);
+          const contact = await this.sharedService.getContact(
+            initiator.id,
+            message.user.phone
+          );
           message.user.contactName = contact?.name || "";
           message.user = getUserSchema(message.user);
         }
@@ -714,7 +709,7 @@ export class ChatsService {
       .where("chat.id = :id", { id: chat_id })
       .getOne();
 
-    const initiator = await this.getUser(user_id);
+    const initiator = await this.sharedService.getUser(user_id);
 
     const currentChatUsers = Array.from(chat.users);
 
@@ -733,7 +728,7 @@ export class ChatsService {
     if (currentChatUsers) {
       for (const user of users) {
         if (!currentChatUsers.includes(user)) {
-          const invitedUser = await this.getUser(user);
+          const invitedUser = await this.sharedService.getUser(user_id);
           if (invitedUser && initiator) {
             await this.createMessage(chat_id, user_id, {
               text: `${this.getUserName(
@@ -788,7 +783,7 @@ export class ChatsService {
       .where("chat.id = :id", { id: chat_id })
       .getOne();
 
-    const initiator = await this.getUser(user_id);
+    const initiator = await this.sharedService.getUser(user_id);
 
     const currentChatUsers = Array.from(chat.users);
 
@@ -816,7 +811,7 @@ export class ChatsService {
       await this.chatsRepository.update(chat_id, updatedChat);
 
       for (const user of users) {
-        const invitedUser = await this.getUser(user);
+        const invitedUser = await this.sharedService.getUser(user_id);
         if (invitedUser && initiator) {
           await this.createMessage(chat_id, user_id, {
             text: `${this.getUserName(
@@ -907,37 +902,39 @@ export class ChatsService {
 
       chat.users.forEach((user_id) => {
         if (user_id !== initiator.id) {
-          this.getUser(user_id).then((user) => {
+          this.sharedService.getUser(user_id).then((user) => {
             if (user && user?.fb_tokens) {
-              this.getContact(user, initiator).then((contact) => {
-                user?.fb_tokens.map((token) => {
-                  admin.messaging().sendToDevice(token, {
-                    notification: {
-                      title:
-                        message.message_type === "system"
-                          ? String(chat.name)
-                          : contact?.name
-                          ? String(contact?.name)
-                          : String(initiator.name),
-                      body: String(this.getMessageContent(message)),
-                      priority: "max",
-                    },
-                    data: {
-                      text: this.getMessageContent(message),
-                      msg_type: message.message_type,
-                      chat_id: String(chat.id),
-                      chat_name: String(chat.name),
-                      user_id: String(initiator.id),
-                      user_name: String(initiator.name),
-                      user_contact_name: contact?.name || "",
-                      user_nickname: String(initiator.nickname),
-                      user_avatar: String(initiator.avatar) || "",
-                      chat_avatar: String(chat.avatar),
-                      is_group: chat.is_group ? "true" : "false",
-                    },
+              this.sharedService
+                .getContact(user.id, initiator.phone)
+                .then((contact) => {
+                  user?.fb_tokens.map((token) => {
+                    admin.messaging().sendToDevice(token, {
+                      notification: {
+                        title:
+                          message.message_type === "system"
+                            ? String(chat.name)
+                            : contact?.name
+                            ? String(contact?.name)
+                            : String(initiator.name),
+                        body: String(this.getMessageContent(message)),
+                        priority: "max",
+                      },
+                      data: {
+                        text: this.getMessageContent(message),
+                        msg_type: message.message_type,
+                        chat_id: String(chat.id),
+                        chat_name: String(chat.name),
+                        user_id: String(initiator.id),
+                        user_name: String(initiator.name),
+                        user_contact_name: contact?.name || "",
+                        user_nickname: String(initiator.nickname),
+                        user_avatar: String(initiator.avatar) || "",
+                        chat_avatar: String(chat.avatar),
+                        is_group: chat.is_group ? "true" : "false",
+                      },
+                    });
                   });
                 });
-              });
             }
           });
         }
