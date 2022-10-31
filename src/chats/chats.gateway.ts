@@ -12,6 +12,7 @@ import { ChatsService } from "./chats.service";
 import { UsersService } from "../users/users.service";
 import { getUserSchema } from "../utils/schema";
 import { messageStatuses } from "./constants";
+import { SharedService } from "../shared/shared.service";
 
 @WebSocketGateway({
   cors: {
@@ -24,7 +25,8 @@ export class ChatsGateway
   constructor(
     private chatsService: ChatsService,
     private usersService: UsersService,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
+    private sharedService: SharedService
   ) {}
 
   @WebSocketServer() server: Server;

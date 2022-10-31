@@ -12,7 +12,7 @@ export class SharedService {
     @InjectRepository(ContactEntity)
     private contactsRepository: Repository<ContactEntity>
   ) {}
-  async getUser(id) {
+  async getUser(id: number) {
     return await this.usersRepository
       .createQueryBuilder("users")
       .where("users.id = :id", { id: Number(id) })
@@ -21,7 +21,7 @@ export class SharedService {
   async getContact(ownerId: number, userPhone: string) {
     return await this.contactsRepository
       .createQueryBuilder("contact")
-      .where("contact.owner = :id", { id: ownerId })
+      .where("contact.owner = :id", { id: Number(ownerId) })
       .andWhere("contact.phone = :phone", { phone: userPhone })
       .getOne();
   }
