@@ -179,7 +179,7 @@ export class ChatsGateway
               message: {
                 user: getUserSchema({
                   ...initiator,
-                  contactName: contact.name,
+                  contactName: contact?.name || "",
                 }),
                 action: action,
                 chat_id: chat_id,
