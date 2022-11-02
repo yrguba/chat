@@ -205,20 +205,25 @@ export class ChatsGateway
       messagesReq.push(message);
     }
     const chat = await this.sharedService.getChatWithChatUsers(chat_id);
-    chat.chatUsers.forEach((user) => {
-      messagesReq.forEach((msg) => {
-        const ids = msg.users_have_read.map((user) => user.id);
-        ids.push(msg.initiator_id);
-        msg.message_status = this.sharedService.checkMessageStatus(
+    for (let user of chat.chatUsers) {
+      const { pending } = await this.sharedService.getCountMessages(
+        user.id,
+        chat.id
+      );
+      for (let message of messagesReq) {
+        const ids = message.users_have_read.map((user) => user.id);
+        ids.push(message.initiator_id);
+        message.message_status = this.sharedService.checkMessageStatus(
           user.id,
           ids
         );
-      });
+      }
       this.server?.sockets?.to(user.socket_id)?.emit("receiveMessageStatus", {
+        pending_messages: pending,
         chat_id: chat.id,
         messages: messagesReq,
       });
-    });
+    }
   }
 
   @SubscribeMessage("ping")
