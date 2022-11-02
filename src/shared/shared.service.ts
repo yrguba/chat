@@ -93,6 +93,13 @@ export class SharedService {
       .getOne();
   }
 
+  async getUsersHaveRead(message) {
+    const withoutMe = message.users_have_read.filter(
+      (i) => i !== message.initiator_id
+    );
+    return await this.getChatUsers(withoutMe, message.initiator_id, true);
+  }
+
   async saveMessage(message) {
     return await this.messageRepository.save(message);
   }
@@ -104,8 +111,10 @@ export class SharedService {
     let pendingCounter = 0;
     const messages = await this.getMessages(chatId);
     messages.forEach((msg) => {
-      if (!msg.users_have_read.includes(userId)) {
-        pendingCounter += 1;
+      if (msg.users_have_read) {
+        if (!msg.users_have_read.includes(userId)) {
+          pendingCounter += 1;
+        }
       }
     });
     return {

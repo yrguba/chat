@@ -1024,14 +1024,14 @@ export class ChatsService {
 
       const text =
         messages.length > 1 ? "Пересланные сообщения" : "Пересланное сообщение";
-
+      const haveRead = [...chat.listeners, user_id];
       const newMmg = await this.messageRepository.save({
         text: text,
         message_type: "text",
         initiator_id: user_id,
         forwarded_messages: messages.map((msg) => msg.id),
+        users_have_read: haveRead,
       });
-
       chat.updated_at = new Date();
       chat.message.push(newMmg);
       initiator.message.push(newMmg);

@@ -48,20 +48,15 @@ export class ChatsGateway
             userId,
             chat.message.users_have_read
           );
-          const withoutMe = chat.message.users_have_read.filter(
-            (i) => i !== chat.message.initiator_id
-          );
-          const usersHaveRead = await this.sharedService.getChatUsers(
-            withoutMe,
-            chat.message.initiator_id,
-            true
+          const haveRead = await this.sharedService.getUsersHaveRead(
+            chat.message
           );
           this.server?.sockets?.to(user.socket_id)?.emit("receiveMessage", {
             message: {
               ...chat?.message,
               chat_id: chat.chat_id,
               message_status: status,
-              users_have_read: usersHaveRead,
+              users_have_read: haveRead,
             },
           });
         }
@@ -73,11 +68,22 @@ export class ChatsGateway
     data?.users.map((userId) => {
       this.usersService.getUser(userId).then(async (user) => {
         if (user && user.socket_id) {
+          const status = this.sharedService.checkMessageStatus(
+            userId,
+            data.data.message.users_have_read
+          );
+          const haveRead = await this.sharedService.getUsersHaveRead(
+            data.data.message
+          );
           this.server?.sockets
             ?.to(user.socket_id)
             ?.emit("receiveForwardMessage", {
               chat_id: Number(data.chat_id),
-              message: data.data.message,
+              message: {
+                ...data.data.message,
+                message_status: status,
+                users_have_read: haveRead,
+              },
             });
         }
       });
