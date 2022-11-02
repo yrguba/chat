@@ -256,31 +256,26 @@ export class ChatsService {
       .getCount();
   }
 
-  async getChatUsers(user_id, chat) {
-    const usersData = [];
-    const users = await this.userRepository
-      .createQueryBuilder("users")
-      .where("users.id IN (:...usersArray)", { usersArray: chat.users })
-      .getMany();
-    for (const user of users) {
-      const contact = await this.contactsRepository
-        .createQueryBuilder("contact")
-        .where("contact.owner = :id", { id: user_id })
-        .andWhere("contact.phone = :phone", { phone: user.phone })
-        .getOne();
-
-      user.contactName = contact?.name || "";
-      usersData.push(getUserSchema(user));
+  async setChatListeners(userId, { sub, unsub }) {
+    if (sub) {
+      const subChat = await this.sharedService.getChat(sub);
+      const checkUser = subChat.listeners.some((i) => i === userId);
+      !checkUser && subChat.listeners.push(userId);
+      await this.chatsRepository.save(subChat);
     }
-    return usersData;
+    if (unsub) {
+      const unsubChat = await this.sharedService.getChat(unsub);
+      unsubChat.listeners = unsubChat.listeners.filter((i) => i !== userId);
+      await this.chatsRepository.save(unsubChat);
+    }
   }
 
   async getChat(user_id: number, chat_id: number) {
-    const chat = await this.chatsRepository
-      .createQueryBuilder("chat")
-      .where("chat.id = :id", { id: chat_id })
-      .getOne();
-
+    const chat = await this.sharedService.getChatWithChatUsers(
+      chat_id,
+      user_id,
+      true
+    );
     if (chat) {
       chat.pending_messages = await this.messageRepository
         .createQueryBuilder("messages")
@@ -293,14 +288,10 @@ export class ChatsService {
         })
         .getCount();
 
-      const chatUsers = await this.getChatUsers(user_id, chat);
-
       if (chat && !chat?.is_group) {
         const chatData = await this.getChatName(user_id, chat);
         chat.name = chatData?.name ? chatData?.name : chat.name;
         chat.avatar = chatData?.avatar ? chatData?.avatar : chat.name;
-
-        if (chatUsers) chat.chatUsers = chatUsers;
 
         return {
           status: 200,
@@ -309,7 +300,6 @@ export class ChatsService {
           },
         };
       } else if (chat) {
-        if (chatUsers) chat.chatUsers = chatUsers;
         return {
           status: 200,
           data: {
@@ -488,6 +478,19 @@ export class ChatsService {
           message.user.contactName = contact?.name || "";
           message.user = getUserSchema(message.user);
         }
+        message.message_status = this.sharedService.checkMessageStatus(
+          user_id,
+          message.users_have_read
+        );
+        const ids = message.users_have_read.filter(
+          (i) => i !== message.initiator_id
+        );
+
+        message.users_have_read = await this.sharedService.getChatUsers(
+          ids,
+          user_id,
+          true
+        );
 
         if (message.forwarded_messages?.length) {
           const messages = [];
@@ -641,23 +644,16 @@ export class ChatsService {
       const splicedChats = filteredChats.splice(offset, options.limit);
 
       for (const chat of splicedChats) {
-        const countPendingMessages = await this.messageRepository
-          .createQueryBuilder("messages")
-          .where("messages.chat.id = :id", { id: chat.id })
-          .andWhere("messages.message_status != :statusRead", {
-            statusRead: messageStatuses.read,
-          })
-          .andWhere("messages.initiator_id != :initiator_id", {
-            initiator_id: user_id,
-          })
-          .getCount();
+        const { pending, total } = await this.sharedService.getCountMessages(
+          user_id,
+          chat.id
+        );
 
-        const countTotalMessages = await this.messageRepository
-          .createQueryBuilder("messages")
-          .where("messages.chat.id = :id", { id: chat.id })
-          .getCount();
-
-        const chatUsers = await this.getChatUsers(user_id, chat);
+        const chatUsers = await this.sharedService.getChatUsers(
+          chat.users,
+          user_id,
+          true
+        );
 
         if (user_id && !chat.is_group) {
           const chatData = await this.getChatName(user_id, chat);
@@ -665,8 +661,8 @@ export class ChatsService {
           chat.avatar = chatData?.avatar ? chatData?.avatar : chat.avatar;
         }
         chat.message = await this.getLastMessageFromChat(chat.id, user_id);
-        chat.pending_messages = countPendingMessages;
-        chat.totalMessages = countTotalMessages;
+        chat.pending_messages = pending;
+        chat.totalMessages = total;
         chat.chatUsers = chatUsers;
       }
 
@@ -880,6 +876,7 @@ export class ChatsService {
       access: chat.users,
       accessChats: [chat_id],
       reply_message_id: replyMessageId,
+      users_have_read: chat.listeners,
     });
 
     const initiator = await this.userRepository.findOne({
@@ -1163,22 +1160,6 @@ export class ChatsService {
           },
         },
       };
-    }
-  }
-
-  async updateMessageStatus(
-    message_id: number,
-    status: string = messageStatuses.pending
-  ): Promise<any> {
-    const message = await this.messageRepository.findOne({
-      where: { id: message_id },
-    });
-
-    if (message) {
-      return await this.messageRepository.save({
-        ...message,
-        message_status: status,
-      });
     }
   }
 

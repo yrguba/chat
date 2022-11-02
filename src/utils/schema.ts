@@ -29,5 +29,6 @@ export const getMessageSchema = (messageData) => {
     message_status: messageData.message_status || messageStatuses.sent,
     forwarded_messages: messageData.forwarded_messages || [],
     totalMessages: messageData?.totalMessages || 0,
+    users_have_read: messageData.users_have_read,
   };
 };
