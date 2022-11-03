@@ -223,15 +223,6 @@ export class ChatsController {
         chat_id: param.chat_id,
         ...message,
       });
-
-      this.chatsService
-        .updateMessageStatus(message.message.id)
-        .then((updatedMessage) => {
-          this.chatsGateway.handleChangeMessageStatus({
-            chatUsers: message.users,
-            messages: [updatedMessage],
-          });
-        });
     }
     res.status(message.status).json(message.data);
   }

@@ -8,11 +8,17 @@ import { JwtModule } from "@nestjs/jwt";
 import { ContactsService } from "../contacts/contacts.service";
 import { SharedService } from "../shared/shared.service";
 import { ChatsEntity } from "../database/entities/chats.entity";
+import { MessageEntity } from "../database/entities/message.entity";
 
 @Global()
 @Module({
   imports: [
-    TypeOrmModule.forFeature([UserEntity, ContactEntity, ChatsEntity]),
+    TypeOrmModule.forFeature([
+      UserEntity,
+      ContactEntity,
+      ChatsEntity,
+      MessageEntity,
+    ]),
     JwtModule,
   ],
   providers: [UsersService, ContactsService, SharedService],

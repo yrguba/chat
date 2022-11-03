@@ -37,6 +37,8 @@ export class MessageEntity {
   accessChats?: number[];
   @Column("int", { array: true, default: null })
   forwarded_messages: number[];
+  @Column("int", { array: true, default: null })
+  users_have_read: number[];
   @ManyToOne(() => ChatsEntity, (chat) => chat.message, {
     onDelete: "CASCADE",
   })

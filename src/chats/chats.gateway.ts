@@ -42,10 +42,22 @@ export class ChatsGateway
 
   handleEmitNewMessage(chat) {
     chat?.users.map((userId) => {
-      this.usersService.getUser(userId).then((user) => {
+      this.usersService.getUser(userId).then(async (user) => {
         if (user && user.socket_id) {
+          const status = this.sharedService.checkMessageStatus(
+            userId,
+            chat.message.users_have_read
+          );
+          const haveRead = await this.sharedService.getUsersHaveRead(
+            chat.message
+          );
           this.server?.sockets?.to(user.socket_id)?.emit("receiveMessage", {
-            message: { ...chat?.message, chat_id: chat.chat_id },
+            message: {
+              ...chat?.message,
+              chat_id: chat.chat_id,
+              message_status: status,
+              users_have_read: haveRead,
+            },
           });
         }
       });
@@ -56,11 +68,22 @@ export class ChatsGateway
     data?.users.map((userId) => {
       this.usersService.getUser(userId).then(async (user) => {
         if (user && user.socket_id) {
+          const status = this.sharedService.checkMessageStatus(
+            userId,
+            data.data.message.users_have_read
+          );
+          const haveRead = await this.sharedService.getUsersHaveRead(
+            data.data.message
+          );
           this.server?.sockets
             ?.to(user.socket_id)
             ?.emit("receiveForwardMessage", {
               chat_id: Number(data.chat_id),
-              message: data.data.message,
+              message: {
+                ...data.data.message,
+                message_status: status,
+                users_have_read: haveRead,
+              },
             });
         }
       });
@@ -76,20 +99,6 @@ export class ChatsGateway
             ?.emit("receiveDeleteMessage", {
               chat_id: data.chat.id,
               messages: data.messages,
-            });
-        }
-      });
-    });
-  }
-
-  handleChangeMessageStatus(data) {
-    data?.chatUsers.map((userId) => {
-      this.usersService.getUser(userId).then((user) => {
-        if (user && user.socket_id) {
-          this.server?.sockets
-            ?.to(user.socket_id)
-            ?.emit("receiveMessageStatus", {
-              messages: data?.messages,
             });
         }
       });
@@ -132,25 +141,6 @@ export class ChatsGateway
     });
   }
 
-  handleEmitChatPendingMessagesCount(initiator_id, chat) {
-    this.chatsService
-      .getChatUnreadMessages(initiator_id, chat.id)
-      .then((count) => {
-        chat?.users.map((userId) => {
-          this.usersService.getUser(userId).then((user) => {
-            if (user && user.socket_id) {
-              this.server?.sockets
-                ?.to(user.socket_id)
-                ?.emit("chatPendingMessages", {
-                  chat_id: chat.id,
-                  pending_messages: count,
-                });
-            }
-          });
-        });
-      });
-  }
-
   @SubscribeMessage("searchMessages")
   async handleSearchMessages(client: any, payload: any) {
     const foundMessages = await this.chatsService.getSearchMessages(payload);
@@ -191,35 +181,54 @@ export class ChatsGateway
     return "";
   }
 
-  @SubscribeMessage("messageRead")
-  handleMessageReadAction(
-    client: any,
-    payload: { chat_id: number; messages: number[] }
-  ) {
+  @SubscribeMessage("chatListeners")
+  async handleChatListeners(client: any, payload: any) {
     const clientUserId = this.getUserId(client);
-    const { chat_id, messages } = payload;
+    await this.chatsService.setChatListeners(clientUserId, payload);
+  }
 
-    const updatedMessages = [];
-
-    for (const message of messages) {
-      this.chatsService
-        .updateMessageStatus(message, messageStatuses.read)
-        .then((updatedMessage) => {
-          updatedMessages.push(updatedMessage);
-
-          if (messages.length === updatedMessages.length) {
-            this.chatsService.getChatById(chat_id).then((chat) => {
-              if (chat) {
-                this.handleChangeMessageStatus({
-                  chatUsers: chat.users,
-                  messages: updatedMessages,
-                });
-
-                this.handleEmitChatPendingMessagesCount(clientUserId, chat);
-              }
-            });
-          }
-        });
+  @SubscribeMessage("messageRead")
+  async handleMessageReadAction(
+    client: any,
+    { chat_id, messages }: { chat_id: number; messages: number[] }
+  ) {
+    const messagesReq = [];
+    const clientUserId = this.getUserId(client);
+    for (let messageId of messages) {
+      const message = await this.sharedService.getMessage(chat_id, messageId);
+      if (!message.users_have_read.includes(clientUserId)) {
+        message.users_have_read.push(clientUserId);
+        await this.sharedService.saveMessage(message);
+      }
+      const withoutInitiator = message.users_have_read.filter(
+        (i) => i !== message.initiator_id
+      );
+      message.users_have_read = await this.sharedService.getChatUsers(
+        withoutInitiator,
+        clientUserId,
+        true
+      );
+      messagesReq.push(message);
+    }
+    const chat = await this.sharedService.getChatWithChatUsers(chat_id);
+    for (let user of chat.chatUsers) {
+      const { pending } = await this.sharedService.getCountMessages(
+        user.id,
+        chat.id
+      );
+      for (let message of messagesReq) {
+        const ids = message.users_have_read.map((user) => user.id);
+        ids.push(message.initiator_id);
+        message.message_status = this.sharedService.checkMessageStatus(
+          user.id,
+          ids
+        );
+      }
+      this.server?.sockets?.to(user.socket_id)?.emit("receiveMessageStatus", {
+        pending_messages: pending,
+        chat_id: chat.id,
+        messages: messagesReq,
+      });
     }
   }
 

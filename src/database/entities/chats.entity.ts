@@ -25,6 +25,8 @@ export class ChatsEntity {
   avatar: string;
   @Column({ nullable: true, default: false })
   is_group: boolean;
+  @Column("int", { array: true, default: [] })
+  listeners: number[];
   @Column({ nullable: true, default: 0 })
   pending_messages: number;
   chatUsers: any;
