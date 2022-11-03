@@ -27,7 +27,7 @@ import { MessagesGateway } from "./messages.gateway";
 import { MessagesService } from "./messages.service";
 
 @ApiTags("Messages")
-@Controller("messages")
+@Controller("chats")
 export class MessagesController {
   constructor(
     private chatsService: ChatsService,
