@@ -74,6 +74,12 @@ export class ChatsService {
 
     let targetMessage: any = message[0];
 
+    targetMessage.message_status = this.sharedService.checkMessageStatus(
+      user_id,
+      targetMessage.users_have_read
+    );
+    targetMessage.users_have_read = [];
+
     if (targetMessage) {
       targetMessage = getMessageSchema(targetMessage);
     }
@@ -241,19 +247,6 @@ export class ChatsService {
       .createQueryBuilder("chat")
       .where("chat.id = :id", { id: chat_id })
       .getOne();
-  }
-
-  async getChatUnreadMessages(initiator_id: number, chat_id: number) {
-    return await this.messageRepository
-      .createQueryBuilder("messages")
-      .where("messages.chat.id = :id", { id: chat_id })
-      .andWhere("messages.message_status != :statusRead", {
-        statusRead: messageStatuses.read,
-      })
-      .andWhere("messages.initiator_id != :initiator_id", {
-        initiator_id: initiator_id,
-      })
-      .getCount();
   }
 
   async setChatListeners(userId, { sub, unsub }) {
