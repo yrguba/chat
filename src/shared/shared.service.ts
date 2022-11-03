@@ -5,8 +5,9 @@ import { Repository } from "typeorm";
 import { ContactEntity } from "../database/entities/contact.entity";
 import { ChatsEntity } from "../database/entities/chats.entity";
 import { MessageEntity } from "../database/entities/message.entity";
-import { messageStatuses } from "../chats/constants";
+import { messageStatuses } from "../messages/constants";
 import { getUserSchema } from "../utils/schema";
+import { JwtService } from "@nestjs/jwt";
 
 @Injectable()
 export class SharedService {
@@ -18,8 +19,18 @@ export class SharedService {
     @InjectRepository(ChatsEntity)
     private chatsRepository: Repository<ChatsEntity>,
     @InjectRepository(MessageEntity)
-    private messageRepository: Repository<MessageEntity>
+    private messageRepository: Repository<MessageEntity>,
+    private readonly jwtService: JwtService
   ) {}
+  getUserId(client) {
+    const jwt = client.handshake?.headers?.authorization?.replace(
+      "Bearer ",
+      ""
+    );
+    const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
+    return json?.id;
+  }
+
   async getUser(id: number) {
     return await this.usersRepository
       .createQueryBuilder("users")

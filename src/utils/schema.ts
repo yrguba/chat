@@ -1,4 +1,4 @@
-import { messageStatuses } from "../chats/constants";
+import { messageStatuses } from "../messages/constants";
 
 export const getUserSchema = (userData) => {
   return {

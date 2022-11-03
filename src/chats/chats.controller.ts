@@ -20,14 +20,11 @@ import { ApiTags, ApiParam, ApiQuery } from "@nestjs/swagger";
 import { ChatDTO } from "./dto/chat.dto";
 import { ChatNameDTO } from "./dto/chatName.dto";
 import { ChatAvatarDTO } from "./dto/chatAvatar.dto";
-import { MessageDTO } from "./dto/message.dto";
+import { MessageDTO } from "../messages/dto/message.dto";
 import { JwtAuthGuard } from "../auth/strategy/jwt-auth.guard";
 import { JwtService } from "@nestjs/jwt";
 import { UsersService } from "../users/users.service";
-import { UpdateMessageDto } from "./dto/updateMessage.dto";
-import { DeleteMessageDto } from "./dto/deleteMessage.dto";
-import { ForwardMessageDTO } from "./dto/forwardMessage.dto";
-import { messageStatuses } from "./constants";
+import { MessagesGateway } from "../messages/messages.gateway";
 
 @ApiTags("Chats")
 @Controller("chats")
@@ -36,7 +33,8 @@ export class ChatsController {
     private chatsService: ChatsService,
     private usersService: UsersService,
     private readonly jwtService: JwtService,
-    private chatsGateway: ChatsGateway
+    private chatsGateway: ChatsGateway,
+    private messagesGateway: MessagesGateway
   ) {}
 
   @UseGuards(JwtAuthGuard)
@@ -109,7 +107,7 @@ export class ChatsController {
       body.name
     );
     if (chat.status === 200) {
-      this.chatsGateway.handleEmitNewMessage({
+      this.messagesGateway.handleEmitNewMessage({
         chat_id: param.chat_id,
         ...chat.data.message,
       });
@@ -133,43 +131,12 @@ export class ChatsController {
       body.avatar
     );
     if (chat.status === 200) {
-      this.chatsGateway.handleEmitNewMessage({
+      this.messagesGateway.handleEmitNewMessage({
         chat_id: param.chat_id,
         ...chat.data.message,
       });
     }
     res.status(chat.status).json(chat.data);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @ApiQuery({
-    name: "page",
-    description: "Текущая страница",
-    required: false,
-    type: Number,
-  })
-  @ApiQuery({
-    name: "limit",
-    description: "Количество записей на странице",
-    required: false,
-    type: Number,
-  })
-  @ApiParam({ name: "chat_id", required: true })
-  @Get("/:chat_id/messages")
-  async getMessages(
-    @Res() res,
-    @Req() req,
-    @Param() param,
-    @Query("page", new DefaultValuePipe(1), ParseIntPipe) page = 1,
-    @Query("limit", new DefaultValuePipe(10), ParseIntPipe) limit = 20
-  ) {
-    const userId = await this.usersService.getUserIdFromToken(req);
-    const messages = await this.chatsService.getMessages(
-      userId,
-      param.chat_id,
-      { page, limit }
-    );
-    res.status(messages.status).json(messages.data);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -181,7 +148,7 @@ export class ChatsController {
     const chat = await this.chatsService.createChat(userId, body);
     if (chat?.status === 201) {
       if (chat.data.data.message.length > 0) {
-        this.chatsGateway.handleEmitNewMessage({
+        this.messagesGateway.handleEmitNewMessage({
           chat_id: chat?.data?.data.chat_id,
           ...chat.data.data.message,
         });
@@ -199,130 +166,6 @@ export class ChatsController {
   async deleteChat(@Res() res, @Req() req, @Param() params) {
     const userId = await this.usersService.getUserIdFromToken(req);
     const result = await this.chatsService.deleteChat(userId, params.chat_id);
-    res.status(200).json({ data: result });
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @ApiParam({ name: "chat_id", required: true })
-  @Post("/message/:chat_id")
-  async createMessage(
-    @Res() res,
-    @Req() req,
-    @Body() body: MessageDTO,
-    @Param() param
-  ) {
-    const userId = await this.usersService.getUserIdFromToken(req);
-    const message = await this.chatsService.createMessage(
-      param.chat_id,
-      Number(userId),
-      body
-    );
-
-    if (message?.status === 201) {
-      this.chatsGateway.handleEmitNewMessage({
-        chat_id: param.chat_id,
-        ...message,
-      });
-    }
-    res.status(message.status).json(message.data);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @ApiParam({ name: "chat_id", required: true })
-  @Post("/forward/message/:chat_id/")
-  async forwardMessage(
-    @Res() res,
-    @Req() req,
-    @Body() body: ForwardMessageDTO,
-    @Param() param
-  ) {
-    const userId = await this.usersService.getUserIdFromToken(req);
-    const message = await this.chatsService.forwardMessage(
-      param.chat_id,
-      Number(userId),
-      body
-    );
-    if (message?.status === 200) {
-      this.chatsGateway.handleEmitForwardMessage({
-        chat_id: param.chat_id,
-        data: message.data.data,
-        users: message.users,
-      });
-    }
-    res.status(message.status).json(message.data);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @ApiParam({ name: "chat_id", required: true })
-  @ApiParam({ name: "message_id", required: true })
-  @Post("/reply/message/:chat_id/:message_id")
-  async replyMessage(
-    @Res() res,
-    @Req() req,
-    @Body() body: MessageDTO,
-    @Param() param
-  ) {
-    const userId = await this.usersService.getUserIdFromToken(req);
-    const message = await this.chatsService.replyMessage(
-      param.chat_id,
-      param.message_id,
-      Number(userId),
-      body
-    );
-    if (message?.status === 201) {
-      this.chatsGateway.handleEmitNewMessage({
-        chat_id: param.chat_id,
-        ...message,
-      });
-    }
-    res.status(message.status).json(message.data);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @ApiParam({ name: "chat_id", required: true })
-  @ApiParam({ name: "message_id", required: true })
-  @Patch("/message/:chat_id/:message_id")
-  async updateMessageText(
-    @Res() res,
-    @Req() req,
-    @Body() body: UpdateMessageDto,
-    @Param() param
-  ) {
-    const userId = await this.usersService.getUserIdFromToken(req);
-    const message = await this.chatsService.updateMessage(
-      param.chat_id,
-      param.message_id,
-      Number(userId),
-      body
-    );
-    if (message?.status === 200) {
-      this.chatsGateway.handleEmitNewMessage({
-        chat_id: param.chat_id,
-        ...message,
-      });
-    }
-    res.status(message.status).json(message.data);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @ApiParam({ name: "chat_id", required: true })
-  @Delete("/message/:chat_id")
-  async deleteMessage(
-    @Res() res,
-    @Req() req,
-    @Param() params,
-    @Body() body: DeleteMessageDto
-  ) {
-    const userId = await this.usersService.getUserIdFromToken(req);
-    const result = await this.chatsService.deleteMessage(
-      userId,
-      params.chat_id,
-      body
-    );
-    if (result.data.data.messages && result.data.data.messages.length > 0) {
-      this.chatsGateway.handleEmitDeleteMessage(result.data.data);
-    }
-
     res.status(200).json({ data: result });
   }
 
@@ -358,7 +201,7 @@ export class ChatsController {
     );
 
     if (chat?.status === 200) {
-      this.chatsGateway.handleEmitNewMessage({
+      this.messagesGateway.handleEmitNewMessage({
         chat_id: params.chat_id,
         ...chat.data.message,
       });
@@ -383,7 +226,7 @@ export class ChatsController {
       params.chat_id
     );
     if (chat?.status === 200) {
-      this.chatsGateway.handleEmitNewMessage({
+      this.messagesGateway.handleEmitNewMessage({
         chat_id: params.chat_id,
         ...chat.data.message,
       });
