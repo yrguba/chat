@@ -68,9 +68,11 @@ export class ChatsGateway
     data?.users.map((userId) => {
       this.usersService.getUser(userId).then((user) => {
         if (user && user.socket_id) {
-          this.server?.sockets?.to(user.socket_id)?.emit("/", {
-            data: data.data,
-          });
+          this.server?.sockets
+            ?.to(user.socket_id)
+            ?.emit("receiveChatReactions", {
+              data: data.data,
+            });
         }
       });
     });
