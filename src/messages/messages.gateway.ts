@@ -25,6 +25,7 @@ export class MessagesGateway {
   @WebSocketServer() server: Server;
 
   handleEmitNewMessage(chat) {
+    const { message } = chat;
     chat?.users.map((userId) => {
       this.usersService.getUser(userId).then(async (user) => {
         if (user && user.socket_id) {
@@ -32,9 +33,12 @@ export class MessagesGateway {
             userId,
             chat.message.users_have_read
           );
+          message.users_have_read = message.users_have_read.filter(
+            (i) => i !== message.initiator_id
+          );
           this.server?.sockets?.to(user.socket_id)?.emit("receiveMessage", {
             message: {
-              ...chat?.message,
+              ...message,
               chat_id: chat.chat_id,
               message_status: status,
             },
@@ -45,19 +49,23 @@ export class MessagesGateway {
   }
 
   handleEmitForwardMessage(data) {
+    const { message } = data.data;
     data?.users.map((userId) => {
       this.usersService.getUser(userId).then(async (user) => {
         if (user && user.socket_id) {
           const status = this.sharedService.checkMessageStatus(
             userId,
-            data.data.message.users_have_read
+            message.users_have_read
+          );
+          message.users_have_read = message.users_have_read.filter(
+            (i) => i !== message.initiator_id
           );
           this.server?.sockets
             ?.to(user.socket_id)
             ?.emit("receiveForwardMessage", {
               chat_id: Number(data.chat_id),
               message: {
-                ...data.data.message,
+                ...message,
                 message_status: status,
               },
             });

@@ -128,6 +128,10 @@ export class MessagesService {
           chat.permittedReactions
         );
 
+        message.users_have_read = message.users_have_read.filter(
+          (i) => i !== message.initiator_id
+        );
+
         if (message.forwarded_messages?.length) {
           const messages = [];
           for (let msgId of message.forwarded_messages) {
@@ -407,6 +411,7 @@ export class MessagesService {
         users_have_read: haveRead,
         reactions: reactions,
       });
+
       chat.updated_at = new Date();
       chat.message.push(newMmg);
       initiator.message.push(newMmg);
