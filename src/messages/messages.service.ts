@@ -108,6 +108,12 @@ export class MessagesService {
           .getMany();
       }
 
+      const { pending, total } = await this.sharedService.getCountMessages(
+        user_id,
+        chat.id
+      );
+      chat.pending_messages = pending;
+
       let splicedMessages = messages.splice(offset, options.limit);
 
       for (let message of splicedMessages) {
