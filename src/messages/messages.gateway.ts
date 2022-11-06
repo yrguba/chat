@@ -32,15 +32,11 @@ export class MessagesGateway {
             userId,
             chat.message.users_have_read
           );
-          const haveRead = await this.sharedService.getUsersHaveRead(
-            chat.message
-          );
           this.server?.sockets?.to(user.socket_id)?.emit("receiveMessage", {
             message: {
               ...chat?.message,
               chat_id: chat.chat_id,
               message_status: status,
-              users_have_read: haveRead,
             },
           });
         }
@@ -56,9 +52,6 @@ export class MessagesGateway {
             userId,
             data.data.message.users_have_read
           );
-          const haveRead = await this.sharedService.getUsersHaveRead(
-            data.data.message
-          );
           this.server?.sockets
             ?.to(user.socket_id)
             ?.emit("receiveForwardMessage", {
@@ -66,7 +59,6 @@ export class MessagesGateway {
               message: {
                 ...data.data.message,
                 message_status: status,
-                users_have_read: haveRead,
               },
             });
         }
@@ -85,6 +77,16 @@ export class MessagesGateway {
               messages: data.messages,
             });
         }
+      });
+    });
+  }
+
+  handleUpdReactionsMessage(data) {
+    data?.users.forEach((userId) => {
+      this.usersService.getUser(userId).then((user) => {
+        this.server?.sockets?.to(user.socket_id)?.emit("receiveReactions", {
+          data: data.data,
+        });
       });
     });
   }
@@ -141,13 +143,8 @@ export class MessagesGateway {
         message.users_have_read.push(clientUserId);
         await this.sharedService.saveMessage(message);
       }
-      const withoutInitiator = message.users_have_read.filter(
+      message.users_have_read = message.users_have_read.filter(
         (i) => i !== message.initiator_id
-      );
-      message.users_have_read = await this.sharedService.getChatUsers(
-        withoutInitiator,
-        clientUserId,
-        true
       );
       messagesReq.push(message);
     }
@@ -158,8 +155,7 @@ export class MessagesGateway {
         chat.id
       );
       for (let message of messagesReq) {
-        const ids = message.users_have_read.map((user) => user.id);
-        ids.push(message.initiator_id);
+        const ids = [...message.users_have_read, message.initiator_id];
         message.message_status = this.sharedService.checkMessageStatus(
           user.id,
           ids

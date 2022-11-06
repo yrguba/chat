@@ -25,6 +25,10 @@ import { UpdateMessageDto } from "./dto/updateMessage.dto";
 import { DeleteMessageDto } from "./dto/deleteMessage.dto";
 import { MessagesGateway } from "./messages.gateway";
 import { MessagesService } from "./messages.service";
+import {
+  ReactionToMessageDTOBody,
+  ReactionToMessageDTOParams,
+} from "./dto/reactionToMessage.dto";
 
 @ApiTags("Messages")
 @Controller("chats")
@@ -189,5 +193,26 @@ export class MessagesController {
     }
 
     res.status(200).json({ data: result });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiParam({ name: "chat_id", required: true })
+  @ApiParam({ name: "message_id", required: true })
+  @Post("/:chat_id/message/:message_id/reaction")
+  async reactionToMessage(
+    @Res() res,
+    @Req() req,
+    @Param() params: ReactionToMessageDTOParams,
+    @Body() body: ReactionToMessageDTOBody
+  ) {
+    const userId = await this.usersService.getUserIdFromToken(req);
+    const result = await this.messagesService.reactionToMessage(
+      params.chat_id,
+      params.message_id,
+      Number(userId),
+      body
+    );
+    await this.messagesGateway.handleUpdReactionsMessage(result);
+    res.status(200).json({ data: result.data });
   }
 }

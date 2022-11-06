@@ -4,10 +4,13 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   ManyToOne,
+  OneToOne,
 } from "typeorm";
 import { ChatsEntity } from "./chats.entity";
 import { UserEntity } from "./user.entity";
 import { messageStatuses } from "../../messages/constants";
+import { ReactionsEntity } from "./reactions.entity";
+import { JoinColumn } from "typeorm";
 
 @Entity()
 export class MessageEntity {
@@ -48,4 +51,9 @@ export class MessageEntity {
   })
   user: UserEntity;
   replyMessage?: MessageEntity;
+  @OneToOne(() => ReactionsEntity, {
+    onDelete: "CASCADE",
+  })
+  @JoinColumn()
+  reactions: ReactionsEntity;
 }

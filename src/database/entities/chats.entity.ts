@@ -27,6 +27,8 @@ export class ChatsEntity {
   is_group: boolean;
   @Column("int", { array: true, default: [] })
   listeners: number[];
+  @Column("varchar", { array: true, default: [] })
+  permittedReactions: string[];
   @Column({ nullable: true, default: 0 })
   pending_messages: number;
   chatUsers: any;

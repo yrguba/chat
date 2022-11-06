@@ -12,6 +12,7 @@ import { SharedService } from "../shared/shared.service";
 import { MessagesService } from "./messages.service";
 import { MessagesController } from "./messages.controller";
 import { MessagesGateway } from "./messages.gateway";
+import { ReactionsEntity } from "../database/entities/reactions.entity";
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { MessagesGateway } from "./messages.gateway";
       MessageEntity,
       UserEntity,
       ContactEntity,
+      ReactionsEntity,
     ]),
     JwtModule,
   ],

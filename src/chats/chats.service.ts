@@ -12,6 +12,8 @@ import { getMessageSchema, getUserSchema } from "../utils/schema";
 import { messageStatuses } from "../messages/constants";
 import { SharedService } from "../shared/shared.service";
 import { MessagesService } from "../messages/messages.service";
+import { reactions } from "./constants/reactions";
+import { ReactionsEntity } from "../database/entities/reactions.entity";
 
 @Injectable()
 export class ChatsService {
@@ -24,12 +26,21 @@ export class ChatsService {
     private userRepository: Repository<UserEntity>,
     @InjectRepository(ContactEntity)
     private contactsRepository: Repository<ContactEntity>,
+    @InjectRepository(ReactionsEntity)
+    private reactionsRepository: Repository<ReactionsEntity>,
     @Inject(forwardRef(() => MessagesService))
     private messagesService: MessagesService,
     private sharedService: SharedService
   ) {}
 
   public socket: Server = null;
+
+  async getChatById(chat_id: number) {
+    return await this.chatsRepository
+      .createQueryBuilder("chat")
+      .where("chat.id = :id", { id: chat_id })
+      .getOne();
+  }
 
   async getChatName(user_id, chat) {
     let id;
@@ -76,14 +87,15 @@ export class ChatsService {
 
     let targetMessage: any = message[0];
 
-    targetMessage.message_status = this.sharedService.checkMessageStatus(
-      user_id,
-      targetMessage.users_have_read
-    );
-    targetMessage.users_have_read = [];
-
     if (targetMessage) {
       targetMessage = getMessageSchema(targetMessage);
+      targetMessage.message_status = this.sharedService.checkMessageStatus(
+        user_id,
+        targetMessage?.users_have_read
+      );
+      message[0].users_have_read = targetMessage.users_have_read.filter(
+        (i) => i !== user_id
+      );
     }
 
     if (targetMessage && targetMessage.user) {
@@ -94,13 +106,6 @@ export class ChatsService {
       targetMessage.user.contactName = contact?.name || "";
       targetMessage.user = getUserSchema(targetMessage);
     }
-
-    // if (targetMessage && targetMessage.author_id) {
-    //   const author = await this.userRepository.findOne({
-    //     where: { id: targetMessage.author_id },
-    //   });
-    //   targetMessage.author = getUserSchema(author);
-    // }
 
     if (targetMessage && targetMessage?.reply_message_id) {
       const replyMessage = await this.messageRepository.findOne({
@@ -172,10 +177,14 @@ export class ChatsService {
 
     // Если чаты с данными пользователями существуют
     if (currentChats) {
+      const savedChat = {
+        ...data,
+        permittedReactions: reactions.base,
+      };
       // Если чат групповой то создаем создаем новый
       if (data.is_group) {
         console.log("Create Group Chat");
-        chat = await this.chatsRepository.save(data);
+        chat = await this.chatsRepository.save(savedChat);
       } else {
         // Иначе
         let targetChat = currentChats.filter(
@@ -185,12 +194,12 @@ export class ChatsService {
         console.log("Check private chats");
         if (targetChat && targetChat.length === 0) {
           console.log("Private chats not found");
-          chat = await this.chatsRepository.save(data);
+          chat = await this.chatsRepository.save(savedChat);
         } else {
           if (Array.isArray(targetChat)) {
             if (targetChat.length === 1 && targetChat[0].is_group) {
               console.log("Create new private chat");
-              chat = await this.chatsRepository.save(data);
+              chat = await this.chatsRepository.save(savedChat);
             } else {
               targetChat = targetChat.filter((chat) => !chat.is_group);
               chat = targetChat[0];
@@ -248,13 +257,6 @@ export class ChatsService {
         };
       }
     }
-  }
-
-  async getChatById(chat_id: number) {
-    return await this.chatsRepository
-      .createQueryBuilder("chat")
-      .where("chat.id = :id", { id: chat_id })
-      .getOne();
   }
 
   async setChatListeners(userId, { sub, unsub }) {
@@ -714,6 +716,28 @@ export class ChatsService {
           message: "Test Push",
         },
       },
+    };
+  }
+
+  async setReactionsInChat(chat_id, reactions) {
+    const chat = await this.getChatById(chat_id);
+    chat.permittedReactions = reactions;
+    const updChat = await this.chatsRepository.save(chat);
+    return {
+      status: 200,
+      users: updChat.users,
+      data: {
+        chatId: updChat.id,
+        permittedReactions: updChat.permittedReactions,
+      },
+    };
+  }
+  async getAllReactions() {
+    const reactions = await this.reactionsRepository.findOne({});
+    delete reactions.id;
+    return {
+      status: 200,
+      data: reactions,
     };
   }
 }

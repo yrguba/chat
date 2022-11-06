@@ -30,5 +30,6 @@ export const getMessageSchema = (messageData) => {
     forwarded_messages: messageData.forwarded_messages || [],
     totalMessages: messageData?.totalMessages || 0,
     users_have_read: messageData.users_have_read,
+    reactions: messageData.reactions,
   };
 };
