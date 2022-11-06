@@ -33,12 +33,13 @@ export class MessagesGateway {
             userId,
             chat.message.users_have_read
           );
-          message.users_have_read = message.users_have_read.filter(
+          const usersHaveRead = message.users_have_read.filter(
             (i) => i !== message.initiator_id
           );
           this.server?.sockets?.to(user.socket_id)?.emit("receiveMessage", {
             message: {
               ...message,
+              users_have_read: usersHaveRead,
               chat_id: chat.chat_id,
               message_status: status,
             },
@@ -57,7 +58,7 @@ export class MessagesGateway {
             userId,
             message.users_have_read
           );
-          message.users_have_read = message.users_have_read.filter(
+          const usersHaveRead = message.users_have_read.filter(
             (i) => i !== message.initiator_id
           );
           this.server?.sockets
@@ -66,6 +67,7 @@ export class MessagesGateway {
               chat_id: Number(data.chat_id),
               message: {
                 ...message,
+                users_have_read: usersHaveRead,
                 message_status: status,
               },
             });
@@ -143,17 +145,20 @@ export class MessagesGateway {
     client: any,
     { chat_id, messages }: { chat_id: number; messages: number[] }
   ) {
+    if (!messages.length) return;
     const messagesReq = [];
     const clientUserId = this.sharedService.getUserId(client);
     for (let messageId of messages) {
       const message = await this.sharedService.getMessage(chat_id, messageId);
-      if (!message.users_have_read.includes(clientUserId)) {
-        message.users_have_read.push(clientUserId);
-        await this.sharedService.saveMessage(message);
+      if (message?.users_have_read.length) {
+        if (!message.users_have_read.includes(clientUserId)) {
+          message?.users_have_read.push(clientUserId);
+          await this.sharedService.saveMessage(message);
+        }
+        message.users_have_read = message.users_have_read.filter(
+          (i) => i !== message.initiator_id
+        );
       }
-      message.users_have_read = message.users_have_read.filter(
-        (i) => i !== message.initiator_id
-      );
       messagesReq.push(message);
     }
     const chat = await this.sharedService.getChatWithChatUsers(chat_id);

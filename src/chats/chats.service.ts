@@ -291,6 +291,13 @@ export class ChatsService {
         })
         .getCount();
 
+      const { pending, total } = await this.sharedService.getCountMessages(
+        user_id,
+        chat.id
+      );
+      chat.pending_messages = pending;
+      chat.totalMessages = total;
+
       if (chat && !chat?.is_group) {
         const chatData = await this.getChatName(user_id, chat);
         chat.name = chatData?.name ? chatData?.name : chat.name;
