@@ -7,7 +7,7 @@ import {
 } from "typeorm";
 import { ChatsEntity } from "./chats.entity";
 import { UserEntity } from "./user.entity";
-import { messageStatuses } from "../../chats/constants";
+import { messageStatuses } from "../../messages/constants";
 
 @Entity()
 export class MessageEntity {

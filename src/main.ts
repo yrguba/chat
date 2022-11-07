@@ -10,6 +10,7 @@ import { NestExpressApplication } from "@nestjs/platform-express";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import { ContactsModule } from "./contacts/contacts.module";
 import { FilesModule } from "./files/files.module";
+import { MessagesModule } from "./messages/messages.module";
 
 import * as admin from "firebase-admin";
 import { ServiceAccount } from "firebase-admin";
@@ -50,6 +51,7 @@ async function bootstrap() {
       AuthModule,
       ProfileModule,
       ChatsModule,
+      MessagesModule,
       UsersModule,
       ContactsModule,
       FilesModule,
