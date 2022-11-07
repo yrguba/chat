@@ -259,7 +259,10 @@ export class MessagesService {
       users_have_read: chat.listeners,
       reactions: reactions,
     });
-
+    message.reactions = this.getFilterReactions(
+      message.reactions,
+      chat.permittedReactions
+    );
     const initiator = await this.userRepository.findOne({
       where: { id: user_id },
       relations: ["message"],
@@ -409,7 +412,7 @@ export class MessagesService {
 
       const reactions = await this.reactionRepository.save({});
 
-      const newMmg = await this.messageRepository.save({
+      const newMsg = await this.messageRepository.save({
         text: text,
         message_type: "text",
         initiator_id: user_id,
@@ -417,10 +420,9 @@ export class MessagesService {
         users_have_read: haveRead,
         reactions: reactions,
       });
-
       chat.updated_at = new Date();
-      chat.message.push(newMmg);
-      initiator.message.push(newMmg);
+      chat.message.push(newMsg);
+      initiator.message.push(newMsg);
       await this.userRepository.save(initiator);
       await this.chatsRepository.save(chat);
 
@@ -437,7 +439,11 @@ export class MessagesService {
           data: {
             data: {
               message: {
-                ...getMessageSchema(newMmg),
+                ...getMessageSchema(newMsg),
+                reactions: this.getFilterReactions(
+                  newMsg.reactions,
+                  chat.permittedReactions
+                ),
                 user: getUserSchema(initiator),
                 forwarded_messages: messages,
               },
