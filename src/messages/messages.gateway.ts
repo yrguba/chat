@@ -25,6 +25,7 @@ export class MessagesGateway {
   @WebSocketServer() server: Server;
 
   handleEmitNewMessage(chat) {
+    const { message } = chat;
     chat?.users.map((userId) => {
       this.usersService.getUser(userId).then(async (user) => {
         if (user && user.socket_id) {
@@ -32,15 +33,15 @@ export class MessagesGateway {
             userId,
             chat.message.users_have_read
           );
-          const haveRead = await this.sharedService.getUsersHaveRead(
-            chat.message
+          const usersHaveRead = message.users_have_read.filter(
+            (i) => i !== message.initiator_id
           );
           this.server?.sockets?.to(user.socket_id)?.emit("receiveMessage", {
             message: {
-              ...chat?.message,
+              ...message,
+              users_have_read: usersHaveRead,
               chat_id: chat.chat_id,
               message_status: status,
-              users_have_read: haveRead,
             },
           });
         }
@@ -49,24 +50,25 @@ export class MessagesGateway {
   }
 
   handleEmitForwardMessage(data) {
+    const { message } = data.data;
     data?.users.map((userId) => {
       this.usersService.getUser(userId).then(async (user) => {
         if (user && user.socket_id) {
           const status = this.sharedService.checkMessageStatus(
             userId,
-            data.data.message.users_have_read
+            message.users_have_read
           );
-          const haveRead = await this.sharedService.getUsersHaveRead(
-            data.data.message
+          const usersHaveRead = message.users_have_read.filter(
+            (i) => i !== message.initiator_id
           );
           this.server?.sockets
             ?.to(user.socket_id)
             ?.emit("receiveForwardMessage", {
               chat_id: Number(data.chat_id),
               message: {
-                ...data.data.message,
+                ...message,
+                users_have_read: usersHaveRead,
                 message_status: status,
-                users_have_read: haveRead,
               },
             });
         }
@@ -85,6 +87,16 @@ export class MessagesGateway {
               messages: data.messages,
             });
         }
+      });
+    });
+  }
+
+  handleUpdReactionsMessage(data) {
+    data?.users.forEach((userId) => {
+      this.usersService.getUser(userId).then((user) => {
+        this.server?.sockets?.to(user.socket_id)?.emit("receiveReactions", {
+          data: data.data,
+        });
       });
     });
   }
@@ -133,22 +145,20 @@ export class MessagesGateway {
     client: any,
     { chat_id, messages }: { chat_id: number; messages: number[] }
   ) {
+    if (!messages.length) return;
     const messagesReq = [];
     const clientUserId = this.sharedService.getUserId(client);
     for (let messageId of messages) {
       const message = await this.sharedService.getMessage(chat_id, messageId);
-      if (!message.users_have_read.includes(clientUserId)) {
-        message.users_have_read.push(clientUserId);
-        await this.sharedService.saveMessage(message);
+      if (message?.users_have_read.length) {
+        if (!message.users_have_read.includes(clientUserId)) {
+          message?.users_have_read.push(clientUserId);
+          await this.sharedService.saveMessage(message);
+        }
+        message.users_have_read = message.users_have_read.filter(
+          (i) => i !== message.initiator_id
+        );
       }
-      const withoutInitiator = message.users_have_read.filter(
-        (i) => i !== message.initiator_id
-      );
-      message.users_have_read = await this.sharedService.getChatUsers(
-        withoutInitiator,
-        clientUserId,
-        true
-      );
       messagesReq.push(message);
     }
     const chat = await this.sharedService.getChatWithChatUsers(chat_id);
@@ -158,8 +168,7 @@ export class MessagesGateway {
         chat.id
       );
       for (let message of messagesReq) {
-        const ids = message.users_have_read.map((user) => user.id);
-        ids.push(message.initiator_id);
+        const ids = [...message.users_have_read, message.initiator_id];
         message.message_status = this.sharedService.checkMessageStatus(
           user.id,
           ids

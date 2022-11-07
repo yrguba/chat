@@ -20,6 +20,10 @@ import { ApiTags, ApiParam, ApiQuery } from "@nestjs/swagger";
 import { ChatDTO } from "./dto/chat.dto";
 import { ChatNameDTO } from "./dto/chatName.dto";
 import { ChatAvatarDTO } from "./dto/chatAvatar.dto";
+import {
+  SetReactionsDTOBody,
+  SetReactionsDTOParams,
+} from "./dto/setReactions.dto";
 import { MessageDTO } from "../messages/dto/message.dto";
 import { JwtAuthGuard } from "../auth/strategy/jwt-auth.guard";
 import { JwtService } from "@nestjs/jwt";
@@ -233,5 +237,29 @@ export class ChatsController {
       this.chatsGateway.handleEmitDeleteFromChat(chat?.data?.data || []);
     }
     res.status(chat.status).json(chat.data);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiParam({ name: "chat_id", required: true })
+  @Patch("/:chat_id/reactions")
+  async setReactionsInChat(
+    @Res() res,
+    @Req() req,
+    @Param() param: SetReactionsDTOParams,
+    @Body() body: SetReactionsDTOBody
+  ) {
+    const result = await this.chatsService.setReactionsInChat(
+      param.chat_id,
+      body.reactions
+    );
+    await this.chatsGateway.handleSetReactionsInChat(result);
+    res.status(result.status).json(result.data);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get("allReactions")
+  async getAllReactions(@Res() res, @Req() req) {
+    const result = await this.chatsService.getAllReactions();
+    res.status(result.status).json(result.data);
   }
 }

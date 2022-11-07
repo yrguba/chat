@@ -21,6 +21,7 @@ import { ContactsModule } from "./contacts/contacts.module";
 import { FilesModule } from "./files/files.module";
 import { SharedModule } from "./shared/shared.module";
 import { MessagesModule } from "./messages/messages.module";
+import { ReactionsEntity } from "./database/entities/reactions.entity";
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { MessagesModule } from "./messages/messages.module";
         MessageEntity,
         ContactEntity,
         AppEntity,
+        ReactionsEntity,
       ],
       synchronize: true,
     }),

@@ -135,7 +135,7 @@ export class SharedService {
   }
 
   checkMessageStatus(userId: number, usersHaveRead: number[]) {
-    const check = usersHaveRead.includes(userId);
+    const check = usersHaveRead?.includes(userId);
     return check ? messageStatuses.read : messageStatuses.pending;
   }
 }

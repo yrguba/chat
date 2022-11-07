@@ -11,6 +11,8 @@ import { Server } from "socket.io";
 import { getMessageSchema, getUserSchema } from "../utils/schema";
 import * as admin from "firebase-admin";
 import { DeleteMessageDto } from "./dto/deleteMessage.dto";
+import { ReactionToMessageDTOBody } from "./dto/reactionToMessage.dto";
+import { ReactionsEntity } from "../database/entities/reactions.entity";
 
 @Injectable()
 export class MessagesService {
@@ -23,6 +25,8 @@ export class MessagesService {
     private userRepository: Repository<UserEntity>,
     @InjectRepository(ContactEntity)
     private contactsRepository: Repository<ContactEntity>,
+    @InjectRepository(ReactionsEntity)
+    private reactionRepository: Repository<ReactionsEntity>,
     @Inject(forwardRef(() => ChatsService))
     private chatService: ChatsService,
     private sharedService: SharedService
@@ -30,9 +34,10 @@ export class MessagesService {
 
   public socket: Server = null;
 
-  async getMessage(id: number): Promise<any> {
+  async getMessage(id: number, relations?: object): Promise<any> {
     return await this.messageRepository.findOne({
       where: { id: id },
+      relations: relations,
     });
   }
 
@@ -51,6 +56,16 @@ export class MessagesService {
       where: { id: id },
       relations: ["user"],
     });
+  }
+
+  getFilterReactions(reactions, permitted) {
+    const obj = {};
+    Object.keys(reactions).forEach((i) => {
+      if (permitted.includes(i)) {
+        obj[i] = reactions[i];
+      }
+    });
+    return obj;
   }
 
   async getMessages(user_id, chat_id, options) {
@@ -83,6 +98,7 @@ export class MessagesService {
         messages = await this.messageRepository
           .createQueryBuilder("messages")
           .leftJoinAndSelect("messages.user", "user")
+          .leftJoinAndSelect("messages.reactions", "reactions")
           .orderBy("messages.created_at", "DESC")
           .where("messages.access @> :access", { access: [user_id] })
           .andWhere("messages.accessChats @> :accessChats", {
@@ -91,6 +107,12 @@ export class MessagesService {
           .orWhere("messages.chat.id = :id", { id: chat_id })
           .getMany();
       }
+
+      const { pending, total } = await this.sharedService.getCountMessages(
+        user_id,
+        chat.id
+      );
+      chat.pending_messages = pending;
 
       let splicedMessages = messages.splice(offset, options.limit);
 
@@ -107,14 +129,13 @@ export class MessagesService {
           user_id,
           message.users_have_read
         );
-        const ids = message.users_have_read.filter(
-          (i) => i !== message.initiator_id
+        message.reactions = this.getFilterReactions(
+          message.reactions,
+          chat.permittedReactions
         );
 
-        message.users_have_read = await this.sharedService.getChatUsers(
-          ids,
-          user_id,
-          true
+        message.users_have_read = message.users_have_read.filter(
+          (i) => i !== message.initiator_id
         );
 
         if (message.forwarded_messages?.length) {
@@ -228,12 +249,15 @@ export class MessagesService {
       relations: ["message"],
     });
 
+    const reactions = await this.reactionRepository.save({});
+
     const message = await this.messageRepository.save({
       ...data,
       access: chat.users,
       accessChats: [chat_id],
       reply_message_id: replyMessageId,
       users_have_read: chat.listeners,
+      reactions: reactions,
     });
 
     const initiator = await this.userRepository.findOne({
@@ -382,13 +406,18 @@ export class MessagesService {
       const text =
         messages.length > 1 ? "Пересланные сообщения" : "Пересланное сообщение";
       const haveRead = [...chat.listeners, user_id];
+
+      const reactions = await this.reactionRepository.save({});
+
       const newMmg = await this.messageRepository.save({
         text: text,
         message_type: "text",
         initiator_id: user_id,
         forwarded_messages: messages.map((msg) => msg.id),
         users_have_read: haveRead,
+        reactions: reactions,
       });
+
       chat.updated_at = new Date();
       chat.message.push(newMmg);
       initiator.message.push(newMmg);
@@ -574,5 +603,40 @@ export class MessagesService {
         };
       }
     }
+  }
+  async reactionToMessage(
+    chat_id: number,
+    messageId: number,
+    userId: number,
+    { reaction }: ReactionToMessageDTOBody
+  ) {
+    const chat = await this.chatService.getChatById(Number(chat_id));
+    const message = await this.getMessage(Number(messageId), {
+      reactions: true,
+    });
+    const { reactions } = message;
+    const filtered = this.getFilterReactions(
+      message.reactions,
+      chat.permittedReactions
+    );
+    Object.keys(filtered).forEach((key) => {
+      let found = false;
+      filtered[key].forEach((i, index) => {
+        if (i === userId) {
+          if (key === reaction) found = true;
+          filtered[key].splice(index, 1);
+        }
+      });
+      if (!found && key === reaction) filtered[key].push(userId);
+    });
+    await this.reactionRepository.save({ ...reactions, ...filtered });
+    return {
+      users: chat.users,
+      data: {
+        chatId: Number(chat_id),
+        messageId: message.id,
+        reactions: filtered,
+      },
+    };
   }
 }

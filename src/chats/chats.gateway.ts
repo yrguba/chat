@@ -64,6 +64,20 @@ export class ChatsGateway
     });
   }
 
+  handleSetReactionsInChat(data) {
+    data?.users.map((userId) => {
+      this.usersService.getUser(userId).then((user) => {
+        if (user && user.socket_id) {
+          this.server?.sockets
+            ?.to(user.socket_id)
+            ?.emit("receiveChatReactions", {
+              data: data.data,
+            });
+        }
+      });
+    });
+  }
+
   @SubscribeMessage("chatListeners")
   async handleChatListeners(client: any, payload: any) {
     const clientUserId = this.sharedService.getUserId(client);
