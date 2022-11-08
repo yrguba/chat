@@ -194,7 +194,7 @@ export class ChatsController {
     res.status(result.status).json(result.data);
   }
 
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Get("/:chat_id/avatars")
   @ApiOperation({ summary: "получить все аватарки чата" })
   @ApiParam({ name: "chat_id", required: true })
@@ -205,12 +205,11 @@ export class ChatsController {
   async getAvatars(
     @UploadedFile() file,
     @Res() res,
+    @Req() req,
     @Param() param: ChatAvatarDTOParam
   ) {
-    const result = this.fileService.getFiles(
-      FilePathsDirective.CHAT_AVATAR,
-      param.chat_id
-    );
+    const userId = await this.usersService.getUserIdFromToken(req);
+    const result = await this.chatsService.getAvatars(param.chat_id, userId);
     res.status(result.status).json(result.data);
   }
 
