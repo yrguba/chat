@@ -8,6 +8,7 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFile,
+  Param,
 } from "@nestjs/common";
 import { ProfileService } from "./profile.service";
 import {
@@ -15,6 +16,7 @@ import {
   ApiTags,
   ApiResponse,
   ApiOperation,
+  ApiParam,
 } from "@nestjs/swagger";
 import { ProfileEmptyDTO } from "./dto/profile.empty.dto";
 import { JwtAuthGuard } from "../auth/strategy/jwt-auth.guard";
@@ -25,7 +27,7 @@ import { UsersService } from "../users/users.service";
 import { FilePathsDirective } from "../files/constanst/paths";
 import { imageFileFilter } from "../utils/file-upload.utils";
 import { FileDTO, getFilesDTO } from "../files/dto/file.dto";
-import { GetAvatarsProfileDtoBody } from "./dto/profileAvatar";
+import { GetAvatarsProfileDtoParam } from "./dto/profileAvatar";
 
 @ApiTags("profile")
 @Controller("profile")
@@ -83,8 +85,9 @@ export class ProfileController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get("/avatars")
+  @Get("/:user_id/avatars")
   @ApiOperation({ summary: "получить все аватарки профиля" })
+  @ApiParam({ name: "user_id", required: true })
   @ApiResponse({
     status: 200,
     type: getFilesDTO,
@@ -93,11 +96,11 @@ export class ProfileController {
     @UploadedFile() file,
     @Res() res,
     @Req() req,
-    @Body() body: GetAvatarsProfileDtoBody
+    @Param() param: GetAvatarsProfileDtoParam
   ) {
     const result = this.fileService.getFiles(
       FilePathsDirective.USER_AVATAR,
-      body.user_id
+      param.user_id
     );
     res.status(result.status).json(result.data);
   }

@@ -1,8 +1,9 @@
-import { IsInt } from "class-validator";
-import { ApiProperty } from "@nestjs/swagger";
+import { IsInt, IsOptional } from "class-validator";
+import { Transform } from "class-transformer";
 
-export class GetAvatarsProfileDtoBody {
-  @ApiProperty({ example: 1487 })
-  @IsInt({ message: "user_id must be number" })
+export class GetAvatarsProfileDtoParam {
+  @IsOptional()
+  @IsInt({ message: "chatId must be number" })
+  @Transform(({ value }) => Number(value))
   user_id: number;
 }
