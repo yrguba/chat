@@ -39,11 +39,8 @@ export class SharedService {
   }
   async getUserWithContactName(ownerId: number, userId: number) {
     const user = await this.getUser(userId);
-    console.log("user", user);
-    if (user) {
-      const contact = await this.getContact(ownerId, user?.phone);
-      user.contactName = contact?.name || "";
-    }
+    const contact = await this.getContact(ownerId, user?.phone);
+    user.contactName = contact?.name || "";
     return user;
   }
   async getContact(ownerId: number, userPhone: string) {
@@ -74,16 +71,18 @@ export class SharedService {
   async getChatUsers(arr: number[], ownerId?: number, userSchema = false) {
     const users = [];
     for (let id of arr) {
-      if (ownerId) {
-        userSchema
-          ? users.push(
-              getUserSchema(await this.getUserWithContactName(ownerId, id))
-            )
-          : users.push(await this.getUserWithContactName(ownerId, id));
-      } else {
-        userSchema
-          ? users.push(getUserSchema(await this.getUser(id)))
-          : users.push(await this.getUser(id));
+      if (Number(id)) {
+        if (ownerId) {
+          userSchema
+            ? users.push(
+                getUserSchema(await this.getUserWithContactName(ownerId, id))
+              )
+            : users.push(await this.getUserWithContactName(ownerId, id));
+        } else {
+          userSchema
+            ? users.push(getUserSchema(await this.getUser(id)))
+            : users.push(await this.getUser(id));
+        }
       }
     }
     return users;
