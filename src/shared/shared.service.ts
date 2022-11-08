@@ -67,8 +67,11 @@ export class SharedService {
     userSchema = false
   ) {
     const chat = await this.getChat(chatId);
-    chat.chatUsers = await this.getChatUsers(chat.users, ownerId, userSchema);
-    return chat;
+    if (chat) {
+      chat.chatUsers = await this.getChatUsers(chat.users, ownerId, userSchema);
+      return chat;
+    }
+    return null;
   }
 
   async getChatUsers(arr: number[], ownerId?: number, userSchema = false) {

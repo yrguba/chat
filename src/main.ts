@@ -29,8 +29,10 @@ async function bootstrap() {
 
   app.enableVersioning({
     type: VersioningType.URI,
+    defaultVersion: "1",
+    prefix: "api/v",
   });
-  app.setGlobalPrefix("api/v1");
+
   app.useGlobalPipes(new ValidationPipe());
 
   const config = new DocumentBuilder()

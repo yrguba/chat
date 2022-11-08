@@ -64,16 +64,13 @@ export class ChatsGateway
     });
   }
 
-  handleSetReactionsInChat(data) {
-    data?.users.map((userId) => {
-      this.usersService.getUser(userId).then((user) => {
-        if (user && user.socket_id) {
-          this.server?.sockets
-            ?.to(user.socket_id)
-            ?.emit("receiveChatReactions", {
-              data: data.data,
-            });
-        }
+  handleUpdateChat(data) {
+    data.chat.chatUsers.map((user) => {
+      this.server?.sockets?.to(user.socket_id)?.emit("receiveChatChanges", {
+        data: {
+          chatId: data.chat.id,
+          updatedValues: data.updatedValues,
+        },
       });
     });
   }

@@ -1,6 +1,7 @@
 export const unAuthorizeResponse = () => {
   return {
     status: 401,
+    socketData: null,
     data: {
       error: {
         code: 401,
@@ -13,6 +14,7 @@ export const unAuthorizeResponse = () => {
 export const badRequestResponse = (errorContent) => {
   return {
     status: 400,
+    socketData: null,
     data: {
       error: {
         code: 400,
@@ -25,6 +27,7 @@ export const badRequestResponse = (errorContent) => {
 export const internalErrorResponse = (errorContent) => {
   return {
     status: 500,
+    socketData: null,
     data: {
       error: {
         code: 500,
@@ -34,9 +37,10 @@ export const internalErrorResponse = (errorContent) => {
   };
 };
 
-export const successResponse = (data) => {
+export const successResponse = (data, socketData?: any) => {
   return {
     status: 200,
+    socketData: socketData,
     data: {
       data: data,
     },

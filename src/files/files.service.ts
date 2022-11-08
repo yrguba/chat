@@ -1,7 +1,11 @@
-import { Injectable } from "@nestjs/common";
+import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { AppEntity } from "../database/entities/app.entity";
+import { editFileName, getPathToFile } from "../utils/file-upload.utils";
+import * as fs from "fs";
+import * as path from "path";
+import { successResponse } from "../utils/response";
 
 @Injectable()
 export class FilesService {
@@ -37,6 +41,47 @@ export class FilesService {
           data: apps[0],
         },
       };
+    }
+  }
+
+  createFile(file, directive, id): string {
+    try {
+      const { clientPatchToFile, serverPathToFile } = getPathToFile(
+        directive,
+        id
+      );
+      const fileName = editFileName(null, file, () => "");
+      if (!fs.existsSync(serverPathToFile)) {
+        fs.mkdirSync(serverPathToFile, { recursive: true });
+      }
+      fs.writeFileSync(path.resolve(serverPathToFile, fileName), file.buffer);
+      return `${clientPatchToFile}/${fileName}`;
+    } catch (e) {
+      throw new HttpException(
+        "ошибка загрузки файла",
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  getFiles(directive, id) {
+    try {
+      const { clientPatchToFile, serverPathToFile } = getPathToFile(
+        directive,
+        id
+      );
+      const files = [];
+      if (fs.existsSync(serverPathToFile)) {
+        fs.readdirSync(serverPathToFile).forEach((file) => {
+          files.push(`${clientPatchToFile}/${file}`);
+        });
+      }
+      return successResponse({ files });
+    } catch (e) {
+      throw new HttpException(
+        "ошибка поиска файлов",
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
     }
   }
 }
