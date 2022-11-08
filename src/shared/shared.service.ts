@@ -39,7 +39,7 @@ export class SharedService {
   }
   async getUserWithContactName(ownerId: number, userId: number) {
     const user = await this.getUser(userId);
-    const contact = await this.getContact(ownerId, user.phone);
+    const contact = await this.getContact(ownerId, user?.phone);
     user.contactName = contact?.name || "";
     return user;
   }
