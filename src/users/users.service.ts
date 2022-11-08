@@ -28,7 +28,7 @@ export class UsersService {
 
     for (const user of users) {
       const contact = await this.sharedService.getContact(id, user.phone);
-      user.contactName = contact.name || "";
+      user.contactName = contact?.name || "";
       usersData.push(getUserSchema(user));
     }
 
