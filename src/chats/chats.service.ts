@@ -93,8 +93,9 @@ export class ChatsService {
         user_id,
         targetMessage?.users_have_read
       );
-      message[0].users_have_read = targetMessage.users_have_read.filter(
-        (i) => i !== user_id
+      message[0].users_have_read = this.sharedService.getFilteredUsersHeavyRead(
+        message[0].users_have_read,
+        user_id
       );
     }
 
@@ -262,13 +263,13 @@ export class ChatsService {
   async setChatListeners(userId, { sub, unsub }) {
     if (sub) {
       const subChat = await this.sharedService.getChat(sub);
-      const checkUser = subChat.listeners.some((i) => i === userId);
-      !checkUser && subChat.listeners.push(userId);
+      const checkUser = subChat?.listeners.some((i) => i === userId);
+      !checkUser && subChat?.listeners.push(userId);
       await this.chatsRepository.save(subChat);
     }
     if (unsub) {
       const unsubChat = await this.sharedService.getChat(unsub);
-      unsubChat.listeners = unsubChat.listeners.filter((i) => i !== userId);
+      unsubChat.listeners = unsubChat?.listeners.filter((i) => i !== userId);
       await this.chatsRepository.save(unsubChat);
     }
   }

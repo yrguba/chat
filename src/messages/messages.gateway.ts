@@ -33,8 +33,9 @@ export class MessagesGateway {
             userId,
             chat.message.users_have_read
           );
-          const usersHaveRead = message.users_have_read.filter(
-            (i) => i !== message.initiator_id
+          const usersHaveRead = this.sharedService.getFilteredUsersHeavyRead(
+            message.users_have_read,
+            message.initiator_id
           );
           this.server?.sockets?.to(user.socket_id)?.emit("receiveMessage", {
             message: {
@@ -58,8 +59,9 @@ export class MessagesGateway {
             userId,
             message.users_have_read
           );
-          const usersHaveRead = message.users_have_read.filter(
-            (i) => i !== message.initiator_id
+          const usersHaveRead = this.sharedService.getFilteredUsersHeavyRead(
+            message.users_have_read,
+            message.initiator_id
           );
           this.server?.sockets
             ?.to(user.socket_id)
@@ -155,8 +157,9 @@ export class MessagesGateway {
           message?.users_have_read.push(clientUserId);
           await this.sharedService.saveMessage(message);
         }
-        message.users_have_read = message.users_have_read.filter(
-          (i) => i !== message.initiator_id
+        message.users_have_read = this.sharedService.getFilteredUsersHeavyRead(
+          message.users_have_read,
+          message.initiator_id
         );
       }
       messagesReq.push(message);
