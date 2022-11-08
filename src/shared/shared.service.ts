@@ -45,6 +45,7 @@ export class SharedService {
       user.contactName = contact?.name || "";
       return user;
     }
+    return null;
   }
   async getContact(ownerId: number, userPhone: string) {
     return await this.contactsRepository
@@ -76,15 +77,19 @@ export class SharedService {
     for (let id of arr) {
       if (Number(id)) {
         if (ownerId) {
-          userSchema
-            ? users.push(
-                getUserSchema(await this.getUserWithContactName(ownerId, id))
-              )
-            : users.push(await this.getUserWithContactName(ownerId, id));
+          const res = await this.getUserWithContactName(ownerId, id);
+          if (userSchema) {
+            res && users.push(getUserSchema(res));
+          } else {
+            res && users.push(res);
+          }
         } else {
-          userSchema
-            ? users.push(getUserSchema(await this.getUser(id)))
-            : users.push(await this.getUser(id));
+          const res = await this.getUser(id);
+          if (userSchema) {
+            res && users.push(res);
+          } else {
+            res && users.push(res);
+          }
         }
       }
     }
