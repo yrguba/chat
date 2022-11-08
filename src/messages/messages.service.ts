@@ -134,8 +134,9 @@ export class MessagesService {
           chat.permittedReactions
         );
 
-        message.users_have_read = message.users_have_read.filter(
-          (i) => i !== message.initiator_id
+        message.users_have_read = this.sharedService.getFilteredUsersHeavyRead(
+          message.users_have_read,
+          message.initiator_id
         );
 
         if (message.forwarded_messages?.length) {

@@ -104,12 +104,12 @@ export class SharedService {
       .getOne();
   }
 
-  async getUsersHaveRead(message) {
-    const withoutMe = message.users_have_read.filter(
-      (i) => i !== message.initiator_id
-    );
-    return await this.getChatUsers(withoutMe, message.initiator_id, true);
-  }
+  getFilteredUsersHeavyRead = (users, user_id) => {
+    if (users?.length) {
+      return users.filter((i) => i !== user_id);
+    }
+    return [];
+  };
 
   async saveMessage(message) {
     return await this.messageRepository.save(message);
