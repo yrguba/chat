@@ -60,11 +60,13 @@ export class MessagesService {
 
   getFilterReactions(reactions, permitted) {
     const obj = {};
-    Object.keys(reactions).forEach((i) => {
-      if (permitted.includes(i)) {
-        obj[i] = reactions[i];
-      }
-    });
+    if (reactions && permitted) {
+      Object.keys(reactions).forEach((i) => {
+        if (permitted.includes(i)) {
+          obj[i] = reactions[i];
+        }
+      });
+    }
     return obj;
   }
 

@@ -39,7 +39,6 @@ export class SharedService {
   }
   async getUserWithContactName(ownerId: number, userId: number) {
     const user = await this.getUser(userId);
-    console.log("user", user);
     if (user) {
       const contact = await this.getContact(ownerId, user?.phone);
       user.contactName = contact?.name || "";
