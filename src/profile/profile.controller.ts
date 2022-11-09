@@ -65,7 +65,7 @@ export class ProfileController {
     type: ProfileEmptyDTO,
   })
   @ApiConsumes("multipart/form-data")
-  @UseInterceptors(FileInterceptor("file", { fileFilter: imageFileFilter }))
+  @UseInterceptors(FileInterceptor("images", { fileFilter: imageFileFilter }))
   async updateAvatar(
     @UploadedFile() file,
     @Res() res,

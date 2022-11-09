@@ -45,9 +45,10 @@ import { UsersService } from "../users/users.service";
 import { MessagesGateway } from "../messages/messages.gateway";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { imageFileFilter } from "../utils/file-upload.utils";
-import { getFilesDTO } from "../files/dto/file.dto";
+import { FileDTO, getFilesDTO } from "../files/dto/file.dto";
 import { FilePathsDirective } from "../files/constanst/paths";
 import { FilesService } from "../files/files.service";
+import { ChatFilesDtoParam } from "./dto/chatFiles.dto";
 
 @ApiTags("Chats")
 @Controller("chats")
@@ -170,11 +171,12 @@ export class ChatsController {
   @ApiResponse({ status: 200, type: UpdateChatAvatarDTOResponse })
   @ApiParam({ name: "chat_id", required: true })
   @ApiConsumes("multipart/form-data")
-  @UseInterceptors(FileInterceptor("file", { fileFilter: imageFileFilter }))
+  @UseInterceptors(FileInterceptor("images", { fileFilter: imageFileFilter }))
   async updateAvatar(
     @UploadedFile() file,
     @Res() res,
     @Req() req,
+    @Body() body: FileDTO,
     @Param() param: ChatAvatarDTOParam
   ) {
     const userId = await this.usersService.getUserIdFromToken(req);
@@ -332,6 +334,31 @@ export class ChatsController {
   @Get("allReactions")
   async getAllReactions(@Res() res, @Req() req) {
     const result = await this.chatsService.getAllReactions();
+    res.status(result.status).json(result.data);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: "получить файлы чата (images | videos | voices | audios)",
+  })
+  @ApiParam({ name: "chat_id", required: true })
+  @ApiParam({
+    name: "file_type",
+    enum: ["images", "videos", "voices", "audios"],
+    required: true,
+  })
+  @ApiResponse({
+    status: 200,
+    type: getFilesDTO,
+  })
+  @Get("/:chat_id/files/:file_type")
+  async getFiles(@Res() res, @Param() param: ChatFilesDtoParam, @Req() req) {
+    const userId = await this.usersService.getUserIdFromToken(req);
+    const result = await this.chatsService.getFiles(
+      param.chat_id,
+      userId,
+      param.file_type
+    );
     res.status(result.status).json(result.data);
   }
 }

@@ -31,5 +31,6 @@ export const getMessageSchema = (messageData) => {
     totalMessages: messageData?.totalMessages || 0,
     users_have_read: messageData.users_have_read,
     reactions: messageData.reactions,
+    content: messageData.content,
   };
 };

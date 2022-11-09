@@ -8,6 +8,25 @@ export const imageFileFilter = (req, file, callback) => {
   callback(null, true);
 };
 
+export const imageTypeCheck = (file) => {
+  return file.originalname.match(/\.(jpg|jpeg|png|gif|pdf|txt)$/);
+};
+
+export const videoTypeCheck = (file) => {
+  return file.originalname.match(/\.(mp4|ogg|ogv|webm|mov)$/);
+};
+
+export const audioTypeCheck = (file) => {
+  return file.originalname.match(/\.(ogg|vorbis|wav|mp3)$/);
+};
+
+export const messageFileFilter = (req, file, callback) => {
+  if (imageTypeCheck(file) || videoTypeCheck(file) || audioTypeCheck(file)) {
+    return callback(null, true);
+  }
+  return callback(new Error("Only image files are allowed!"), false);
+};
+
 export const appFileFilter = (req, file, callback) => {
   if (!file.originalname.match(/\.(apk)$/)) {
     return callback(new Error("Only apk files are allowed!"), false);

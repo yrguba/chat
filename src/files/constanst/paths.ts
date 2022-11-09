@@ -1,3 +1,10 @@
+export enum FileTypes {
+  IMAGES = "images",
+  VIDEOS = "videos",
+  AUDIOS = "audios",
+  VOICES = "voices",
+}
+
 export enum FilePaths {
   DEST = "./storage",
   IMAGES = "images",

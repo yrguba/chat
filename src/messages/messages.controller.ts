@@ -11,13 +11,15 @@ import {
   Query,
   Req,
   Res,
+  UploadedFiles,
   UseGuards,
+  UseInterceptors,
 } from "@nestjs/common";
 import { ChatsService } from "../chats/chats.service";
 import { UsersService } from "../users/users.service";
 import { JwtService } from "@nestjs/jwt";
 import { ChatsGateway } from "../chats/chats.gateway";
-import { ApiParam, ApiQuery, ApiTags } from "@nestjs/swagger";
+import { ApiOperation, ApiParam, ApiQuery, ApiTags } from "@nestjs/swagger";
 import { JwtAuthGuard } from "../auth/strategy/jwt-auth.guard";
 import { MessageDTO } from "./dto/message.dto";
 import { ForwardMessageDTO } from "./dto/forwardMessage.dto";
@@ -29,6 +31,9 @@ import {
   ReactionToMessageDTOBody,
   ReactionToMessageDTOParams,
 } from "./dto/reactionToMessage.dto";
+import { FileDTO } from "../files/dto/file.dto";
+import { FileFieldsInterceptor } from "@nestjs/platform-express";
+import { messageFileFilter } from "../utils/file-upload.utils";
 
 @ApiTags("Messages")
 @Controller("chats")
@@ -85,6 +90,51 @@ export class MessagesController {
       param.chat_id,
       Number(userId),
       body
+    );
+
+    if (message?.status === 201) {
+      this.messagesGateway.handleEmitNewMessage({
+        chat_id: param.chat_id,
+        ...message,
+      });
+    }
+    res.status(message.status).json(message.data);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: "создать сообщение с файлом" })
+  @ApiParam({ name: "chat_id", required: true })
+  @Post(":chat_id/file_message")
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: "images", maxCount: 10 },
+        { name: "audios", maxCount: 10 },
+        { name: "videos", maxCount: 10 },
+        { name: "voices", maxCount: 1 },
+      ],
+      { fileFilter: messageFileFilter }
+    )
+  )
+  async createFileMessage(
+    @Res() res,
+    @Req() req,
+    @Body() body: FileDTO,
+    @Param() param,
+    @UploadedFiles() files
+  ) {
+    const userId = await this.usersService.getUserIdFromToken(req);
+    const { filesName, type } = this.messagesService.saveMessageContent(
+      param.chat_id,
+      files
+    );
+    const messageData = { text: "", message_type: type };
+    const message = await this.messagesService.createMessage(
+      param.chat_id,
+      Number(userId),
+      messageData,
+      null,
+      filesName
     );
 
     if (message?.status === 201) {
