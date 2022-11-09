@@ -19,7 +19,13 @@ import { ChatsService } from "../chats/chats.service";
 import { UsersService } from "../users/users.service";
 import { JwtService } from "@nestjs/jwt";
 import { ChatsGateway } from "../chats/chats.gateway";
-import { ApiOperation, ApiParam, ApiQuery, ApiTags } from "@nestjs/swagger";
+import {
+  ApiConsumes,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiTags,
+} from "@nestjs/swagger";
 import { JwtAuthGuard } from "../auth/strategy/jwt-auth.guard";
 import { MessageDTO } from "./dto/message.dto";
 import { ForwardMessageDTO } from "./dto/forwardMessage.dto";
@@ -104,6 +110,7 @@ export class MessagesController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: "создать сообщение с файлом" })
   @ApiParam({ name: "chat_id", required: true })
+  @ApiConsumes("multipart/form-data")
   @Post(":chat_id/file_message")
   @UseInterceptors(
     FileFieldsInterceptor(
@@ -117,11 +124,11 @@ export class MessagesController {
     )
   )
   async createFileMessage(
+    @UploadedFiles() files,
     @Res() res,
     @Req() req,
     @Body() body: FileDTO,
-    @Param() param,
-    @UploadedFiles() files
+    @Param() param
   ) {
     const userId = await this.usersService.getUserIdFromToken(req);
     const { filesName, type } = this.messagesService.saveMessageContent(
