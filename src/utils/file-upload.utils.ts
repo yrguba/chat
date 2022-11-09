@@ -26,12 +26,34 @@ export const getPathToFile = (directive, id) => {
     clientPatchToFile: path.replace(/^\./, ""),
     serverPathToFile: path,
   });
-  const { DEST, IMAGES, USERS, AVATARS, CHATS, AUDIOS } = FilePaths;
+  const {
+    DEST,
+    IMAGES,
+    USERS,
+    AVATARS,
+    CHATS,
+    AUDIOS,
+    MESSAGES,
+    VOICES,
+    VIDEOS,
+  } = FilePaths;
   if (directive === FilePathsDirective.USER_AVATAR) {
     return obj(`${DEST}/${USERS}/${id}/${AVATARS}`);
   }
   if (directive === FilePathsDirective.CHAT_AVATAR) {
     return obj(`${DEST}/${CHATS}/${id}/${AVATARS}`);
+  }
+  if (directive === FilePathsDirective.CHAT_MESSAGES_AUDIOS) {
+    return obj(`${DEST}/${CHATS}/${id}/${MESSAGES}/${AUDIOS}`);
+  }
+  if (directive === FilePathsDirective.CHAT_MESSAGES_VIDEOS) {
+    return obj(`${DEST}/${CHATS}/${id}/${MESSAGES}/${VIDEOS}`);
+  }
+  if (directive === FilePathsDirective.CHAT_MESSAGES_IMAGES) {
+    return obj(`${DEST}/${CHATS}/${id}/${MESSAGES}/${IMAGES}`);
+  }
+  if (directive === FilePathsDirective.CHAT_MESSAGES_VOICES) {
+    return obj(`${DEST}/${CHATS}/${id}/${MESSAGES}/${VOICES}`);
   }
   return null;
 };
