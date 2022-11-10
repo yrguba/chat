@@ -17,14 +17,14 @@ export const videoTypeCheck = (file) => {
 };
 
 export const audioTypeCheck = (file) => {
-  return file.originalname.match(/\.(ogg|vorbis|wav|mp3)$/);
+  return file.originalname.match(/\.(ogg|vorbis|wav|mp3|webm)$/);
 };
 
 export const messageFileFilter = (req, file, callback) => {
   if (imageTypeCheck(file) || videoTypeCheck(file) || audioTypeCheck(file)) {
     return callback(null, true);
   }
-  return callback(new Error("Only image files are allowed!"), false);
+  return callback(new Error("недопустимый формат"), false);
 };
 
 export const appFileFilter = (req, file, callback) => {
