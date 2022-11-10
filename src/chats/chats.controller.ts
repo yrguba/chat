@@ -13,13 +13,27 @@ import {
   DefaultValuePipe,
   ParseIntPipe,
   Delete,
+  UseInterceptors,
+  UploadedFile,
+  Version,
 } from "@nestjs/common";
 import { ChatsService } from "./chats.service";
 import { ChatsGateway } from "./chats.gateway";
-import { ApiTags, ApiParam, ApiQuery } from "@nestjs/swagger";
+import {
+  ApiTags,
+  ApiParam,
+  ApiQuery,
+  ApiOperation,
+  ApiResponse,
+  ApiConsumes,
+} from "@nestjs/swagger";
 import { ChatDTO } from "./dto/chat.dto";
 import { ChatNameDTO } from "./dto/chatName.dto";
-import { ChatAvatarDTO } from "./dto/chatAvatar.dto";
+import {
+  ChatAvatarDTO,
+  ChatAvatarDTOParam,
+  UpdateChatAvatarDTOResponse,
+} from "./dto/chatAvatar.dto";
 import {
   SetReactionsDTOBody,
   SetReactionsDTOParams,
@@ -29,6 +43,11 @@ import { JwtAuthGuard } from "../auth/strategy/jwt-auth.guard";
 import { JwtService } from "@nestjs/jwt";
 import { UsersService } from "../users/users.service";
 import { MessagesGateway } from "../messages/messages.gateway";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { imageFileFilter } from "../utils/file-upload.utils";
+import { getFilesDTO } from "../files/dto/file.dto";
+import { FilePathsDirective } from "../files/constanst/paths";
+import { FilesService } from "../files/files.service";
 
 @ApiTags("Chats")
 @Controller("chats")
@@ -36,6 +55,7 @@ export class ChatsController {
   constructor(
     private chatsService: ChatsService,
     private usersService: UsersService,
+    private fileService: FilesService,
     private readonly jwtService: JwtService,
     private chatsGateway: ChatsGateway,
     private messagesGateway: MessagesGateway
@@ -141,6 +161,56 @@ export class ChatsController {
       });
     }
     res.status(chat.status).json(chat.data);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Version("2")
+  @Patch("/:chat_id/avatar")
+  @ApiOperation({ summary: "изменить аватар чата" })
+  @ApiResponse({ status: 200, type: UpdateChatAvatarDTOResponse })
+  @ApiParam({ name: "chat_id", required: true })
+  @ApiConsumes("multipart/form-data")
+  @UseInterceptors(FileInterceptor("file", { fileFilter: imageFileFilter }))
+  async updateAvatar(
+    @UploadedFile() file,
+    @Res() res,
+    @Req() req,
+    @Param() param: ChatAvatarDTOParam
+  ) {
+    const userId = await this.usersService.getUserIdFromToken(req);
+    const fileName = this.fileService.createFile(
+      file,
+      FilePathsDirective.CHAT_AVATAR,
+      param.chat_id
+    );
+    const result = await this.chatsService.updateAvatar(
+      userId,
+      Number(param.chat_id),
+      fileName
+    );
+    if (result.status === 200) {
+      this.chatsGateway.handleUpdateChat(result.socketData);
+    }
+    res.status(result.status).json(result.data);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get("/:chat_id/avatars")
+  @ApiOperation({ summary: "получить все аватарки чата" })
+  @ApiParam({ name: "chat_id", required: true })
+  @ApiResponse({
+    status: 200,
+    type: getFilesDTO,
+  })
+  async getAvatars(
+    @UploadedFile() file,
+    @Res() res,
+    @Req() req,
+    @Param() param: ChatAvatarDTOParam
+  ) {
+    const userId = await this.usersService.getUserIdFromToken(req);
+    const result = await this.chatsService.getAvatars(param.chat_id, userId);
+    res.status(result.status).json(result.data);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -252,7 +322,9 @@ export class ChatsController {
       param.chat_id,
       body.reactions
     );
-    await this.chatsGateway.handleSetReactionsInChat(result);
+    if (result.status === 200) {
+      this.chatsGateway.handleUpdateChat(result.socketData);
+    }
     res.status(result.status).json(result.data);
   }
 

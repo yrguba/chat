@@ -13,6 +13,8 @@ import { MessagesService } from "./messages.service";
 import { MessagesController } from "./messages.controller";
 import { MessagesGateway } from "./messages.gateway";
 import { ReactionsEntity } from "../database/entities/reactions.entity";
+import { FilesService } from "../files/files.service";
+import { AppEntity } from "../database/entities/app.entity";
 
 @Module({
   imports: [
@@ -22,6 +24,7 @@ import { ReactionsEntity } from "../database/entities/reactions.entity";
       UserEntity,
       ContactEntity,
       ReactionsEntity,
+      AppEntity,
     ]),
     JwtModule,
   ],
@@ -32,6 +35,7 @@ import { ReactionsEntity } from "../database/entities/reactions.entity";
     ChatsGateway,
     UsersService,
     SharedService,
+    FilesService,
   ],
   controllers: [MessagesController],
   exports: [MessagesService],

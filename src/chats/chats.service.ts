@@ -14,6 +14,9 @@ import { SharedService } from "../shared/shared.service";
 import { MessagesService } from "../messages/messages.service";
 import { reactions } from "./constants/reactions";
 import { ReactionsEntity } from "../database/entities/reactions.entity";
+import { badRequestResponse, successResponse } from "../utils/response";
+import { FilePathsDirective } from "../files/constanst/paths";
+import { FilesService } from "../files/files.service";
 
 @Injectable()
 export class ChatsService {
@@ -30,6 +33,7 @@ export class ChatsService {
     private reactionsRepository: Repository<ReactionsEntity>,
     @Inject(forwardRef(() => MessagesService))
     private messagesService: MessagesService,
+    private filesService: FilesService,
     private sharedService: SharedService
   ) {}
 
@@ -443,6 +447,31 @@ export class ChatsService {
     };
   }
 
+  async updateAvatar(userId: number, chatId: number, avatar: string) {
+    const chat = await this.sharedService.getChatWithChatUsers(chatId);
+    if (!chat) return badRequestResponse("нет такова чата");
+    const checkUser = chat.users.includes(userId);
+    if (!checkUser || !chat.is_group)
+      return badRequestResponse("нет прав доступа");
+    if (!chat.is_group) return badRequestResponse("нельзя поменять аватар");
+
+    chat.avatar = avatar;
+    const updChat = await this.chatsRepository.save(chat);
+    return successResponse(
+      { chatId, avatar: updChat.avatar },
+      { chat: updChat, updatedValues: { avatar } }
+    );
+  }
+
+  async getAvatars(chat_id: number, userId) {
+    const chat = await this.getChatById(chat_id);
+    if (!chat.is_group) {
+      const id = chat.users.find((i) => i !== userId);
+      return this.filesService.getFiles(FilePathsDirective.USER_AVATAR, id);
+    }
+    return this.filesService.getFiles(FilePathsDirective.CHAT_AVATAR, chat_id);
+  }
+
   async deleteChat(id: number, chat_id: number): Promise<DeleteResult> {
     return await this.chatsRepository.delete(chat_id);
   }
@@ -728,17 +757,13 @@ export class ChatsService {
   }
 
   async setReactionsInChat(chat_id, reactions) {
-    const chat = await this.getChatById(chat_id);
+    const chat = await this.sharedService.getChatWithChatUsers(chat_id);
     chat.permittedReactions = reactions;
     const updChat = await this.chatsRepository.save(chat);
-    return {
-      status: 200,
-      users: updChat.users,
-      data: {
-        chatId: updChat.id,
-        permittedReactions: updChat.permittedReactions,
-      },
-    };
+    return successResponse(
+      { chatId: updChat.id, permittedReactions: updChat.permittedReactions },
+      { chat: updChat, updatedValues: { permittedReactions: reactions } }
+    );
   }
   async getAllReactions() {
     const reactions = await this.reactionsRepository.findOne({});
