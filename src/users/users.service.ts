@@ -40,11 +40,18 @@ export class UsersService {
     };
   }
 
-  async getUser(id: number): Promise<UserEntity> {
-    return await this.usersRepository
-      .createQueryBuilder("users")
-      .where("users.id = :id", { id: id })
-      .getOne();
+  async getUser(id: number, relations?: object): Promise<any> {
+    return await this.usersRepository.findOne({
+      where: { id: id },
+      relations: relations,
+    });
+  }
+
+  async getUserByPhone(phone: string, relations?: object): Promise<any> {
+    return await this.usersRepository.findOne({
+      where: { phone: phone },
+      relations: relations,
+    });
   }
 
   async getUserWithContacts(id: number): Promise<UserEntity> {

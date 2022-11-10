@@ -9,6 +9,12 @@ import { JwtModule } from "@nestjs/jwt";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { UserEntity } from "../database/entities/user.entity";
+import { UsersService } from "../users/users.service";
+import { ContactEntity } from "../database/entities/contact.entity";
+import { SharedService } from "../shared/shared.service";
+import { ChatsEntity } from "../database/entities/chats.entity";
+import { MessageEntity } from "../database/entities/message.entity";
+import { SessionEntity } from "../database/entities/session.entity";
 
 @Module({
   imports: [
@@ -24,10 +30,22 @@ import { UserEntity } from "../database/entities/user.entity";
       },
       inject: [ConfigService],
     }),
-    TypeOrmModule.forFeature([UserEntity]),
+    TypeOrmModule.forFeature([
+      UserEntity,
+      ContactEntity,
+      ChatsEntity,
+      MessageEntity,
+      SessionEntity,
+    ]),
     HttpModule,
   ],
-  providers: [AuthService, JwtStrategy, JwtRefreshStrategy],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    JwtRefreshStrategy,
+    UsersService,
+    SharedService,
+  ],
   exports: [AuthService],
   controllers: [AuthController],
 })

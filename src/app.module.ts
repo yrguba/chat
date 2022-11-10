@@ -22,6 +22,7 @@ import { FilesModule } from "./files/files.module";
 import { SharedModule } from "./shared/shared.module";
 import { MessagesModule } from "./messages/messages.module";
 import { ReactionsEntity } from "./database/entities/reactions.entity";
+import { SessionEntity } from "./database/entities/session.entity";
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { ReactionsEntity } from "./database/entities/reactions.entity";
         ContactEntity,
         AppEntity,
         ReactionsEntity,
+        SessionEntity,
       ],
       synchronize: true,
     }),

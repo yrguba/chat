@@ -34,3 +34,12 @@ export const getMessageSchema = (messageData) => {
     content: messageData.content,
   };
 };
+
+export const getSessionSchema = (sessionData) => {
+  return {
+    device_type: sessionData.device_type,
+    os_name: sessionData.os_name,
+    browser: sessionData.browser,
+    location: sessionData.location,
+  };
+};

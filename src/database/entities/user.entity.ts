@@ -1,6 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from "typeorm";
 import { ContactEntity } from "./contact.entity";
 import { MessageEntity } from "./message.entity";
+import { SessionEntity } from "./session.entity";
 
 @Entity()
 export class UserEntity {
@@ -38,4 +39,6 @@ export class UserEntity {
   refresh_token?: string;
   @Column("text", { array: true, nullable: true, default: [] })
   fb_tokens?: string[];
+  @OneToMany(() => SessionEntity, (session) => session.user)
+  sessions?: SessionEntity[];
 }

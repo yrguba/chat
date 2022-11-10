@@ -17,5 +17,7 @@ module.exports = {
   plugins: ["react", "@typescript-eslint"],
   rules: {
     "prefer-const": 0,
+    "@typescript-eslint/no-var-requires": 0,
+    "no-undef": 0,
   },
 };
