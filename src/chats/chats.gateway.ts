@@ -29,7 +29,7 @@ export class ChatsGateway
   @WebSocketServer() server: Server;
 
   handleEmitNewChat(chat) {
-    chat?.users.map((userId) => {
+    chat?.users?.map((userId) => {
       this.usersService.getUser(userId).then((user) => {
         if (user && user.socket_id) {
           this.server?.sockets?.to(user.socket_id)?.emit("receiveChat", {
