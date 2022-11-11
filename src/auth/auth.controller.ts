@@ -2,12 +2,14 @@ import {
   Body,
   Controller,
   Post,
-  Get,
   Req,
   Res,
   UseGuards,
   Delete,
   Param,
+  Version,
+  Headers,
+  Get,
 } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { UsersService } from "../users/users.service";
@@ -40,6 +42,25 @@ export class AuthController {
     res.status(auth.status).json(auth.data);
   }
 
+  @Version("2")
+  @Post("login")
+  async loginV2(
+    @Req() req,
+    @Res() res,
+    @Body() body: LoginDTO,
+    @Headers() headers
+  ) {
+    const auth = await this.authService.loginV2(body, headers);
+    res.status(auth.status).json(auth.data);
+  }
+
+  @Post("logout")
+  async logout(@Req() req, @Res() res, @Headers() headers) {
+    const userId = await this.usersService.getUserIdFromToken(req);
+    const result = await this.authService.logout(userId, headers);
+    res.status(result.status).json(result.data);
+  }
+
   @Post("refresh")
   async refreshTokens(@Res() res, @Req() req, @Body() body: RefreshDTO) {
     const user = this.jwtService.decode(body.access_token, { json: true }) as {
@@ -48,6 +69,23 @@ export class AuthController {
     const tokens = await this.authService.refreshTokens(
       user.id,
       body.refresh_token
+    );
+    res.status(tokens.status).json(tokens.data);
+  }
+
+  @Version("2")
+  @Post("refresh")
+  async refreshTokensV2(
+    @Res() res,
+    @Req() req,
+    @Body() body: RefreshDTO,
+    @Headers() headers
+  ) {
+    const userId = await this.usersService.getUserIdFromToken(req);
+    const tokens = await this.authService.refreshTokensV2(
+      userId,
+      body.refresh_token,
+      headers
     );
     res.status(tokens.status).json(tokens.data);
   }
@@ -73,5 +111,13 @@ export class AuthController {
       param.firebase_token
     );
     res.status(tokens.status).json(tokens.data);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get("sessions")
+  async getSessions(@Res() res, @Req() req, @Param() param) {
+    const userId = await this.usersService.getUserIdFromToken(req);
+    const result = await this.authService.getSessions(userId);
+    res.status(result.status).json(result.data);
   }
 }

@@ -1,4 +1,10 @@
-import { forwardRef, Inject, Injectable } from "@nestjs/common";
+import {
+  forwardRef,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+} from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ChatsEntity } from "../database/entities/chats.entity";
 import { Repository } from "typeorm";
@@ -13,6 +19,13 @@ import * as admin from "firebase-admin";
 import { DeleteMessageDto } from "./dto/deleteMessage.dto";
 import { ReactionToMessageDTOBody } from "./dto/reactionToMessage.dto";
 import { ReactionsEntity } from "../database/entities/reactions.entity";
+import { FilePathsDirective, FileTypes } from "../files/constanst/paths";
+import { FilesService } from "../files/files.service";
+import {
+  audioTypeCheck,
+  imageTypeCheck,
+  videoTypeCheck,
+} from "../utils/file-upload.utils";
 
 @Injectable()
 export class MessagesService {
@@ -29,7 +42,8 @@ export class MessagesService {
     private reactionRepository: Repository<ReactionsEntity>,
     @Inject(forwardRef(() => ChatsService))
     private chatService: ChatsService,
-    private sharedService: SharedService
+    private sharedService: SharedService,
+    private fileService: FilesService
   ) {}
 
   public socket: Server = null;
@@ -239,11 +253,48 @@ export class MessagesService {
     return foundMessages;
   }
 
+  saveMessageContent(chatId, files) {
+    const arr = [];
+    let type = "";
+    Object.keys(files).forEach((key) => {
+      type = key;
+      const pathDictionary = {
+        [FileTypes.IMAGES]: FilePathsDirective.CHAT_MESSAGES_IMAGES,
+        [FileTypes.AUDIOS]: FilePathsDirective.CHAT_MESSAGES_AUDIOS,
+        [FileTypes.VIDEOS]: FilePathsDirective.CHAT_MESSAGES_VIDEOS,
+        [FileTypes.VOICES]: FilePathsDirective.CHAT_MESSAGES_VOICES,
+      };
+      files[key].forEach((file) => {
+        const typeCheckDictionary = {
+          [FileTypes.IMAGES]: imageTypeCheck(file),
+          [FileTypes.AUDIOS]: audioTypeCheck(file),
+          [FileTypes.VIDEOS]: videoTypeCheck(file),
+          [FileTypes.VOICES]: audioTypeCheck(file),
+        };
+        if (file && typeCheckDictionary[key]) {
+          const fileName = this.fileService.createFile(
+            file,
+            pathDictionary[key],
+            chatId
+          );
+          arr.push(fileName);
+        } else {
+          throw new HttpException(
+            "формат файла не соответствует заявленному",
+            HttpStatus.INTERNAL_SERVER_ERROR
+          );
+        }
+      });
+    });
+    return { filesName: arr, type };
+  }
+
   async createMessage(
     chat_id: number,
     user_id: number,
     data: any,
-    replyMessageId: any = null
+    replyMessageId: any = null,
+    filesName?: string[]
   ): Promise<any> {
     data.initiator_id = Number(user_id);
 
@@ -261,6 +312,7 @@ export class MessagesService {
       reply_message_id: replyMessageId,
       users_have_read: chat.listeners,
       reactions: reactions,
+      content: filesName || [],
     });
     message.reactions = this.getFilterReactions(
       message.reactions,

@@ -15,13 +15,20 @@ import {
   successResponse,
   unAuthorizeResponse,
 } from "../utils/response";
+import { getIdentifier } from "../utils/sessions.utils";
+import { UsersService } from "../users/users.service";
+import { SessionEntity } from "../database/entities/session.entity";
+import { getSessionSchema, getUserSchema } from "../utils/schema";
 
 @Injectable()
 export class AuthService {
   constructor(
     private jwtService: JwtService,
+    private userService: UsersService,
     @InjectRepository(UserEntity)
-    private usersRepository: Repository<UserEntity>
+    private usersRepository: Repository<UserEntity>,
+    @InjectRepository(SessionEntity)
+    private sessionRepository: Repository<SessionEntity>
   ) {}
 
   async login(user: any): Promise<Record<string, any>> {
@@ -83,6 +90,31 @@ export class AuthService {
     }
   }
 
+  async loginV2(data, headers) {
+    const sessionInfo = getIdentifier(headers);
+    const user = await this.userService.getUserByPhone(data.phone, {
+      sessions: true,
+    });
+    if (!user) return badRequestResponse("Invalid fields");
+    const checkCode = bcrypt.compareSync(data.code, user.code);
+    if (!checkCode) return unAuthorizeResponse();
+    const tokens = await this.updCurrentSession(sessionInfo, user, "login");
+    return successResponse({
+      ...getUserSchema(user),
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+    });
+  }
+
+  async logout(userId, headers) {
+    const sessionInfo = getIdentifier(headers);
+    const user = await this.userService.getUser(userId, {
+      sessions: true,
+    });
+    await this.updCurrentSession(sessionInfo, user, "logout");
+    return successResponse({});
+  }
+
   async send_code(phone: string): Promise<Record<string, any>> {
     if (!phone) {
       return badRequestResponse("Invalid phone");
@@ -122,13 +154,13 @@ export class AuthService {
     }
 
     // TODO Вынести в константы
-    const data = await this.post("https://online.sigmasms.ru/api/login", {
+    const data: any = await this.post("https://online.sigmasms.ru/api/login", {
       username: "Cheresergey@gmail.com",
       password: "JMv0d9",
     });
 
     if (data) {
-      const token = JSON.parse(<string>data).token;
+      const token = JSON.parse(data).token;
       await this.post(
         "https://online.sigmasms.ru/api/sendings",
         {
@@ -241,6 +273,31 @@ export class AuthService {
     });
   }
 
+  async refreshTokensV2(userId: number, refresh_token: string, headers) {
+    const sessionInfo = getIdentifier(headers);
+    const user = await this.userService.getUser(userId, {
+      sessions: true,
+    });
+    const currenSession = user.sessions.find(
+      (i) => i.identifier === sessionInfo.identifier
+    );
+    if (!currenSession || !currenSession.refresh_token) {
+      return unAuthorizeResponse();
+    }
+    const refreshTokenMatches = await argon2.verify(
+      currenSession.refresh_token,
+      refresh_token
+    );
+    if (!refreshTokenMatches) {
+      return badRequestResponse("Refresh token invalid");
+    }
+    const tokens = await this.updCurrentSession(sessionInfo, user, "refresh");
+    return successResponse({
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+    });
+  }
+
   async updateRefreshToken(userId: number, refreshToken: string) {
     const hashedRefreshToken = await this.hashData(refreshToken);
     await this.usersRepository.update(userId, {
@@ -248,10 +305,68 @@ export class AuthService {
     });
   }
 
-  async getTokens(userId: number, phone: string) {
+  async updCurrentSession(sessionInfo, user, action) {
+    const tokens = await this.getTokens(
+      user.id,
+      user.phone,
+      sessionInfo.identifier
+    );
+    const hashedRefreshToken = await this.hashData(tokens.refresh_token);
+    if (action === "login") {
+      const currentSession = user.sessions.find(
+        (i) => i.identifier === sessionInfo.identifier
+      );
+      if (currentSession) {
+        await this.sessionRepository.update(
+          { identifier: sessionInfo.identifier },
+          { refresh_token: hashedRefreshToken }
+        );
+        user.sessions = user.sessions.map((i) => {
+          if (i.identifier === sessionInfo.identifier) {
+            return { ...i, refresh_token: hashedRefreshToken };
+          }
+          return i;
+        });
+      } else {
+        const newSession = await this.sessionRepository.save({
+          ...sessionInfo,
+          refresh_token: hashedRefreshToken,
+        });
+        user.sessions = [...user.sessions, newSession];
+      }
+    }
+    if (action === "logout") {
+      const currentSession = user.sessions.find(
+        (i) => i.identifier === sessionInfo.identifier
+      );
+      await this.sessionRepository.delete({
+        identifier: currentSession.identifier,
+      });
+      user.sessions = user.sessions.filter(
+        (i) => i.identifier !== currentSession.identifier
+      );
+    }
+    if (action === "refresh") {
+      await this.sessionRepository.update(
+        { identifier: sessionInfo.identifier },
+        { refresh_token: hashedRefreshToken }
+      );
+      user.sessions = user.sessions.map((i) => {
+        if (i.identifier === sessionInfo.identifier) {
+          return { ...i, refresh_token: hashedRefreshToken };
+        }
+        return i;
+      });
+    }
+    await this.usersRepository.save(user);
+    return tokens;
+  }
+
+  async getTokens(userId: number, phone: string, identifier?: string) {
     return {
       access_token: this.jwtService.sign(
         {
+          identifier: identifier || "",
           phone: phone,
           id: userId,
         },
@@ -312,5 +427,14 @@ export class AuthService {
 
   hashData(data: string) {
     return argon2.hash(data);
+  }
+
+  async getSessions(userId) {
+    const user = await this.userService.getUser(userId, {
+      sessions: true,
+    });
+    const sessions = user.sessions.map((i) => getSessionSchema(i));
+
+    return successResponse({ sessions });
   }
 }

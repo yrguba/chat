@@ -15,7 +15,7 @@ import { MessagesService } from "../messages/messages.service";
 import { reactions } from "./constants/reactions";
 import { ReactionsEntity } from "../database/entities/reactions.entity";
 import { badRequestResponse, successResponse } from "../utils/response";
-import { FilePathsDirective } from "../files/constanst/paths";
+import { FilePathsDirective, FileTypes } from "../files/constanst/paths";
 import { FilesService } from "../files/files.service";
 
 @Injectable()
@@ -765,6 +765,7 @@ export class ChatsService {
       { chat: updChat, updatedValues: { permittedReactions: reactions } }
     );
   }
+
   async getAllReactions() {
     const reactions = await this.reactionsRepository.findOne({});
     delete reactions.id;
@@ -772,5 +773,20 @@ export class ChatsService {
       status: 200,
       data: reactions,
     };
+  }
+
+  async getFiles(chatId: number, userId: number, fileType) {
+    const chat = await this.getChatById(chatId);
+    if (!chat.users.includes(userId)) return badRequestResponse("нет доступа");
+    if (!Object.values(FileTypes).includes(fileType)) {
+      return badRequestResponse("неверный тип");
+    }
+    const pathDictionary = {
+      [FileTypes.IMAGES]: FilePathsDirective.CHAT_MESSAGES_IMAGES,
+      [FileTypes.AUDIOS]: FilePathsDirective.CHAT_MESSAGES_AUDIOS,
+      [FileTypes.VIDEOS]: FilePathsDirective.CHAT_MESSAGES_VIDEOS,
+      [FileTypes.VOICES]: FilePathsDirective.CHAT_MESSAGES_VOICES,
+    };
+    return this.filesService.getFiles(pathDictionary[fileType], chatId);
   }
 }

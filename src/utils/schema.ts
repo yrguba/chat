@@ -31,5 +31,15 @@ export const getMessageSchema = (messageData) => {
     totalMessages: messageData?.totalMessages || 0,
     users_have_read: messageData.users_have_read,
     reactions: messageData.reactions,
+    content: messageData.content,
+  };
+};
+
+export const getSessionSchema = (sessionData) => {
+  return {
+    device_type: sessionData.device_type,
+    os_name: sessionData.os_name,
+    browser: sessionData.browser,
+    location: sessionData.location,
   };
 };
