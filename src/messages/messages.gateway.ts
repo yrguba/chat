@@ -153,7 +153,7 @@ export class MessagesGateway {
     for (let messageId of messages) {
       const message = await this.sharedService.getMessage(chat_id, messageId);
       if (message?.users_have_read) {
-        if (!message.users_have_read.includes(clientUserId)) {
+        if (!message?.users_have_read.includes(clientUserId)) {
           message?.users_have_read.push(clientUserId);
           await this.sharedService.saveMessage(message);
         }
