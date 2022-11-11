@@ -14,5 +14,6 @@ export const getIdentifier = (headers) => {
     os_name: os?.name || "",
     device_type: device?.type || "",
     browser: client.name,
+    location: headers["x-coords"],
   };
 };
