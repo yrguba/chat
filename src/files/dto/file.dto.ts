@@ -2,7 +2,7 @@ import { ApiProperty } from "@nestjs/swagger";
 
 export class FileDTO {
   @ApiProperty({ type: "string", format: "binary", required: true })
-  files_type: Express.Multer.File;
+  files_type: any;
 }
 
 export class getFilesDTO {
