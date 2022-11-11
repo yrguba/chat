@@ -1,155 +1,157 @@
 import {
-    SubscribeMessage,
-    WebSocketGateway,
-    OnGatewayInit,
-    WebSocketServer,
-    OnGatewayConnection,
-    OnGatewayDisconnect,
-} from '@nestjs/websockets';
-import { JwtService } from "@nestjs/jwt";
-import { Socket, Server } from 'socket.io';
+  SubscribeMessage,
+  WebSocketGateway,
+  OnGatewayInit,
+  WebSocketServer,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+} from "@nestjs/websockets";
+import { Socket, Server } from "socket.io";
 import { ChatsService } from "./chats.service";
 import { UsersService } from "../users/users.service";
-
-import * as admin from 'firebase-admin';
-
+import { getUserSchema } from "../utils/schema";
+import { SharedService } from "../shared/shared.service";
 
 @WebSocketGateway({
-    cors: {
-        origin: '*',
-    },
+  cors: {
+    origin: "*",
+  },
 })
+export class ChatsGateway
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
+  constructor(
+    private chatsService: ChatsService,
+    private usersService: UsersService,
+    private sharedService: SharedService
+  ) {}
 
-export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
-    constructor(
-        private chatsService: ChatsService,
-        private usersService: UsersService,
-        private readonly jwtService: JwtService
-    ) {
-        this.usersPool = [];
-    }
+  @WebSocketServer() server: Server;
 
-    @WebSocketServer() server: Server;
-    private usersPool: any[];
+  handleEmitNewChat(chat) {
+    chat?.users.map((userId) => {
+      this.usersService.getUser(userId).then((user) => {
+        if (user && user.socket_id) {
+          this.server?.sockets?.to(user.socket_id)?.emit("receiveChat", {
+            message: chat,
+          });
+        }
+      });
+    });
+  }
 
-    handleEmit (data) {
-        data?.users.map((userId) => {
-            this.usersService.getUser(userId).then((user) => {
-                if (user && user.socket_id) {
-                    this.server?.sockets?.to(user.socket_id)?.emit('receiveMessage', {
-                        message: {...data?.message, chat_id: data.chat_id},
+  handleEmitAddToChat(chat) {
+    chat?.users.map((userId) => {
+      this.usersService.getUser(userId).then((user) => {
+        if (user && user.socket_id) {
+          this.server?.sockets?.to(user.socket_id)?.emit("addedToChat", {
+            message: chat,
+          });
+        }
+      });
+    });
+  }
+
+  handleEmitDeleteFromChat(chat) {
+    chat?.users.map((userId) => {
+      this.usersService.getUser(userId).then((user) => {
+        if (user && user.socket_id) {
+          this.server?.sockets?.to(user.socket_id)?.emit("removedFromChat", {
+            message: chat,
+          });
+        }
+      });
+    });
+  }
+
+  handleUpdateChat(data) {
+    data.chat.chatUsers.map((user) => {
+      this.server?.sockets?.to(user.socket_id)?.emit("receiveChatChanges", {
+        data: {
+          chatId: data.chat.id,
+          updatedValues: data.updatedValues,
+        },
+      });
+    });
+  }
+
+  @SubscribeMessage("chatListeners")
+  async handleChatListeners(client: any, payload: any) {
+    const clientUserId = this.sharedService.getUserId(client);
+    await this.chatsService.setChatListeners(clientUserId, payload);
+  }
+
+  @SubscribeMessage("ping")
+  handlePing(client: any, payload: any): string {
+    client?.socket?.emit("pong", {
+      message: "pong",
+    });
+    return "";
+  }
+
+  afterInit(server: Server) {
+    this.chatsService.socket = server;
+  }
+
+  handleDisconnect(client: Socket) {
+    const clientUserId = this.sharedService.getUserId(client);
+    if (clientUserId) {
+      this.usersService
+        .updateUserStatus(clientUserId, true)
+        .then((initiator) => {
+          this.chatsService.getUserChats(clientUserId).then((chats) => {
+            if (chats) {
+              chats.map((chat) => {
+                chat?.users.map((userId) => {
+                  if (userId !== clientUserId) {
+                    this.usersService.getUser(userId).then((user) => {
+                      if (user && user.socket_id) {
+                        this.server?.sockets
+                          ?.to(user.socket_id)
+                          ?.emit("receiveUserStatus", {
+                            user: getUserSchema(initiator),
+                            status: "offline",
+                          });
+                      }
                     });
-                } else {
-                    //send push
-                }
-            });
-        });
-    };
-
-    handleEmitNewChat (chat) {
-        chat?.users.map((userId) => {
-            this.usersService.getUser(userId).then((user) => {
-                if (user && user.socket_id) {
-                    console.log(user)
-                    this.server?.sockets?.to(user.socket_id)?.emit('receiveChat', {
-                        message: chat,
-                    });
-                } else {
-                    //send push
-                }
-            });
-
-        });
-    };
-
-    handleEmitAddToChat (chat) {
-        chat?.users.map((userId) => {
-            this.usersService.getUser(userId).then((user) => {
-                if (user && user.socket_id) {
-                    this.server?.sockets?.to(user.socket_id)?.emit('addedToChat', {
-                        message: chat,
-                    });
-                } else {
-                    //send push
-                }
-            });
-
-        });
-    };
-
-    handleEmitDeleteFromChat (chat) {
-        chat?.users.map((userId) => {
-            this.usersService.getUser(userId).then((user) => {
-                if (user && user.socket_id) {
-                    this.server?.sockets?.to(user.socket_id)?.emit('removedFromChat', {
-                        message: chat,
-                    });
-                } else {
-                    //send push
-                }
-            });
-
-        });
-    };
-
-    @SubscribeMessage('typingMessage')
-    handleTypingMessage(client: any, payload: any) {
-        const jwt = client.handshake?.headers?.authorization?.replace('Bearer ', '');
-        const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
-        if (json?.id) {
-            const {
-                chat_id,
-            } = payload;
-
-            this.chatsService.getChat(json.id, chat_id).then((data: any) => {
-                data?.data?.data?.users.map((userId) => {
-                    if (userId !== json.id) {
-                        this.usersService.getUser(userId).then((user) => {
-                            if (user && user.socket_id) {
-                                this.server?.sockets?.to(user.socket_id)?.emit('receiveTypingMessage', {
-                                    message: `${user.name || user.nickname  || user.phone} печатает`,
-                                });
-                            }
-                        });
-                    }
+                  }
                 });
-            });
-        }
-        return '';
-    }
-
-    @SubscribeMessage('ping')
-    handlePing(client: any, payload: any): string {
-        client?.socket?.emit('pong', {
-            message: 'pong',
+              });
+            }
+          });
         });
-        return '';
     }
 
-    afterInit(server: Server) {
-        this.chatsService.socket = server;
-        //Do stuffs
-    }
+    console.log("disconnect client");
+  }
 
-    handleDisconnect(client: Socket) {
-        // const jwt = client.handshake?.headers?.authorization?.replace('Bearer ', '');
-        // const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
-        // if (json?.id) {
-        //     this.usersService.updateUserSocket(json.id, client.id, false).then(data => {
-        //         console.log('disconnect client');
-        //     });
-        // }
-
-        console.log('disconnect client');
+  handleConnection(client: Socket, ...args: any[]) {
+    const clientUserId = this.sharedService.getUserId(client);
+    if (clientUserId) {
+      this.usersService
+        .updateUserSocket(clientUserId, client.id, true)
+        .then((initiator) => {
+          this.chatsService.getUserChats(clientUserId).then((chats) => {
+            if (chats) {
+              chats.map((chat) => {
+                chat?.users.map((userId) => {
+                  if (userId !== clientUserId) {
+                    this.usersService.getUser(userId).then((user) => {
+                      if (user && user.socket_id) {
+                        this.server?.sockets
+                          ?.to(user.socket_id)
+                          ?.emit("receiveUserStatus", {
+                            user: getUserSchema(initiator),
+                            status: "online",
+                          });
+                      }
+                    });
+                  }
+                });
+              });
+            }
+          });
+        });
     }
-
-    handleConnection(client: Socket, ...args: any[]) {
-        const jwt = client.handshake?.headers?.authorization?.replace('Bearer ', '');
-        const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
-        if (json?.id) {
-            this.usersService.updateUserSocket(json.id, client.id, true).then(data => {
-                console.log('updated client');
-            });
-        }
-    }
+  }
 }
