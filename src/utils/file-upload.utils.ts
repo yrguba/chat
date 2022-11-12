@@ -76,3 +76,11 @@ export const getPathToFile = (directive, id) => {
   }
   return null;
 };
+
+export const usersFilesAccessVerify = (userId, filepath) => {
+  const words = filepath.split("/");
+  const findIndex = words.findIndex((word) => word === "users");
+  if (findIndex === -1) return false;
+  const ownerId = Number(words[findIndex + 1]);
+  return Number(userId) === ownerId;
+};

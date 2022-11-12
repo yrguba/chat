@@ -621,6 +621,7 @@ export class MessagesService {
       if (Array.isArray(data.messages)) {
         for (const message of data.messages) {
           const targetMessage = await this.getMessage(Number(message));
+          this.fileService.deleteFiles(targetMessage.content);
           deletedMessages.push(getMessageSchema(targetMessage));
           await this.messageRepository.delete(Number(message));
         }
@@ -642,7 +643,6 @@ export class MessagesService {
           const targetMessage = await this.messageRepository.findOne({
             where: { id: Number(message) },
           });
-
           const chatUsers = chat.users;
           const updatedAccessUsers = chatUsers.filter((user) => user !== id);
 
