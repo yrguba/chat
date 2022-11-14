@@ -9,6 +9,7 @@ import {
   UseInterceptors,
   UploadedFile,
   Param,
+  Delete,
 } from "@nestjs/common";
 import { ProfileService } from "./profile.service";
 import {
@@ -27,7 +28,10 @@ import { UsersService } from "../users/users.service";
 import { FilePathsDirective } from "../files/constanst/paths";
 import { imageFileFilter } from "../utils/file-upload.utils";
 import { FileDTO, getFilesDTO } from "../files/dto/file.dto";
-import { GetAvatarsProfileDtoParam } from "./dto/profileAvatar";
+import {
+  DeleteAvatarsProfileDtoBody,
+  GetAvatarsProfileDtoParam,
+} from "./dto/profileAvatar";
 
 @ApiTags("profile")
 @Controller("profile")
@@ -102,6 +106,19 @@ export class ProfileController {
       FilePathsDirective.USER_AVATAR,
       param.user_id
     );
+    res.status(result.status).json(result.data);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete("avatar")
+  @ApiOperation({ summary: "удалить аватар профиля" })
+  async deleteAvatar(
+    @Res() res,
+    @Req() req,
+    @Body() body: DeleteAvatarsProfileDtoBody
+  ) {
+    const userId = await this.usersService.getUserIdFromToken(req);
+    const result = await this.profileService.deleteAvatar(userId, body.avatar);
     res.status(result.status).json(result.data);
   }
 }
