@@ -155,6 +155,10 @@ export class MessagesService {
           message.initiator_id
         );
 
+        if (message.message_type === "system") {
+          message.text = await this.updTextSystemMessage(user_id, message);
+        }
+
         if (message.forwarded_messages?.length) {
           const messages = [];
           for (let msgId of message.forwarded_messages) {
@@ -699,5 +703,45 @@ export class MessagesService {
         reactions: filtered,
       },
     };
+  }
+
+  async updTextSystemMessage(userId, message) {
+    if (message?.text.includes("/")) {
+      const { content, initiatorId, inviteId } =
+        this.sharedService.parseMessageStatusText(message);
+      const isIAmInitiator =
+        initiatorId && Number(userId) === Number(initiatorId);
+      const isIAmInvited = inviteId && Number(userId) === Number(inviteId);
+      let updMessage = [];
+      if (!isIAmInitiator) {
+        const initiator = await this.sharedService.getUserWithContactName(
+          userId,
+          initiatorId
+        );
+        updMessage[0] = initiator?.contactName || initiator.name;
+      } else {
+        updMessage[0] = "вы";
+      }
+      if (inviteId) {
+        if (!isIAmInvited) {
+          const invite = await this.sharedService.getUserWithContactName(
+            userId,
+            inviteId
+          );
+          updMessage[2] = invite?.contactName || invite.name;
+        } else {
+          updMessage[2] = "вас";
+        }
+      }
+      updMessage[1] = content;
+      if (isIAmInitiator) {
+        const firstWord = updMessage[1].split(" ")[0];
+        const words = updMessage[1].split(" ");
+        words.splice(0, 1, `${firstWord}и`);
+        updMessage[1] = words.join(" ");
+      }
+      return updMessage.join(" ");
+    }
+    return message.text;
   }
 }
