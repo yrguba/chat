@@ -637,6 +637,10 @@ export class ChatsService {
             users: currentChatUsers,
             ...message,
           },
+          socketData: {
+            chat: { ...chat, chatUsers: chatUsers },
+            updatedValues: { chatUsers: usersData, users: currentChatUsers },
+          },
           message: message,
         },
       };
@@ -714,6 +718,10 @@ export class ChatsService {
             chatUsers: usersData,
             users: updatedUsers,
             ...message,
+          },
+          socketData: {
+            chat: { ...chat, chatUsers: chatUsers },
+            updatedValues: { chatUsers: usersData, users: updatedUsers },
           },
           message: message,
         },

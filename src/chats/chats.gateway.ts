@@ -65,7 +65,14 @@ export class ChatsGateway
   }
 
   handleUpdateChat(data) {
-    data.chat.chatUsers.map((user) => {
+    data.chat.chatUsers.map(async (user) => {
+      if (data.updatedValues?.chatUsers?.length) {
+        data.updatedValues.chatUsers =
+          await this.sharedService.changeContactName(
+            user.id,
+            data.chat.chatUsers
+          );
+      }
       this.server?.sockets?.to(user.socket_id)?.emit("receiveChatChanges", {
         data: {
           chatId: data.chat.id,

@@ -282,6 +282,7 @@ export class ChatsController {
         ...chat.data.message,
       });
       this.chatsGateway.handleEmitAddToChat(chat?.data?.data || []);
+      this.chatsGateway.handleUpdateChat(chat.data.socketData);
     }
     res.status(chat.status).json(chat.data);
   }
@@ -307,6 +308,7 @@ export class ChatsController {
         ...chat.data.message,
       });
       this.chatsGateway.handleEmitDeleteFromChat(chat?.data?.data || []);
+      this.chatsGateway.handleUpdateChat(chat.data.socketData);
     }
     res.status(chat.status).json(chat.data);
   }

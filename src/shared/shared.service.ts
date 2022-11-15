@@ -61,6 +61,17 @@ export class SharedService {
       .getOne();
   }
 
+  async changeContactName(ownerId, users) {
+    const usersWithContactName = [];
+    for (let user of users) {
+      const contact = await this.getContact(ownerId, user.phone);
+      usersWithContactName.push(
+        getUserSchema({ ...user, contactName: contact?.name || "" })
+      );
+    }
+    return usersWithContactName;
+  }
+
   async getChatWithChatUsers(
     chatId: number,
     ownerId?: number,
