@@ -161,4 +161,12 @@ export class SharedService {
     const check = usersHaveRead?.includes(userId);
     return check ? messageStatuses.read : messageStatuses.pending;
   }
+
+  parseMessageStatusText(message) {
+    const arr = message.text.split("/");
+    const content = arr[1];
+    const initiatorId = arr[0].split(":")[1];
+    const inviteId = arr.pop().split(":")[1];
+    return { content, initiatorId, inviteId };
+  }
 }

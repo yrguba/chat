@@ -191,6 +191,12 @@ export class ChatsController {
       fileName
     );
     if (result.status === 200) {
+      if (result?.message) {
+        this.messagesGateway.handleEmitNewMessage({
+          chat_id: param.chat_id,
+          ...result.message,
+        });
+      }
       this.chatsGateway.handleUpdateChat(result.socketData);
     }
     res.status(result.status).json(result.data);

@@ -37,9 +37,10 @@ export const internalErrorResponse = (errorContent) => {
   };
 };
 
-export const successResponse = (data, socketData?: any) => {
+export const successResponse = (data, socketData?: any, message?: any) => {
   return {
     status: 200,
+    message: message,
     socketData: socketData,
     data: {
       data: data,
