@@ -709,38 +709,41 @@ export class MessagesService {
     if (message?.text.includes("/")) {
       const { content, initiatorId, inviteId } =
         this.sharedService.parseMessageStatusText(message);
-      const isIAmInitiator =
-        initiatorId && Number(userId) === Number(initiatorId);
-      const isIAmInvited = inviteId && Number(userId) === Number(inviteId);
-      let updMessage = [];
-      if (!isIAmInitiator) {
-        const initiator = await this.sharedService.getUserWithContactName(
-          userId,
-          initiatorId
-        );
-        updMessage[0] = initiator?.contactName || initiator.name;
-      } else {
-        updMessage[0] = "вы";
-      }
-      if (inviteId) {
-        if (!isIAmInvited) {
-          const invite = await this.sharedService.getUserWithContactName(
+      if (content && initiatorId && inviteId) {
+        const isIAmInitiator =
+          initiatorId && Number(userId) === Number(initiatorId);
+        const isIAmInvited = inviteId && Number(userId) === Number(inviteId);
+        let updMessage = [];
+        if (!isIAmInitiator) {
+          const initiator = await this.sharedService.getUserWithContactName(
             userId,
-            inviteId
+            initiatorId
           );
-          updMessage[2] = invite?.contactName || invite.name;
+          updMessage[0] = initiator?.contactName || initiator.name;
         } else {
-          updMessage[2] = "вас";
+          updMessage[0] = "вы";
         }
+        if (inviteId) {
+          if (!isIAmInvited) {
+            const invite = await this.sharedService.getUserWithContactName(
+              userId,
+              inviteId
+            );
+            updMessage[2] = invite?.contactName || invite.name;
+          } else {
+            updMessage[2] = "вас";
+          }
+        }
+        updMessage[1] = content;
+        if (isIAmInitiator) {
+          const firstWord = updMessage[1].split(" ")[0];
+          const words = updMessage[1].split(" ");
+          words.splice(0, 1, `${firstWord}и`);
+          updMessage[1] = words.join(" ");
+        }
+        return updMessage.join(" ");
       }
-      updMessage[1] = content;
-      if (isIAmInitiator) {
-        const firstWord = updMessage[1].split(" ")[0];
-        const words = updMessage[1].split(" ");
-        words.splice(0, 1, `${firstWord}и`);
-        updMessage[1] = words.join(" ");
-      }
-      return updMessage.join(" ");
+      return message.text;
     }
     return message.text;
   }
