@@ -101,6 +101,10 @@ export class ChatsService {
         message[0].users_have_read,
         user_id
       );
+      message[0].text = await this.messagesService.updTextSystemMessage(
+        user_id,
+        message[0]
+      );
     }
 
     if (targetMessage && targetMessage.user) {
@@ -231,7 +235,7 @@ export class ChatsService {
         if (isNewChat) {
           await this.messagesService
             .createMessage(chat.id, user_id, {
-              text: "Создан новый чат",
+              text: `initiator:${user_id}/создал чат/`,
               message_type: "system",
             })
             .then((data) => {
@@ -404,7 +408,7 @@ export class ChatsService {
     const updatedChat = { ...chat, name: name, updated_at: new Date() };
     await this.messagesService
       .createMessage(chat_id, user_id, {
-        text: "Имя чата обновлено",
+        text: `initiator:${user_id}/изменил название чата/`,
         message_type: "system",
       })
       .then((data) => {
@@ -429,7 +433,7 @@ export class ChatsService {
       .getOne();
     await this.messagesService
       .createMessage(chat_id, user_id, {
-        text: "У чата поменялся аватар",
+        text: `initiator:${user_id}/изменил аватар чата/`,
         message_type: "system",
       })
       .then((data) => {
@@ -447,19 +451,27 @@ export class ChatsService {
     };
   }
 
-  async updateAvatar(userId: number, chatId: number, avatar: string) {
+  async updateAvatar(
+    userId: number,
+    chatId: number,
+    avatar: string
+  ): Promise<any> {
     const chat = await this.sharedService.getChatWithChatUsers(chatId);
     if (!chat) return badRequestResponse("нет такова чата");
     const checkUser = chat.users.includes(userId);
     if (!checkUser || !chat.is_group)
       return badRequestResponse("нет прав доступа");
     if (!chat.is_group) return badRequestResponse("нельзя поменять аватар");
-
+    const message = await this.messagesService.createMessage(chatId, userId, {
+      text: `initiator:${userId}/изменил аватар чата/`,
+      message_type: "system",
+    });
     chat.avatar = avatar;
     const updChat = await this.chatsRepository.save(chat);
     return successResponse(
       { chatId, avatar: updChat.avatar },
-      { chat: updChat, updatedValues: { avatar } }
+      { chat: updChat, updatedValues: { avatar } },
+      message
     );
   }
 
@@ -593,13 +605,11 @@ export class ChatsService {
     if (currentChatUsers) {
       for (const user of users) {
         if (!currentChatUsers.includes(user)) {
-          const invitedUser = await this.sharedService.getUser(user_id);
+          const invitedUser = await this.sharedService.getUser(user);
           if (invitedUser && initiator) {
             await this.messagesService
               .createMessage(chat_id, user_id, {
-                text: `${this.getUserName(
-                  initiator
-                )} пригласил ${this.getUserName(invitedUser)}`,
+                text: `initiator:${initiator.id}/пригласил/invited:${invitedUser.id}`,
                 message_type: "system",
               })
               .then((data) => {
@@ -636,6 +646,10 @@ export class ChatsService {
             chatUsers: usersData,
             users: currentChatUsers,
             ...message,
+          },
+          socketData: {
+            chat: { ...chat, chatUsers: chatUsers },
+            updatedValues: { chatUsers: usersData, users: currentChatUsers },
           },
           message: message,
         },
@@ -678,13 +692,11 @@ export class ChatsService {
       await this.chatsRepository.update(chat_id, updatedChat);
 
       for (const user of users) {
-        const invitedUser = await this.sharedService.getUser(user_id);
+        const invitedUser = await this.sharedService.getUser(user);
         if (invitedUser && initiator) {
           await this.messagesService
             .createMessage(chat_id, user_id, {
-              text: `${this.getUserName(
-                initiator
-              )} удалил из чата ${this.getUserName(invitedUser)}`,
+              text: `initiator:${initiator.id}/удалил из чата/invited:${invitedUser.id}`,
               message_type: "system",
             })
             .then((data) => {
@@ -714,6 +726,10 @@ export class ChatsService {
             chatUsers: usersData,
             users: updatedUsers,
             ...message,
+          },
+          socketData: {
+            chat: { ...chat, chatUsers: chatUsers },
+            updatedValues: { chatUsers: usersData, users: updatedUsers },
           },
           message: message,
         },
