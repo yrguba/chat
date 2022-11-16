@@ -709,7 +709,7 @@ export class MessagesService {
     if (message?.text.includes("/")) {
       const { content, initiatorId, inviteId } =
         this.sharedService.parseMessageStatusText(message);
-      if (content && initiatorId && inviteId) {
+      if (content && initiatorId) {
         const isIAmInitiator =
           initiatorId && Number(userId) === Number(initiatorId);
         const isIAmInvited = inviteId && Number(userId) === Number(inviteId);
