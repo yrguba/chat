@@ -14,6 +14,7 @@ import { MessagesModule } from "./messages/messages.module";
 
 import * as admin from "firebase-admin";
 import { ServiceAccount } from "firebase-admin";
+import { HttpModule } from "./http/http.module";
 
 const serviceAccount = require("../fb.json");
 
@@ -57,6 +58,7 @@ async function bootstrap() {
       UsersModule,
       ContactsModule,
       FilesModule,
+      HttpModule,
     ],
   });
   SwaggerModule.setup("swagger/v1", app, document);
