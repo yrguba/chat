@@ -23,6 +23,8 @@ import { SharedModule } from "./shared/shared.module";
 import { MessagesModule } from "./messages/messages.module";
 import { ReactionsEntity } from "./database/entities/reactions.entity";
 import { SessionEntity } from "./database/entities/session.entity";
+import { HttpController } from './http/http.controller';
+import { HttpModule } from './http/http.module';
 
 @Module({
   imports: [
@@ -63,8 +65,9 @@ import { SessionEntity } from "./database/entities/session.entity";
     ChatGateway,
     SharedModule,
     MessagesModule,
+    HttpModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, HttpController],
   providers: [AppService],
 })
 export class AppModule {}
