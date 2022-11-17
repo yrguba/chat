@@ -179,8 +179,10 @@ export class MessagesService {
           const replyMessage = await this.getMessageWithUser(
             message.reply_message_id
           );
-          replyMessage.user = getUserSchema(replyMessage.user);
-          message.replyMessage = getMessageSchema(replyMessage);
+          if (replyMessage) {
+            replyMessage.user = getUserSchema(replyMessage.user);
+            message.replyMessage = getMessageSchema(replyMessage);
+          }
         }
       }
 
