@@ -23,8 +23,8 @@ import { SharedModule } from "./shared/shared.module";
 import { MessagesModule } from "./messages/messages.module";
 import { ReactionsEntity } from "./database/entities/reactions.entity";
 import { SessionEntity } from "./database/entities/session.entity";
-import { HttpController } from './http/http.controller';
-import { HttpModule } from './http/http.module';
+import { HttpController } from "./http/http.controller";
+import { HttpModule } from "./http/http.module";
 
 @Module({
   imports: [
@@ -67,7 +67,7 @@ import { HttpModule } from './http/http.module';
     MessagesModule,
     HttpModule,
   ],
-  controllers: [AppController, HttpController],
+  controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}
