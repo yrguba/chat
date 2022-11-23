@@ -23,10 +23,13 @@ import { FilePathsDirective, FileTypes } from "../files/constanst/paths";
 import { FilesService } from "../files/files.service";
 import {
   audioTypeCheck,
+  getFileInfo,
   imageTypeCheck,
   videoTypeCheck,
 } from "../utils/file-upload.utils";
 import { NotificationsService } from "../notifications/notifications.service";
+import { messageContentTypes } from "./constants";
+import * as fs from "fs";
 
 @Injectable()
 export class MessagesService {
@@ -186,6 +189,7 @@ export class MessagesService {
             message.replyMessage = getMessageSchema(replyMessage);
           }
         }
+        message.content = this.updMessageContent(message);
       }
 
       splicedMessages = splicedMessages.map((message) =>
@@ -213,6 +217,21 @@ export class MessagesService {
           },
         },
       };
+    }
+  }
+
+  updMessageContent(message) {
+    if (messageContentTypes.includes(message.message_type)) {
+      if (message?.content?.length) {
+        const content = [];
+        message?.content.forEach((filePath) => {
+          if (fs.statSync(`.${filePath}`).isFile()) {
+            content.push(getFileInfo(`.${filePath}`));
+          }
+        });
+        return content;
+      }
+      return getFileInfo(`.${message.text}`);
     }
   }
 
@@ -335,6 +354,8 @@ export class MessagesService {
       initiator.message.push(message);
       await this.userRepository.save(initiator);
     }
+
+    message.content = this.updMessageContent(message);
 
     let userData;
 

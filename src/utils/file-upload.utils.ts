@@ -1,5 +1,5 @@
-import { extname } from "path";
 import { FilePaths, FilePathsDirective } from "../files/constanst/paths";
+import * as fs from "fs";
 
 export const imageFileFilter = (req, file, callback) => {
   if (!file.originalname.match(/\.(jpg|jpeg|png|gif|pdf|txt)$/)) {
@@ -34,10 +34,28 @@ export const appFileFilter = (req, file, callback) => {
   callback(null, true);
 };
 
+const snakeCase = (action: "encode" | "decode", str: string) => {
+  if (action === "encode") return str.split(" ").join("_");
+  return str.split("_").join(" ");
+};
+
+export const getFileInfo = (filePath: string) => {
+  const name = filePath.includes("&$&") ? filePath.split("&$&").pop() : "";
+  return {
+    name: name ? snakeCase("decode", name) : "unknown",
+    extension: `.${filePath.split(".").pop()}`,
+    size: fs.statSync(filePath).size,
+    url: filePath.replace(/^\./, ""),
+  };
+};
+
 export const editFileName = (req, file, callback) => {
-  const fileExtName = extname(file.originalname);
-  callback(null, `${Date.now()}${fileExtName}`);
-  return `${Date.now()}${fileExtName}`;
+  const originalName = snakeCase(
+    "encode",
+    Buffer.from(file.originalname, "latin1").toString("utf8")
+  );
+  callback(null, `${Date.now()}&${originalName}`);
+  return `${Date.now()}&$&${originalName}`;
 };
 
 export const getPathToFile = (directive, id) => {
