@@ -425,6 +425,18 @@ export class AuthService {
     }
   }
 
+  async createOneSignalPlayerId(userId: number, playerId: string) {
+    try {
+      await this.usersRepository.update(
+        { id: userId },
+        { onesignal_player_id: playerId }
+      );
+      return successResponse({});
+    } catch (e) {
+      return badRequestResponse(e);
+    }
+  }
+
   hashData(data: string) {
     return argon2.hash(data);
   }

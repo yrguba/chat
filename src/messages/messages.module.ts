@@ -15,6 +15,7 @@ import { MessagesGateway } from "./messages.gateway";
 import { ReactionsEntity } from "../database/entities/reactions.entity";
 import { FilesService } from "../files/files.service";
 import { AppEntity } from "../database/entities/app.entity";
+import { NotificationsService } from "../notifications/notifications.service";
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { AppEntity } from "../database/entities/app.entity";
     UsersService,
     SharedService,
     FilesService,
+    NotificationsService,
   ],
   controllers: [MessagesController],
   exports: [MessagesService],

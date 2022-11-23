@@ -8,12 +8,16 @@ import {
   Param,
   Post,
   Delete,
+  Version,
 } from "@nestjs/common";
 import { ContactsService } from "./contacts.service";
 import { ApiParam, ApiTags } from "@nestjs/swagger";
 import { JwtAuthGuard } from "../auth/strategy/jwt-auth.guard";
 import { JwtService } from "@nestjs/jwt";
-import { DeleteContactsDto } from "./dto/deleteContacts.dto";
+import {
+  DeleteContactsDto,
+  DeleteContactsDtoV2,
+} from "./dto/deleteContacts.dto";
 import { UsersService } from "../users/users.service";
 import { CreateContactsDto } from "./dto/createContacts.dto";
 
@@ -75,5 +79,17 @@ export class ContactsController {
     });
 
     res.status(200).json({ data: body });
+  }
+
+  @Version("2")
+  @UseGuards(JwtAuthGuard)
+  @Delete("/")
+  async deleteContactsV2(
+    @Res() res,
+    @Req() req,
+    @Body() body: DeleteContactsDtoV2
+  ) {
+    const result = await this.contactsService.deleteContactByPhone(body.phone);
+    res.status(result.status).json(result.data);
   }
 }

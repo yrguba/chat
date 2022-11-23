@@ -20,6 +20,7 @@ import { ApiParam, ApiTags } from "@nestjs/swagger";
 import { PhoneDTO } from "./dto/phone.dto";
 import { FirebaseDto } from "./dto/firebase.dto";
 import { JwtAuthGuard } from "./strategy/jwt-auth.guard";
+import { OnesignalDto } from "./dto/onesignal.dto";
 
 @ApiTags("Authorization")
 @Controller("authorization")
@@ -111,6 +112,21 @@ export class AuthController {
       param.firebase_token
     );
     res.status(tokens.status).json(tokens.data);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post("onesignal_token")
+  async createOneSignalPlayerId(
+    @Res() res,
+    @Req() req,
+    @Body() body: OnesignalDto
+  ) {
+    const userId = await this.usersService.getUserIdFromToken(req);
+    const result = await this.authService.createOneSignalPlayerId(
+      userId,
+      body.onesignal_player_id
+    );
+    res.status(result.status).json(result.data);
   }
 
   @UseGuards(JwtAuthGuard)
