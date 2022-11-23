@@ -26,7 +26,6 @@ export class MessagesGateway {
 
   handleEmitNewMessage(chat) {
     const { message } = chat;
-    let text = "";
     chat?.users.map((userId) => {
       this.usersService.getUser(userId).then(async (user) => {
         if (user && user.socket_id) {
@@ -39,7 +38,7 @@ export class MessagesGateway {
             message.initiator_id
           );
           if (message.message_type === "system") {
-            text = await this.messagesService.updTextSystemMessage(
+            message.text = await this.messagesService.updTextSystemMessage(
               user.id,
               message
             );
@@ -47,7 +46,6 @@ export class MessagesGateway {
           this.server?.sockets?.to(user.socket_id)?.emit("receiveMessage", {
             message: {
               ...message,
-              text: text,
               users_have_read: usersHaveRead,
               chat_id: chat.chat_id,
               message_status: status,
