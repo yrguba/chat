@@ -26,6 +26,7 @@ import {
   imageTypeCheck,
   videoTypeCheck,
 } from "../utils/file-upload.utils";
+import { NotificationsService } from "../notifications/notifications.service";
 
 @Injectable()
 export class MessagesService {
@@ -43,7 +44,8 @@ export class MessagesService {
     @Inject(forwardRef(() => ChatsService))
     private chatService: ChatsService,
     private sharedService: SharedService,
-    private fileService: FilesService
+    private fileService: FilesService,
+    private notificationsService: NotificationsService
   ) {}
 
   public socket: Server = null;
@@ -345,10 +347,19 @@ export class MessagesService {
       chat.users.forEach((user_id) => {
         if (user_id !== initiator.id) {
           this.sharedService.getUser(user_id).then((user) => {
-            if (user && user?.fb_tokens) {
-              this.sharedService
-                .getContact(user.id, initiator.phone)
-                .then((contact) => {
+            this.sharedService
+              .getContact(user.id, initiator.phone)
+              .then((contact) => {
+                if (user && user?.onesignal_player_id) {
+                  this.notificationsService.newMessage(
+                    user.onesignal_player_id,
+                    chat,
+                    message,
+                    initiator,
+                    contact
+                  );
+                }
+                if (user && user?.fb_tokens) {
                   user?.fb_tokens.map((token) => {
                     admin.messaging().sendToDevice(token, {
                       notification: {
@@ -376,8 +387,8 @@ export class MessagesService {
                       },
                     });
                   });
-                });
-            }
+                }
+              });
           });
         }
       });

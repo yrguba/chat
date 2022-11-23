@@ -23,8 +23,8 @@ import { SharedModule } from "./shared/shared.module";
 import { MessagesModule } from "./messages/messages.module";
 import { ReactionsEntity } from "./database/entities/reactions.entity";
 import { SessionEntity } from "./database/entities/session.entity";
-import { HttpController } from "./http/http.controller";
 import { HttpModule } from "./http/http.module";
+import { NotificationsModule } from "./notifications/notifications.module";
 
 @Module({
   imports: [
@@ -66,6 +66,7 @@ import { HttpModule } from "./http/http.module";
     SharedModule,
     MessagesModule,
     HttpModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

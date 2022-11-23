@@ -43,3 +43,22 @@ export const getSessionSchema = (sessionData) => {
     location: sessionData.location,
   };
 };
+
+export const getChatSchema = (chatData) => {
+  return {
+    id: chatData.id,
+    name: chatData.name,
+    created_at: chatData.created_at,
+    updated_at: chatData.updated_at,
+    users: chatData.users,
+    message: chatData.message,
+    avatar: chatData.avatar,
+    is_group: chatData.is_group,
+    listeners: chatData.listeners,
+    permittedReactions: chatData.permittedReactions,
+    pending_messages: chatData.pending_messages,
+    chatUsers: chatData.chatUsers,
+    replyMessage: chatData.replyMessage,
+    totalMessages: chatData.totalMessages,
+  };
+};

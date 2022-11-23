@@ -3,6 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { DeleteResult, Repository } from "typeorm";
 import { ContactEntity } from "../database/entities/contact.entity";
 import { UserEntity } from "../database/entities/user.entity";
+import { successResponse } from "../utils/response";
 
 @Injectable()
 export class ContactsService {
@@ -104,5 +105,10 @@ export class ContactsService {
 
   async deleteContact(id: number): Promise<DeleteResult> {
     return await this.contactsRepository.delete(id);
+  }
+
+  async deleteContactByPhone(phone: string) {
+    await this.contactsRepository.delete({ phone: phone });
+    return successResponse({ phone });
   }
 }
