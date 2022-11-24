@@ -20,8 +20,17 @@ export const audioTypeCheck = (file) => {
   return file.originalname.match(/\.(ogg|vorbis|wav|mp3|webm)$/);
 };
 
+export const documentTypeCheck = (file) => {
+  return file.originalname.match(/\.(txt|rtf|doc|docx|html|pdf|odt)$/);
+};
+
 export const messageFileFilter = (req, file, callback) => {
-  if (imageTypeCheck(file) || videoTypeCheck(file) || audioTypeCheck(file)) {
+  if (
+    imageTypeCheck(file) ||
+    videoTypeCheck(file) ||
+    audioTypeCheck(file) ||
+    documentTypeCheck(file)
+  ) {
     return callback(null, true);
   }
   return callback(new Error("недопустимый формат"), false);
@@ -44,9 +53,13 @@ export const getFileInfo = (filePath: string) => {
   return {
     name: name ? snakeCase("decode", name) : "unknown",
     extension: `.${filePath.split(".").pop()}`,
-    size: fs.statSync(filePath).size,
+    size: fs.statSync(`.${filePath}`).size,
     url: filePath.replace(/^\./, ""),
   };
+};
+
+export const checkFileInDb = (filePath: string) => {
+  return !!fs.statSync(`.${filePath}`).isFile();
 };
 
 export const editFileName = (req, file, callback) => {
@@ -73,6 +86,7 @@ export const getPathToFile = (directive, id) => {
     MESSAGES,
     VOICES,
     VIDEOS,
+    DOCUMENTS,
   } = FilePaths;
   if (directive === FilePathsDirective.USER_AVATAR) {
     return obj(`${DEST}/${USERS}/${id}/${AVATARS}`);
@@ -91,6 +105,9 @@ export const getPathToFile = (directive, id) => {
   }
   if (directive === FilePathsDirective.CHAT_MESSAGES_VOICES) {
     return obj(`${DEST}/${CHATS}/${id}/${MESSAGES}/${VOICES}`);
+  }
+  if (directive === FilePathsDirective.CHAT_MESSAGES_DOCUMENTS) {
+    return obj(`${DEST}/${CHATS}/${id}/${MESSAGES}/${DOCUMENTS}`);
   }
   return null;
 };

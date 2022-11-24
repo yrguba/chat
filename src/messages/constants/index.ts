@@ -4,4 +4,10 @@ export const messageStatuses = {
   read: "read",
 };
 
-export const messageContentTypes = ["images", "videos", "audios", "voices"];
+export const messageContentTypes = [
+  "images",
+  "videos",
+  "audios",
+  "voices",
+  "documents",
+];

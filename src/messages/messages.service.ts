@@ -23,6 +23,8 @@ import { FilePathsDirective, FileTypes } from "../files/constanst/paths";
 import { FilesService } from "../files/files.service";
 import {
   audioTypeCheck,
+  checkFileInDb,
+  documentTypeCheck,
   getFileInfo,
   imageTypeCheck,
   videoTypeCheck,
@@ -225,13 +227,15 @@ export class MessagesService {
       if (message?.content?.length) {
         const content = [];
         message?.content.forEach((filePath) => {
-          if (fs.statSync(`.${filePath}`).isFile()) {
-            content.push(getFileInfo(`.${filePath}`));
+          if (checkFileInDb(filePath)) {
+            content.push(getFileInfo(filePath));
           }
         });
         return content;
       }
-      return getFileInfo(`.${message.text}`);
+      if (checkFileInDb(message.text)) {
+        return getFileInfo(message.text);
+      }
     }
   }
 
@@ -290,6 +294,7 @@ export class MessagesService {
         [FileTypes.AUDIOS]: FilePathsDirective.CHAT_MESSAGES_AUDIOS,
         [FileTypes.VIDEOS]: FilePathsDirective.CHAT_MESSAGES_VIDEOS,
         [FileTypes.VOICES]: FilePathsDirective.CHAT_MESSAGES_VOICES,
+        [FileTypes.DOCUMENTS]: FilePathsDirective.CHAT_MESSAGES_DOCUMENTS,
       };
       files[key].forEach((file) => {
         const typeCheckDictionary = {
@@ -297,6 +302,7 @@ export class MessagesService {
           [FileTypes.AUDIOS]: audioTypeCheck(file),
           [FileTypes.VIDEOS]: videoTypeCheck(file),
           [FileTypes.VOICES]: audioTypeCheck(file),
+          [FileTypes.DOCUMENTS]: documentTypeCheck(file),
         };
         if (file && typeCheckDictionary[key]) {
           const fileName = this.fileService.createFile(
