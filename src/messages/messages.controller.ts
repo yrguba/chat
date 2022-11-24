@@ -118,6 +118,7 @@ export class MessagesController {
         { name: "images", maxCount: 10 },
         { name: "audios", maxCount: 10 },
         { name: "videos", maxCount: 10 },
+        { name: "documents", maxCount: 10 },
         { name: "voices", maxCount: 1 },
       ],
       { fileFilter: messageFileFilter }

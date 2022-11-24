@@ -23,10 +23,15 @@ import { FilePathsDirective, FileTypes } from "../files/constanst/paths";
 import { FilesService } from "../files/files.service";
 import {
   audioTypeCheck,
+  checkFileInDb,
+  documentTypeCheck,
+  getFileInfo,
   imageTypeCheck,
   videoTypeCheck,
 } from "../utils/file-upload.utils";
 import { NotificationsService } from "../notifications/notifications.service";
+import { messageContentTypes } from "./constants";
+import * as fs from "fs";
 
 @Injectable()
 export class MessagesService {
@@ -186,6 +191,7 @@ export class MessagesService {
             message.replyMessage = getMessageSchema(replyMessage);
           }
         }
+        message.content = this.updMessageContent(message);
       }
 
       splicedMessages = splicedMessages.map((message) =>
@@ -213,6 +219,23 @@ export class MessagesService {
           },
         },
       };
+    }
+  }
+
+  updMessageContent(message) {
+    if (messageContentTypes.includes(message.message_type)) {
+      if (message?.content?.length) {
+        const content = [];
+        message?.content.forEach((filePath) => {
+          if (checkFileInDb(filePath)) {
+            content.push(getFileInfo(filePath));
+          }
+        });
+        return content;
+      }
+      if (checkFileInDb(message.text)) {
+        return getFileInfo(message.text);
+      }
     }
   }
 
@@ -271,6 +294,7 @@ export class MessagesService {
         [FileTypes.AUDIOS]: FilePathsDirective.CHAT_MESSAGES_AUDIOS,
         [FileTypes.VIDEOS]: FilePathsDirective.CHAT_MESSAGES_VIDEOS,
         [FileTypes.VOICES]: FilePathsDirective.CHAT_MESSAGES_VOICES,
+        [FileTypes.DOCUMENTS]: FilePathsDirective.CHAT_MESSAGES_DOCUMENTS,
       };
       files[key].forEach((file) => {
         const typeCheckDictionary = {
@@ -278,6 +302,7 @@ export class MessagesService {
           [FileTypes.AUDIOS]: audioTypeCheck(file),
           [FileTypes.VIDEOS]: videoTypeCheck(file),
           [FileTypes.VOICES]: audioTypeCheck(file),
+          [FileTypes.DOCUMENTS]: documentTypeCheck(file),
         };
         if (file && typeCheckDictionary[key]) {
           const fileName = this.fileService.createFile(
@@ -335,6 +360,8 @@ export class MessagesService {
       initiator.message.push(message);
       await this.userRepository.save(initiator);
     }
+
+    message.content = this.updMessageContent(message);
 
     let userData;
 
