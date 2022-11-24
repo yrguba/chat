@@ -50,10 +50,11 @@ const snakeCase = (action: "encode" | "decode", str: string) => {
 
 export const getFileInfo = (filePath: string) => {
   const name = filePath.includes("&$&") ? filePath.split("&$&").pop() : "";
+  const size = (fs.statSync(`.${filePath}`).size / (1024 * 1024)).toFixed(2);
   return {
     name: name ? snakeCase("decode", name) : "unknown",
     extension: `.${filePath.split(".").pop()}`,
-    size: Number((fs.statSync(`.${filePath}`).size / (1024 * 1024)).toFixed(2)),
+    size: Number(size),
     url: filePath.replace(/^\./, ""),
   };
 };
@@ -67,7 +68,7 @@ export const editFileName = (req, file, callback) => {
     "encode",
     Buffer.from(file.originalname, "latin1").toString("utf8")
   );
-  callback(null, `${Date.now()}&${originalName}`);
+  callback(null, `${Date.now()}&$&${originalName}`);
   return `${Date.now()}&$&${originalName}`;
 };
 
