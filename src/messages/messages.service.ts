@@ -234,9 +234,11 @@ export class MessagesService {
         return content;
       }
       if (checkFileInDb(message.text)) {
-        return getFileInfo(message.text);
+        return [getFileInfo(message.text)];
       }
+      return [];
     }
+    return [];
   }
 
   async getSearchMessages(payload: {

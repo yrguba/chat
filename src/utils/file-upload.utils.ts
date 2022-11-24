@@ -53,7 +53,7 @@ export const getFileInfo = (filePath: string) => {
   return {
     name: name ? snakeCase("decode", name) : "unknown",
     extension: `.${filePath.split(".").pop()}`,
-    size: fs.statSync(`.${filePath}`).size,
+    size: Number((fs.statSync(`.${filePath}`).size / (1024 * 1024)).toFixed(2)),
     url: filePath.replace(/^\./, ""),
   };
 };
