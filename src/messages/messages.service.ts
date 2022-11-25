@@ -426,6 +426,7 @@ export class MessagesService {
       if (message.reply_message_id) {
         replyMessage = await this.getMessageWithUser(message.reply_message_id);
         replyMessage.user = getUserSchema(replyMessage.user);
+        replyMessage.content = this.updMessageContent(replyMessage);
       }
 
       return {
