@@ -188,7 +188,10 @@ export class MessagesService {
           );
           if (replyMessage) {
             replyMessage.user = getUserSchema(replyMessage.user);
-            message.replyMessage = getMessageSchema(replyMessage);
+            message.replyMessage = getMessageSchema({
+              ...replyMessage,
+              content: this.updMessageContent(replyMessage),
+            });
           }
         }
         message.content = this.updMessageContent(message);
