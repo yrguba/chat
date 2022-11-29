@@ -381,12 +381,15 @@ export class MessagesService {
           this.sharedService.getUser(user_id).then((user) => {
             this.sharedService
               .getContact(user.id, initiator.phone)
-              .then((contact) => {
+              .then(async (contact) => {
                 if (user && user?.onesignal_player_id) {
-                  this.notificationsService.newMessage(
+                  await this.notificationsService.newMessage(
                     user.onesignal_player_id,
                     chat,
-                    message,
+                    {
+                      ...message,
+                      text: await this.updTextSystemMessage(user.id, message),
+                    },
                     initiator,
                     contact
                   );
