@@ -418,6 +418,13 @@ export class ChatsService {
 
     return {
       status: 200,
+      socketData: {
+        chat: {
+          ...updatedChat,
+          chatUsers: await this.sharedService.getChatUsers(updatedChat.users),
+        },
+        updatedValues: { name: name },
+      },
       data: {
         data: updatedChat,
         message: message,

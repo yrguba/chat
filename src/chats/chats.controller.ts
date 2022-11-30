@@ -136,6 +136,7 @@ export class ChatsController {
         chat_id: param.chat_id,
         ...chat.data.message,
       });
+      this.chatsGateway.handleUpdateChat(chat.socketData);
     }
     res.status(chat.status).json(chat.data);
   }
@@ -272,6 +273,7 @@ export class ChatsController {
   async addUserToChat(
     @Res() res,
     @Req() req,
+
     @Param() params,
     @Body() users: number[]
   ) {
