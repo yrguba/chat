@@ -167,20 +167,7 @@ export class MessagesService {
         }
 
         if (message.forwarded_messages?.length) {
-          const messages = [];
-          for (let msgId of message.forwarded_messages) {
-            const foundMsg = await this.messageRepository.findOne({
-              where: { id: msgId },
-            });
-            if (foundMsg) {
-              const user = await this.userRepository.findOne({
-                where: { id: foundMsg.initiator_id },
-              });
-              foundMsg.user = getUserSchema(user);
-              messages.push(getMessageSchema(foundMsg));
-            }
-          }
-          message.forwarded_messages = messages;
+          message.forwarded_messages = await this.updForwardedMessages(message);
         }
         if (message.reply_message_id) {
           const replyMessage = await this.getMessageWithUser(
@@ -223,6 +210,23 @@ export class MessagesService {
         },
       };
     }
+  }
+
+  async updForwardedMessages(message) {
+    const messages = [];
+    for (let msgId of message.forwarded_messages) {
+      const foundMsg = await this.messageRepository.findOne({
+        where: { id: msgId },
+      });
+      if (foundMsg) {
+        const user = await this.userRepository.findOne({
+          where: { id: foundMsg.initiator_id },
+        });
+        foundMsg.user = getUserSchema(user);
+        messages.push(getMessageSchema(foundMsg));
+      }
+    }
+    return messages;
   }
 
   updMessageContent(message) {
@@ -433,6 +437,11 @@ export class MessagesService {
         replyMessage = await this.getMessageWithUser(message.reply_message_id);
         replyMessage.user = getUserSchema(replyMessage.user);
         replyMessage.content = this.updMessageContent(replyMessage);
+        if (replyMessage.forwarded_messages?.length) {
+          replyMessage.forwarded_messages = await this.updForwardedMessages(
+            replyMessage
+          );
+        }
       }
 
       return {
