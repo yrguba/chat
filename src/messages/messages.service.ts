@@ -222,6 +222,7 @@ export class MessagesService {
         const user = await this.userRepository.findOne({
           where: { id: foundMsg.initiator_id },
         });
+        foundMsg.content = this.updMessageContent(foundMsg);
         foundMsg.user = getUserSchema(user);
         messages.push(getMessageSchema(foundMsg));
       }
