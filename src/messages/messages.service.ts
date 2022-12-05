@@ -504,6 +504,7 @@ export class MessagesService {
         const message = await this.messageRepository.findOne({
           where: { id: messageId },
         });
+        message.content = this.updMessageContent(message);
         if (chat && message) {
           if (message.forwarded_messages?.length) {
             for (let messageId of message.forwarded_messages) {
