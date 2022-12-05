@@ -510,6 +510,7 @@ export class MessagesService {
               const message = await this.messageRepository.findOne({
                 where: { id: messageId },
               });
+              message.content = this.updMessageContent(message);
               await findAuthorAndPushInArr(message);
             }
           } else {
