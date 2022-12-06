@@ -21,7 +21,9 @@ export const audioTypeCheck = (file) => {
 };
 
 export const documentTypeCheck = (file) => {
-  return file.originalname.match(/\.(txt|rtf|doc|docx|html|pdf|odt)$/);
+  return file.originalname.match(
+    /\.(txt|rtf|doc|docx|html|pdf|odt|ppt|pptx|xls|xlsx)$/
+  );
 };
 
 export const messageFileFilter = (req, file, callback) => {
