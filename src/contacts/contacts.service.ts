@@ -111,4 +111,9 @@ export class ContactsService {
     await this.contactsRepository.delete({ phone: phone });
     return successResponse({ phone });
   }
+
+  async deleteAllContact(id: number) {
+    await this.contactsRepository.delete({ owner: id });
+    return successResponse({ id });
+  }
 }

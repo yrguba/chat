@@ -67,6 +67,18 @@ export class ContactsController {
     res.status(200).json({ data: body });
   }
 
+  @Version("2")
+  @UseGuards(JwtAuthGuard)
+  @Post("/")
+
+  async saveContactsV2(@Res() res, @Req() req, @Body() body: CreateContactsDto) {
+    const userId = await this.usersService.getUserIdFromToken(req);
+    await this.contactsService.deleteAllContact(userId);
+    await this.contactsService.saveContact(userId, body?.contacts);
+
+    res.status(200).json({ data: body });
+  }
+
   @UseGuards(JwtAuthGuard)
   @Delete("/")
   async deleteContacts(
