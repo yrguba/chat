@@ -181,7 +181,7 @@ export class MessagesService {
             });
 
             if (replyMessage.forwarded_messages) {
-              replyMessage.forwarded_messages = await this.updForwardedMessages(message);
+              replyMessage.forwarded_messages = await this.updForwardedMessages(replyMessage);
             }
           }
         }
