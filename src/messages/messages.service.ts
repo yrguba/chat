@@ -174,15 +174,14 @@ export class MessagesService {
             message.reply_message_id
           );
           if (replyMessage) {
+            if (replyMessage.forwarded_messages) {
+              replyMessage.forwarded_messages = await this.updForwardedMessages(replyMessage);
+            }
             replyMessage.user = getUserSchema(replyMessage.user);
             message.replyMessage = getMessageSchema({
               ...replyMessage,
               content: this.updMessageContent(replyMessage),
             });
-
-            if (replyMessage.forwarded_messages) {
-              replyMessage.forwarded_messages = await this.updForwardedMessages(replyMessage);
-            }
           }
         }
         message.content = this.updMessageContent(message);
