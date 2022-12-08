@@ -179,6 +179,10 @@ export class MessagesService {
               ...replyMessage,
               content: this.updMessageContent(replyMessage),
             });
+
+            if (replyMessage.forwarded_messages) {
+              replyMessage.forwarded_messages = await this.updForwardedMessages(message);
+            }
           }
         }
         message.content = this.updMessageContent(message);
