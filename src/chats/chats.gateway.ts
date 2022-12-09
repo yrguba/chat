@@ -104,7 +104,7 @@ export class ChatsGateway
     const clientUserId = this.sharedService.getUserId(client);
     if (clientUserId) {
       this.usersService
-        .updateUserStatus(clientUserId, true)
+        .updateUserStatus(clientUserId, false)
         .then((initiator) => {
           this.chatsService.getUserChats(clientUserId).then((chats) => {
             if (chats) {
