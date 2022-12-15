@@ -268,6 +268,7 @@ export class ChatsController {
     res.status(200).json(message.data);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(":chat_id/add-user/")
   @ApiParam({ name: "chat_id", required: true })
   async addUserToChat(
@@ -295,6 +296,23 @@ export class ChatsController {
     res.status(chat.status).json(chat.data);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Patch(":chat_id/exit/")
+  @ApiParam({ name: "chat_id", required: true })
+  async exitFromChat(
+    @Res() res,
+    @Req() req,
+    @Param() params,
+  ) {
+    const userId = await this.usersService.getUserIdFromToken(req);
+    const exitChat = await this.chatsService.exitFromChat(
+      userId,
+      params.chat_id
+    );
+    res.status(exitChat.status).json(exitChat.data);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Patch(":chat_id/remove-user/")
   @ApiParam({ name: "chat_id", required: true })
   async removeUserFromChat(
