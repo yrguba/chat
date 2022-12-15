@@ -664,6 +664,53 @@ export class ChatsService {
     }
   }
 
+  async exitFromChat(user_id: number, chat_id: number) {
+    const chat = await this.chatsRepository
+      .createQueryBuilder("chat")
+      .where("chat.id = :id", { id: chat_id })
+      .getOne();
+
+    if (!chat) {
+      return {
+        status: 404,
+        data: {
+          error: {
+            code: 404,
+            message: "Target chat not found",
+          },
+        },
+      };
+    }
+
+    const currentChatUsers = Array.from(chat.users);
+
+    if (currentChatUsers) {
+      const updatedUsers = currentChatUsers.filter(
+        (user) => user !== user_id
+      );
+      const updatedChat = {
+        ...chat,
+        users: updatedUsers,
+        updated_at: new Date(),
+      };
+      await this.chatsRepository.update(chat_id, updatedChat);
+
+      const message = await this.messagesService.createMessage(chat_id, user_id, {
+          text: `initiator:${user_id}/покинул чат`,
+          message_type: "system",
+        });
+
+      if (message) {
+        return {
+          status: 200,
+          data: {
+            message: "Successfully left from chat"
+          }
+        }
+      }
+    }
+  }
+
   async removeUserFromChat(user_id: number, users: number[], chat_id: number) {
     let message = [];
     const chat = await this.chatsRepository
@@ -681,7 +728,7 @@ export class ChatsService {
         data: {
           error: {
             code: 403,
-            message: "You cant add user to this chat",
+            message: "You cant remove user to this chat",
           },
         },
       };
