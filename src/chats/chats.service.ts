@@ -238,7 +238,12 @@ export class ChatsService {
               text: `initiator:${user_id}/создал чат/`,
               message_type: "system",
             })
-            .then((data) => {
+            .then(async (data) => {
+              data.data.data.message.text =
+                await this.messagesService.updTextSystemMessage(
+                  user_id,
+                  data.data.data.message
+                );
               message = data;
             });
         }
@@ -685,9 +690,7 @@ export class ChatsService {
     const currentChatUsers = Array.from(chat.users);
 
     if (currentChatUsers) {
-      const updatedUsers = currentChatUsers.filter(
-        (user) => user !== user_id
-      );
+      const updatedUsers = currentChatUsers.filter((user) => user !== user_id);
       const updatedChat = {
         ...chat,
         users: updatedUsers,
@@ -695,18 +698,22 @@ export class ChatsService {
       };
       await this.chatsRepository.update(chat_id, updatedChat);
 
-      const message = await this.messagesService.createMessage(chat_id, user_id, {
+      const message = await this.messagesService.createMessage(
+        chat_id,
+        user_id,
+        {
           text: `initiator:${user_id}/покинул чат`,
           message_type: "system",
-        });
+        }
+      );
 
       if (message) {
         return {
           status: 200,
           data: {
-            message: "Successfully left from chat"
-          }
-        }
+            message: "Successfully left from chat",
+          },
+        };
       }
     }
   }
