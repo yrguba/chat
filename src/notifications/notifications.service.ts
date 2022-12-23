@@ -12,6 +12,7 @@ export class NotificationsService {
       headings: { en: chat.name || initiator?.contactName || initiator?.name },
       contents: { en: message.text },
       data: {
+        msg_text: message.text,
         msg_type: message.message_type,
         chat_id: String(chat.id),
         chat_name: String(chat.name),

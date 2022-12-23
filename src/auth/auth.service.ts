@@ -431,7 +431,7 @@ export class AuthService {
         { id: userId },
         { onesignal_player_id: playerId }
       );
-      return successResponse({});
+      return successResponse({ onesignal_player_id: playerId });
     } catch (e) {
       return badRequestResponse(e);
     }

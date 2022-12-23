@@ -52,7 +52,7 @@ const snakeCase = (action: "encode" | "decode", str: string) => {
 
 export const getFileInfo = (filePath: string) => {
   const name = filePath.includes("&$&") ? filePath.split("&$&").pop() : "";
-  const size = (fs.statSync(`.${filePath}`).size / 1024).toFixed(2);
+  const size = (fs.statSync(`.${filePath}`).size / (1024 * 1024)).toFixed(2);
   return {
     name: name ? snakeCase("decode", name) : "unknown",
     extension: `.${filePath.split(".").pop()}`,
