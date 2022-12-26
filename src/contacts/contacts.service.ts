@@ -7,6 +7,8 @@ import { successResponse } from "../utils/response";
 import { ChatsService } from "../chats/chats.service";
 import { SharedService } from "../shared/shared.service";
 import { UsersService } from "../users/users.service";
+import { getUserSchema } from "../utils/schema";
+import { name } from "ts-jest/dist/transformers/hoist-jest";
 
 @Injectable()
 export class ContactsService {
@@ -134,6 +136,7 @@ export class ContactsService {
     const chat = await this.chatService.getPrivateChat(userId, user?.id);
 
     chat.name = body.name;
+    user.contactName = body.name;
     return {
       status: 200,
       socketData: {
@@ -144,7 +147,7 @@ export class ContactsService {
         updatedValues: { name: body.name },
       },
       data: {
-        data: newContact,
+        data: { ...newContact, user: getUserSchema(user) },
       },
     };
   }
