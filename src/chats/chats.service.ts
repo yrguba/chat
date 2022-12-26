@@ -1,7 +1,7 @@
 import { forwardRef, Inject, Injectable } from "@nestjs/common";
 import { Server } from "socket.io";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository, DeleteResult } from "typeorm";
+import { Repository, DeleteResult, ArrayContainedBy } from "typeorm";
 import { ChatsEntity } from "../database/entities/chats.entity";
 import { MessageEntity } from "../database/entities/message.entity";
 import { UserEntity } from "../database/entities/user.entity";
@@ -44,6 +44,17 @@ export class ChatsService {
       .createQueryBuilder("chat")
       .where("chat.id = :id", { id: chat_id })
       .getOne();
+  }
+
+  async getPrivateChat(user1: number, user2: number) {
+    if (user1 && user2) {
+      return await this.chatsRepository.findOne({
+        where: {
+          is_group: false,
+          users: ArrayContainedBy([user1, user2]),
+        },
+      });
+    }
   }
 
   async getChatName(user_id, chat) {
@@ -844,12 +855,7 @@ export class ChatsService {
   }
 
   async getAllReactions() {
-    const reactions = await this.reactionsRepository.findOne({});
-    delete reactions.id;
-    return {
-      status: 200,
-      data: reactions,
-    };
+    return successResponse(reactions.base);
   }
 
   async getFiles(chatId: number, userId: number, fileType) {

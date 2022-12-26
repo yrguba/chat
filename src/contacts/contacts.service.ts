@@ -4,6 +4,9 @@ import { DeleteResult, Repository } from "typeorm";
 import { ContactEntity } from "../database/entities/contact.entity";
 import { UserEntity } from "../database/entities/user.entity";
 import { successResponse } from "../utils/response";
+import { ChatsService } from "../chats/chats.service";
+import { SharedService } from "../shared/shared.service";
+import { UsersService } from "../users/users.service";
 
 @Injectable()
 export class ContactsService {
@@ -11,7 +14,10 @@ export class ContactsService {
     @InjectRepository(ContactEntity)
     private contactsRepository: Repository<ContactEntity>,
     @InjectRepository(UserEntity)
-    private usersRepository: Repository<UserEntity>
+    private usersRepository: Repository<UserEntity>,
+    private chatService: ChatsService,
+    private sharedService: SharedService,
+    private usersService: UsersService
   ) {}
 
   async getContacts(id: number) {
@@ -99,6 +105,46 @@ export class ContactsService {
       status: 200,
       data: {
         data: newContacts,
+      },
+    };
+  }
+
+  async changeContactName(userId, body) {
+    let newContact = null;
+    const contact = await this.contactsRepository.findOne({
+      where: {
+        owner: userId,
+        phone: body.phone,
+      },
+    });
+    if (contact) {
+      newContact = await this.contactsRepository.save({
+        ...contact,
+        name: body.name,
+      });
+    } else {
+      newContact = await this.contactsRepository.save({
+        phone: body.phone,
+        name: body.name,
+        owner: userId,
+      });
+    }
+    const owner = await this.usersService.getUser(userId);
+    const user = await this.usersService.getUserByPhone(body.phone);
+    const chat = await this.chatService.getPrivateChat(userId, user?.id);
+
+    chat.name = body.name;
+    return {
+      status: 200,
+      socketData: {
+        chat: {
+          ...chat,
+          chatUsers: [owner],
+        },
+        updatedValues: { name: body.name },
+      },
+      data: {
+        data: newContact,
       },
     };
   }

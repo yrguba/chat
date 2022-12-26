@@ -5,3 +5,8 @@ export class DeleteContactsDto {
 export class DeleteContactsDtoV2 {
   phone: string;
 }
+
+export class ChangeContactName {
+  name: string;
+  phone: string;
+}
