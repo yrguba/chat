@@ -99,6 +99,13 @@ export class ChatsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get("/allReactions")
+  async getAllReactions(@Res() res) {
+    const result = await this.chatsService.getAllReactions();
+    res.status(result.status).json(result.data);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @ApiParam({ name: "chat_id", required: true })
   @Get("/:chat_id")
   async getChat(@Res() res, @Req() req, @Param() param) {
@@ -299,11 +306,7 @@ export class ChatsController {
   @UseGuards(JwtAuthGuard)
   @Patch(":chat_id/exit/")
   @ApiParam({ name: "chat_id", required: true })
-  async exitFromChat(
-    @Res() res,
-    @Req() req,
-    @Param() params,
-  ) {
+  async exitFromChat(@Res() res, @Req() req, @Param() params) {
     const userId = await this.usersService.getUserIdFromToken(req);
     const exitChat = await this.chatsService.exitFromChat(
       userId,
@@ -355,13 +358,6 @@ export class ChatsController {
     if (result.status === 200) {
       this.chatsGateway.handleUpdateChat(result.socketData);
     }
-    res.status(result.status).json(result.data);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get("allReactions")
-  async getAllReactions(@Res() res, @Req() req) {
-    const result = await this.chatsService.getAllReactions();
     res.status(result.status).json(result.data);
   }
 
