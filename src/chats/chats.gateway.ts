@@ -41,7 +41,7 @@ export class ChatsGateway
   }
 
   handleEmitAddToChat(chat) {
-    chat?.chatUsers.map(({ id: userId }) => {
+    chat?.users.map((userId) => {
       this.usersService.getUser(userId).then((user) => {
         if (user && user.socket_id) {
           this.server?.sockets?.to(user.socket_id)?.emit("addedToChat", {
