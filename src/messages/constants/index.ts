@@ -3,3 +3,11 @@ export const messageStatuses = {
   pending: "pending",
   read: "read",
 };
+
+export const messageContentTypes = [
+  "images",
+  "videos",
+  "audios",
+  "voices",
+  "documents",
+];

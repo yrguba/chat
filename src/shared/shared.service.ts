@@ -61,6 +61,17 @@ export class SharedService {
       .getOne();
   }
 
+  async changeContactName(ownerId, users) {
+    const usersWithContactName = [];
+    for (let user of users) {
+      const contact = await this.getContact(ownerId, user.phone);
+      usersWithContactName.push(
+        getUserSchema({ ...user, contactName: contact?.name || "" })
+      );
+    }
+    return usersWithContactName;
+  }
+
   async getChatWithChatUsers(
     chatId: number,
     ownerId?: number,
@@ -149,5 +160,13 @@ export class SharedService {
   checkMessageStatus(userId: number, usersHaveRead: number[]) {
     const check = usersHaveRead?.includes(userId);
     return check ? messageStatuses.read : messageStatuses.pending;
+  }
+
+  parseMessageStatusText(message) {
+    const arr = message.text.split("/");
+    const content = arr[1];
+    const initiatorId = arr[0].split(":")[1];
+    const inviteId = arr.pop().split(":")[1];
+    return { content, initiatorId, inviteId };
   }
 }

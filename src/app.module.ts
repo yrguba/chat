@@ -23,6 +23,8 @@ import { SharedModule } from "./shared/shared.module";
 import { MessagesModule } from "./messages/messages.module";
 import { ReactionsEntity } from "./database/entities/reactions.entity";
 import { SessionEntity } from "./database/entities/session.entity";
+import { HttpModule } from "./http/http.module";
+import { NotificationsModule } from "./notifications/notifications.module";
 
 @Module({
   imports: [
@@ -63,6 +65,8 @@ import { SessionEntity } from "./database/entities/session.entity";
     ChatGateway,
     SharedModule,
     MessagesModule,
+    HttpModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

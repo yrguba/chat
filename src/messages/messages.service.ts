@@ -23,9 +23,15 @@ import { FilePathsDirective, FileTypes } from "../files/constanst/paths";
 import { FilesService } from "../files/files.service";
 import {
   audioTypeCheck,
+  checkFileInDb,
+  documentTypeCheck,
+  getFileInfo,
   imageTypeCheck,
   videoTypeCheck,
 } from "../utils/file-upload.utils";
+import { NotificationsService } from "../notifications/notifications.service";
+import { messageContentTypes } from "./constants";
+import * as fs from "fs";
 
 @Injectable()
 export class MessagesService {
@@ -43,7 +49,8 @@ export class MessagesService {
     @Inject(forwardRef(() => ChatsService))
     private chatService: ChatsService,
     private sharedService: SharedService,
-    private fileService: FilesService
+    private fileService: FilesService,
+    private notificationsService: NotificationsService
   ) {}
 
   public socket: Server = null;
@@ -155,29 +162,29 @@ export class MessagesService {
           message.initiator_id
         );
 
+        if (message.message_type === "system") {
+          message.text = await this.updTextSystemMessage(user_id, message);
+        }
+
         if (message.forwarded_messages?.length) {
-          const messages = [];
-          for (let msgId of message.forwarded_messages) {
-            const foundMsg = await this.messageRepository.findOne({
-              where: { id: msgId },
-            });
-            if (foundMsg) {
-              const user = await this.userRepository.findOne({
-                where: { id: foundMsg.initiator_id },
-              });
-              foundMsg.user = getUserSchema(user);
-              messages.push(getMessageSchema(foundMsg));
-            }
-          }
-          message.forwarded_messages = messages;
+          message.forwarded_messages = await this.updForwardedMessages(message);
         }
         if (message.reply_message_id) {
           const replyMessage = await this.getMessageWithUser(
             message.reply_message_id
           );
-          replyMessage.user = getUserSchema(replyMessage.user);
-          message.replyMessage = getMessageSchema(replyMessage);
+          if (replyMessage) {
+            if (replyMessage.forwarded_messages) {
+              replyMessage.forwarded_messages = await this.updForwardedMessages(replyMessage);
+            }
+            replyMessage.user = getUserSchema(replyMessage.user);
+            message.replyMessage = getMessageSchema({
+              ...replyMessage,
+              content: this.updMessageContent(replyMessage),
+            });
+          }
         }
+        message.content = this.updMessageContent(message);
       }
 
       splicedMessages = splicedMessages.map((message) =>
@@ -206,6 +213,43 @@ export class MessagesService {
         },
       };
     }
+  }
+
+  async updForwardedMessages(message) {
+    const messages = [];
+    for (let msgId of message.forwarded_messages) {
+      const foundMsg = await this.messageRepository.findOne({
+        where: { id: msgId },
+      });
+      if (foundMsg) {
+        const user = await this.userRepository.findOne({
+          where: { id: foundMsg.initiator_id },
+        });
+        foundMsg.content = this.updMessageContent(foundMsg);
+        foundMsg.user = getUserSchema(user);
+        messages.push(getMessageSchema(foundMsg));
+      }
+    }
+    return messages;
+  }
+
+  updMessageContent(message) {
+    if (messageContentTypes.includes(message.message_type)) {
+      if (message?.content?.length) {
+        const content = [];
+        message?.content.forEach((filePath) => {
+          if (checkFileInDb(filePath)) {
+            content.push(getFileInfo(filePath));
+          }
+        });
+        return content;
+      }
+      if (checkFileInDb(message.text)) {
+        return [getFileInfo(message.text)];
+      }
+      return [];
+    }
+    return [];
   }
 
   async getSearchMessages(payload: {
@@ -263,6 +307,7 @@ export class MessagesService {
         [FileTypes.AUDIOS]: FilePathsDirective.CHAT_MESSAGES_AUDIOS,
         [FileTypes.VIDEOS]: FilePathsDirective.CHAT_MESSAGES_VIDEOS,
         [FileTypes.VOICES]: FilePathsDirective.CHAT_MESSAGES_VOICES,
+        [FileTypes.DOCUMENTS]: FilePathsDirective.CHAT_MESSAGES_DOCUMENTS,
       };
       files[key].forEach((file) => {
         const typeCheckDictionary = {
@@ -270,6 +315,7 @@ export class MessagesService {
           [FileTypes.AUDIOS]: audioTypeCheck(file),
           [FileTypes.VIDEOS]: videoTypeCheck(file),
           [FileTypes.VOICES]: audioTypeCheck(file),
+          [FileTypes.DOCUMENTS]: documentTypeCheck(file),
         };
         if (file && typeCheckDictionary[key]) {
           const fileName = this.fileService.createFile(
@@ -328,6 +374,8 @@ export class MessagesService {
       await this.userRepository.save(initiator);
     }
 
+    message.content = this.updMessageContent(message);
+
     let userData;
 
     if (chat) {
@@ -339,10 +387,22 @@ export class MessagesService {
       chat.users.forEach((user_id) => {
         if (user_id !== initiator.id) {
           this.sharedService.getUser(user_id).then((user) => {
-            if (user && user?.fb_tokens) {
-              this.sharedService
-                .getContact(user.id, initiator.phone)
-                .then((contact) => {
+            this.sharedService
+              .getContact(user.id, initiator.phone)
+              .then(async (contact) => {
+                if (user && user?.onesignal_player_id) {
+                  await this.notificationsService.newMessage(
+                    user.onesignal_player_id,
+                    chat,
+                    {
+                      ...message,
+                      text: await this.updTextSystemMessage(user.id, message),
+                    },
+                    initiator,
+                    contact
+                  );
+                }
+                if (user && user?.fb_tokens) {
                   user?.fb_tokens.map((token) => {
                     admin.messaging().sendToDevice(token, {
                       notification: {
@@ -370,8 +430,8 @@ export class MessagesService {
                       },
                     });
                   });
-                });
-            }
+                }
+              });
           });
         }
       });
@@ -380,6 +440,12 @@ export class MessagesService {
       if (message.reply_message_id) {
         replyMessage = await this.getMessageWithUser(message.reply_message_id);
         replyMessage.user = getUserSchema(replyMessage.user);
+        replyMessage.content = this.updMessageContent(replyMessage);
+        if (replyMessage.forwarded_messages?.length) {
+          replyMessage.forwarded_messages = await this.updForwardedMessages(
+            replyMessage
+          );
+        }
       }
 
       return {
@@ -442,12 +508,14 @@ export class MessagesService {
         const message = await this.messageRepository.findOne({
           where: { id: messageId },
         });
+        message.content = this.updMessageContent(message);
         if (chat && message) {
           if (message.forwarded_messages?.length) {
             for (let messageId of message.forwarded_messages) {
               const message = await this.messageRepository.findOne({
                 where: { id: messageId },
               });
+              message.content = this.updMessageContent(message);
               await findAuthorAndPushInArr(message);
             }
           } else {
@@ -621,6 +689,7 @@ export class MessagesService {
       if (Array.isArray(data.messages)) {
         for (const message of data.messages) {
           const targetMessage = await this.getMessage(Number(message));
+          this.fileService.deleteFiles(targetMessage.content);
           deletedMessages.push(getMessageSchema(targetMessage));
           await this.messageRepository.delete(Number(message));
         }
@@ -642,7 +711,6 @@ export class MessagesService {
           const targetMessage = await this.messageRepository.findOne({
             where: { id: Number(message) },
           });
-
           const chatUsers = chat.users;
           const updatedAccessUsers = chatUsers.filter((user) => user !== id);
 
@@ -699,5 +767,48 @@ export class MessagesService {
         reactions: filtered,
       },
     };
+  }
+
+  async updTextSystemMessage(userId, message) {
+    if (message?.text.includes("/")) {
+      const { content, initiatorId, inviteId } =
+        this.sharedService.parseMessageStatusText(message);
+      if (content && initiatorId) {
+        const isIAmInitiator =
+          initiatorId && Number(userId) === Number(initiatorId);
+        const isIAmInvited = inviteId && Number(userId) === Number(inviteId);
+        let updMessage = [];
+        if (!isIAmInitiator) {
+          const initiator = await this.sharedService.getUserWithContactName(
+            userId,
+            initiatorId
+          );
+          updMessage[0] = initiator?.contactName || initiator.name;
+        } else {
+          updMessage[0] = "вы";
+        }
+        if (inviteId) {
+          if (!isIAmInvited) {
+            const invite = await this.sharedService.getUserWithContactName(
+              userId,
+              inviteId
+            );
+            updMessage[2] = invite?.contactName || invite.name;
+          } else {
+            updMessage[2] = "вас";
+          }
+        }
+        updMessage[1] = content;
+        if (isIAmInitiator) {
+          const firstWord = updMessage[1].split(" ")[0];
+          const words = updMessage[1].split(" ");
+          words.splice(0, 1, `${firstWord}и`);
+          updMessage[1] = words.join(" ");
+        }
+        return updMessage.join(" ");
+      }
+      return message.text;
+    }
+    return message.text;
   }
 }

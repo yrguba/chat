@@ -29,7 +29,7 @@ export class ChatsGateway
   @WebSocketServer() server: Server;
 
   handleEmitNewChat(chat) {
-    chat?.users.map((userId) => {
+    chat?.users?.map((userId) => {
       this.usersService.getUser(userId).then((user) => {
         if (user && user.socket_id) {
           this.server?.sockets?.to(user.socket_id)?.emit("receiveChat", {
@@ -65,7 +65,14 @@ export class ChatsGateway
   }
 
   handleUpdateChat(data) {
-    data.chat.chatUsers.map((user) => {
+    data.chat.chatUsers.map(async (user) => {
+      if (data.updatedValues?.chatUsers?.length) {
+        data.updatedValues.chatUsers =
+          await this.sharedService.changeContactName(
+            user.id,
+            data.chat.chatUsers
+          );
+      }
       this.server?.sockets?.to(user.socket_id)?.emit("receiveChatChanges", {
         data: {
           chatId: data.chat.id,
@@ -97,7 +104,7 @@ export class ChatsGateway
     const clientUserId = this.sharedService.getUserId(client);
     if (clientUserId) {
       this.usersService
-        .updateUserStatus(clientUserId, true)
+        .updateUserStatus(clientUserId, false)
         .then((initiator) => {
           this.chatsService.getUserChats(clientUserId).then((chats) => {
             if (chats) {

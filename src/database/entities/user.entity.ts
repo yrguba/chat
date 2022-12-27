@@ -26,6 +26,8 @@ export class UserEntity {
   @Column({ nullable: true })
   player_id?: string;
   @Column({ nullable: true })
+  onesignal_player_id?: string;
+  @Column({ nullable: true })
   socket_id?: string;
   @Column({ nullable: true, default: false })
   is_online: boolean;

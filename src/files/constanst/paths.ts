@@ -3,6 +3,7 @@ export enum FileTypes {
   VIDEOS = "videos",
   AUDIOS = "audios",
   VOICES = "voices",
+  DOCUMENTS = "documents",
 }
 
 export enum FilePaths {
@@ -11,6 +12,7 @@ export enum FilePaths {
   VIDEOS = "videos",
   AUDIOS = "audios",
   VOICES = "voices",
+  DOCUMENTS = "documents",
   CHATS = "chats",
   USERS = "users",
   AVATARS = "avatars",
@@ -24,4 +26,5 @@ export enum FilePathsDirective {
   CHAT_MESSAGES_IMAGES = "chatMessagesImages",
   CHAT_MESSAGES_VIDEOS = "chatMessagesVideos",
   CHAT_MESSAGES_VOICES = "chatMessagesVoices",
+  CHAT_MESSAGES_DOCUMENTS = "chatMessagesDocuments",
 }

@@ -8,14 +8,20 @@ import {
   Param,
   Post,
   Delete,
+  Version,
 } from "@nestjs/common";
 import { ContactsService } from "./contacts.service";
 import { ApiParam, ApiTags } from "@nestjs/swagger";
 import { JwtAuthGuard } from "../auth/strategy/jwt-auth.guard";
 import { JwtService } from "@nestjs/jwt";
-import { DeleteContactsDto } from "./dto/deleteContacts.dto";
+import {
+  ChangeContactName,
+  DeleteContactsDto,
+  DeleteContactsDtoV2,
+} from "./dto/deleteContacts.dto";
 import { UsersService } from "../users/users.service";
 import { CreateContactsDto } from "./dto/createContacts.dto";
+import { ChatsGateway } from "../chats/chats.gateway";
 
 @ApiTags("contacts")
 @Controller("contacts")
@@ -23,7 +29,8 @@ export class ContactsController {
   constructor(
     private contactsService: ContactsService,
     private usersService: UsersService,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
+    private chatsGateway: ChatsGateway
   ) {}
 
   @UseGuards(JwtAuthGuard)
@@ -63,6 +70,21 @@ export class ContactsController {
     res.status(200).json({ data: body });
   }
 
+  @Version("2")
+  @UseGuards(JwtAuthGuard)
+  @Post("/")
+  async saveContactsV2(
+    @Res() res,
+    @Req() req,
+    @Body() body: CreateContactsDto
+  ) {
+    const userId = await this.usersService.getUserIdFromToken(req);
+    await this.contactsService.deleteAllContact(userId);
+    await this.contactsService.saveContact(userId, body?.contacts);
+
+    res.status(200).json({ data: body });
+  }
+
   @UseGuards(JwtAuthGuard)
   @Delete("/")
   async deleteContacts(
@@ -75,5 +97,32 @@ export class ContactsController {
     });
 
     res.status(200).json({ data: body });
+  }
+
+  @Version("2")
+  @UseGuards(JwtAuthGuard)
+  @Delete("/")
+  async deleteContactsV2(
+    @Res() res,
+    @Req() req,
+    @Body() body: DeleteContactsDtoV2
+  ) {
+    const result = await this.contactsService.deleteContactByPhone(body.phone);
+    res.status(result.status).json(result.data);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post("/change-name")
+  async changeContactName(
+    @Res() res,
+    @Req() req,
+    @Body() body: ChangeContactName
+  ) {
+    const userId = await this.usersService.getUserIdFromToken(req);
+    const result = await this.contactsService.changeContactName(userId, body);
+    if (result.status === 200) {
+      this.chatsGateway.handleUpdateChat(result.socketData);
+    }
+    res.status(result.status).json(result.data);
   }
 }

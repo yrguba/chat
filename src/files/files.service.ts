@@ -84,4 +84,44 @@ export class FilesService {
       );
     }
   }
+
+  deleteFiles(filesName) {
+    try {
+      filesName.forEach((fileName) => {
+        const filePath = `.${fileName}`;
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+          return successResponse({});
+        }
+      });
+    } catch (e) {
+      throw new HttpException(
+        "неудалось удалить файл",
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  deleteAvatarFile(fileName) {
+    try {
+      const filePath = `.${fileName}`;
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        const directive = filePath.split("/").slice(0, -1).join("/");
+        const items = fs.readdirSync(directive);
+        const getFilePath = (name) => {
+          return `${directive}/${name}`.replace(/^\./, "");
+        };
+        return {
+          newAvatar: items.length ? getFilePath(items[0]) : "",
+          updatedList: items.map((item) => getFilePath(item)),
+        };
+      }
+    } catch (e) {
+      throw new HttpException(
+        "неудалось удалить файл",
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
 }

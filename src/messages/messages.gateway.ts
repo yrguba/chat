@@ -37,6 +37,12 @@ export class MessagesGateway {
             message.users_have_read,
             message.initiator_id
           );
+          if (message.message_type === "system") {
+            message.text = await this.messagesService.updTextSystemMessage(
+              user.id,
+              message
+            );
+          }
           this.server?.sockets?.to(user.socket_id)?.emit("receiveMessage", {
             message: {
               ...message,
@@ -153,7 +159,7 @@ export class MessagesGateway {
     for (let messageId of messages) {
       const message = await this.sharedService.getMessage(chat_id, messageId);
       if (message?.users_have_read) {
-        if (!message.users_have_read.includes(clientUserId)) {
+        if (!message?.users_have_read.includes(clientUserId)) {
           message?.users_have_read.push(clientUserId);
           await this.sharedService.saveMessage(message);
         }
