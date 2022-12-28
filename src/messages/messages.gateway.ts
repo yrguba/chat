@@ -33,6 +33,13 @@ export class MessagesGateway {
             userId,
             chat.message.users_have_read
           );
+          if (message.replyMessage) {
+            const contact = await this.sharedService.getContact(
+              userId,
+              message.replyMessage.user.phone
+            );
+            message.replyMessage.user.contactName = contact?.name || "";
+          }
           const usersHaveRead = this.sharedService.getFilteredUsersHeavyRead(
             message.users_have_read,
             message.initiator_id

@@ -192,6 +192,11 @@ export class MessagesService {
               ...replyMessage,
               content: this.updMessageContent(replyMessage),
             });
+            const contact = await this.sharedService.getContact(
+              user_id,
+              message.replyMessage.user.phone
+            );
+            message.replyMessage.user.contactName = contact?.name || "";
           }
         }
         message.content = this.updMessageContent(message);
