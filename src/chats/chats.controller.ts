@@ -297,7 +297,7 @@ export class ChatsController {
         chat_id: params.chat_id,
         ...chat.data.message,
       });
-      this.chatsGateway.handleEmitAddToChat(chat?.data?.data || []);
+      this.chatsGateway.handleEmitAddToChat(chat.data.socketData || []);
       this.chatsGateway.handleUpdateChat(chat.data.socketData);
     }
     res.status(chat.status).json(chat.data);

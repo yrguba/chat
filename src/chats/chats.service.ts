@@ -682,6 +682,8 @@ export class ChatsService {
             ...message,
           },
           socketData: {
+            message: message,
+            invited: users,
             chat: { ...chat, chatUsers: chatUsers },
             updatedValues: { chatUsers: usersData, users: currentChatUsers },
           },
