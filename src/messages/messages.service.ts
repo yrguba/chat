@@ -171,7 +171,10 @@ export class MessagesService {
         }
 
         if (message.forwarded_messages?.length) {
-          message.forwarded_messages = await this.updForwardedMessages(message);
+          message.forwarded_messages = await this.updForwardedMessages(
+            user_id,
+            message
+          );
         }
         if (message.reply_message_id) {
           const replyMessage = await this.getMessageWithUser(
@@ -180,6 +183,7 @@ export class MessagesService {
           if (replyMessage) {
             if (replyMessage.forwarded_messages) {
               replyMessage.forwarded_messages = await this.updForwardedMessages(
+                user_id,
                 replyMessage
               );
             }
@@ -221,16 +225,17 @@ export class MessagesService {
     }
   }
 
-  async updForwardedMessages(message) {
+  async updForwardedMessages(ownerId, message) {
     const messages = [];
     for (let msgId of message.forwarded_messages) {
       const foundMsg = await this.messageRepository.findOne({
         where: { id: msgId },
       });
       if (foundMsg) {
-        const user = await this.userRepository.findOne({
-          where: { id: foundMsg.initiator_id },
-        });
+        const user = await this.sharedService.getUserWithContactName(
+          ownerId,
+          foundMsg.initiator_id
+        );
         foundMsg.content = this.updMessageContent(foundMsg);
         foundMsg.user = getUserSchema(user);
         messages.push(getMessageSchema(foundMsg));
@@ -455,6 +460,7 @@ export class MessagesService {
         replyMessage.content = this.updMessageContent(replyMessage);
         if (replyMessage.forwarded_messages?.length) {
           replyMessage.forwarded_messages = await this.updForwardedMessages(
+            user_id,
             replyMessage
           );
         }
