@@ -13,8 +13,10 @@ import { FileInterceptor } from "@nestjs/platform-express";
 import { diskStorage } from "multer";
 import {
   appFileFilter,
+  documentTypeCheck,
   editFileName,
   imageFileFilter,
+  privacyPolicyFileFilter,
 } from "../utils/file-upload.utils";
 import { ApiBody, ApiConsumes, ApiParam, ApiTags } from "@nestjs/swagger";
 import { JwtAuthGuard } from "../auth/strategy/jwt-auth.guard";
@@ -101,5 +103,34 @@ export class FilesController {
   async getLastVersion(@Res() res, @Req() req, @Param() param) {
     const version = await this.filesService.getLastApp(param.version);
     res.status(version.status).json(version.data);
+  }
+
+  // @UseGuards(JwtAuthGuard)
+  @Post("upload/privacy_policy")
+  @ApiConsumes("multipart/form-data")
+  @ApiBody({
+    schema: {
+      type: "object",
+      properties: {
+        file: {
+          type: "string",
+          format: "binary",
+        },
+      },
+    },
+  })
+  @UseInterceptors(
+    FileInterceptor("file", {
+      storage: diskStorage({
+        destination: "./storage",
+        filename: (req, file, callback) => {
+          callback(null, "PrivacyPolicy.html");
+        },
+      }),
+      fileFilter: privacyPolicyFileFilter,
+    })
+  )
+  async privacyPolicy(@UploadedFile() file, @Res() res) {
+    res.status(200).json("success");
   }
 }

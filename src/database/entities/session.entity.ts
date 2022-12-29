@@ -17,6 +17,10 @@ export class SessionEntity {
   location?: string;
   @Column({ nullable: false, default: "" })
   refresh_token?: string;
+  @Column({ nullable: true, default: "" })
+  firebase_token?: string;
+  @Column({ nullable: true, default: "" })
+  onesignal_player_id?: string;
   @ManyToOne(() => UserEntity, (user) => user.sessions)
   user: UserEntity;
 }
