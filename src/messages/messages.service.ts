@@ -33,6 +33,7 @@ import { NotificationsService } from "../notifications/notifications.service";
 import { messageContentTypes } from "./constants";
 import * as fs from "fs";
 import { badRequestResponse } from "../utils/response";
+import { UsersService } from "../users/users.service";
 
 @Injectable()
 export class MessagesService {
@@ -51,7 +52,8 @@ export class MessagesService {
     private chatService: ChatsService,
     private sharedService: SharedService,
     private fileService: FilesService,
-    private notificationsService: NotificationsService
+    private notificationsService: NotificationsService,
+    private usersService: UsersService
   ) {}
 
   public socket: Server = null;
@@ -404,60 +406,62 @@ export class MessagesService {
       await this.chatsRepository.save(chat);
       userData = getUserSchema(initiator);
 
-      chat.users.forEach((user_id) => {
+      for (let user_id of chat.users) {
         if (user_id !== initiator.id) {
-          this.sharedService.getUser(user_id).then((user) => {
-            this.sharedService
-              .getContact(user.id, initiator.phone)
-              .then(async (contact) => {
-                if (user && user?.onesignal_player_id) {
-                  await this.notificationsService.newMessage(
-                    user.onesignal_player_id,
-                    chat,
-                    {
-                      ...message,
-                      text: await this.getMessageContent(user_id, message),
-                    },
-                    initiator,
-                    contact
-                  );
-                }
-                if (user && user?.fb_tokens) {
-                  for (let token of user.fb_tokens) {
-                    await admin.messaging().sendToDevice(token, {
-                      notification: {
-                        title:
-                          message.message_type === "system"
-                            ? String(chat.name)
-                            : contact?.name
-                            ? String(contact?.name)
-                            : String(initiator.name),
-                        body: String(
-                          await this.getMessageContent(user_id, message)
-                        ),
-                        priority: "max",
-                      },
-                      data: {
-                        text: await this.getMessageContent(user_id, message),
-                        msg_type: message.message_type,
-                        chat_id: String(chat.id),
-                        chat_name: String(chat.name),
-                        user_id: String(initiator.id),
-                        user_name: String(initiator.name),
-                        user_contact_name: contact?.name || "",
-                        user_nickname: String(initiator.nickname),
-                        user_avatar: String(initiator.avatar) || "",
-                        chat_avatar: String(chat.avatar),
-                        is_group: chat.is_group ? "true" : "false",
-                      },
-                    });
-                  }
-                }
-              });
+          const user = await this.usersService.getUser(user_id, {
+            sessions: true,
           });
+          const contact = await this.sharedService.getContact(
+            user.id,
+            initiator.phone
+          );
+          if (user?.sessions?.length) {
+            for (let session of user.sessions) {
+              if (session?.onesignal_player_id) {
+                await this.notificationsService.newMessage(
+                  session.onesignal_player_id,
+                  chat,
+                  {
+                    ...message,
+                    text: await this.getMessageContent(user_id, message),
+                  },
+                  initiator,
+                  contact
+                );
+              }
+              if (session?.firebase_token) {
+                await admin.messaging().sendToDevice(session.firebase_token, {
+                  notification: {
+                    title:
+                      message.message_type === "system"
+                        ? String(chat.name)
+                        : contact?.name
+                        ? String(contact?.name)
+                        : String(initiator.name),
+                    body: String(
+                      await this.getMessageContent(user_id, message)
+                    ),
+                    priority: "max",
+                  },
+                  data: {
+                    text: await this.getMessageContent(user_id, message),
+                    msg_type: message.message_type,
+                    chat_id: String(chat.id),
+                    chat_name: String(chat.name),
+                    user_id: String(initiator.id),
+                    user_name: String(initiator.name),
+                    user_contact_name: contact?.name || "",
+                    user_nickname: String(initiator.nickname),
+                    user_avatar: String(initiator.avatar) || "",
+                    chat_avatar: String(chat.avatar),
+                    is_group: chat.is_group ? "true" : "false",
+                  },
+                });
+              }
+            }
+          }
         }
-      });
-
+      }
       let replyMessage = null;
       if (message.reply_message_id) {
         replyMessage = await this.getMessageWithUser(message.reply_message_id);
