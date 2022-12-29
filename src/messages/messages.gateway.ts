@@ -33,6 +33,13 @@ export class MessagesGateway {
             userId,
             chat.message.users_have_read
           );
+          if (message.replyMessage) {
+            const contact = await this.sharedService.getContact(
+              userId,
+              message.replyMessage.user.phone
+            );
+            message.replyMessage.user.contactName = contact?.name || "";
+          }
           const usersHaveRead = this.sharedService.getFilteredUsersHeavyRead(
             message.users_have_read,
             message.initiator_id
@@ -65,6 +72,14 @@ export class MessagesGateway {
             userId,
             message.users_have_read
           );
+          if (message.forwarded_messages) {
+            for (let msg of message.forwarded_messages) {
+              msg.user = await this.sharedService.getUserWithContactName(
+                userId,
+                msg.user.id
+              );
+            }
+          }
           const usersHaveRead = this.sharedService.getFilteredUsersHeavyRead(
             message.users_have_read,
             message.initiator_id

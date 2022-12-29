@@ -11,6 +11,7 @@ import { ChatsService } from "./chats.service";
 import { UsersService } from "../users/users.service";
 import { getUserSchema } from "../utils/schema";
 import { SharedService } from "../shared/shared.service";
+import { MessagesService } from "../messages/messages.service";
 
 @WebSocketGateway({
   cors: {
@@ -23,29 +24,54 @@ export class ChatsGateway
   constructor(
     private chatsService: ChatsService,
     private usersService: UsersService,
-    private sharedService: SharedService
+    private sharedService: SharedService,
+    private messagesServices: MessagesService
   ) {}
 
   @WebSocketServer() server: Server;
 
   handleEmitNewChat(chat) {
     chat?.users?.map((userId) => {
-      this.usersService.getUser(userId).then((user) => {
+      this.usersService.getUser(userId).then(async (user) => {
+        const message = { ...chat.message.message };
+        message.text = await this.messagesServices.updTextSystemMessage(
+          userId,
+          chat.message.message
+        );
+        for (let user of chat.chatUsers) {
+          const contact = await this.sharedService.getContact(
+            userId,
+            user.phone
+          );
+          user.contactName = contact?.name || "";
+        }
         if (user && user.socket_id) {
           this.server?.sockets?.to(user.socket_id)?.emit("receiveChat", {
-            message: chat,
+            message: { ...chat, message: [message] },
           });
         }
       });
     });
   }
 
-  handleEmitAddToChat(chat) {
-    chat?.users.map((userId) => {
-      this.usersService.getUser(userId).then((user) => {
+  handleEmitAddToChat(data) {
+    data?.invited.map((userId) => {
+      this.usersService.getUser(userId).then(async (user) => {
+        const message = { ...data.message.message };
+        message.text = await this.messagesServices.updTextSystemMessage(
+          userId,
+          data.message.message
+        );
+        for (let user of data.chat.chatUsers) {
+          const contact = await this.sharedService.getContact(
+            userId,
+            user.phone
+          );
+          user.contactName = contact?.name || "";
+        }
         if (user && user.socket_id) {
           this.server?.sockets?.to(user.socket_id)?.emit("addedToChat", {
-            message: chat,
+            message: { ...data.chat, message: [message] },
           });
         }
       });
