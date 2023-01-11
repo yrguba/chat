@@ -32,6 +32,7 @@ export class AuthService {
   ) {}
 
   async login(user: any): Promise<Record<string, any>> {
+    console.log('LOGIN_V1')
     let isValid = false;
 
     const userData = new LoginDTO();
