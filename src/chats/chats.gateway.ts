@@ -33,51 +33,49 @@ export class ChatsGateway
   handleEmitNewChat(chat) {
     chat?.users?.map((userId) => {
       this.usersService.getUser(userId).then(async (user) => {
-        console.log('handleEmitNewChat');
-        // const message = { ...chat.message.message };
-        // message.text = await this.messagesServices.updTextSystemMessage(
-        //   userId,
-        //   chat.message.message
-        // );
-        // for (let user of chat.chatUsers) {
-        //   const contact = await this.sharedService.getContact(
-        //     userId,
-        //     user.phone
-        //   );
-        //   user.contactName = contact?.name || "";
-        // }
-        // if (user && user.socket_id) {
-        //   this.server?.sockets?.to(user.socket_id)?.emit("receiveChat", {
-        //     message: { ...chat, message: [message] },
-        //   });
-        // }
+        const message = { ...chat.message.message };
+        message.text = await this.messagesServices.updTextSystemMessage(
+          userId,
+          chat.message.message
+        );
+        for (let user of chat.chatUsers) {
+          const contact = await this.sharedService.getContact(
+            userId,
+            user.phone
+          );
+          user.contactName = contact?.name || "";
+        }
+        if (user && user.socket_id) {
+          this.server?.sockets?.to(user.socket_id)?.emit("receiveChat", {
+            message: { ...chat, message: [message] },
+          });
+        }
       });
     });
   }
 
   handleEmitAddToChat(data) {
-    console.log('handleEmitAddToChat');
-    // data?.invited.map((userId) => {
-    //   this.usersService.getUser(userId).then(async (user) => {
-    //     const message = { ...data.message.message };
-    //     message.text = await this.messagesServices.updTextSystemMessage(
-    //       userId,
-    //       data.message.message
-    //     );
-    //     for (let user of data.chat.chatUsers) {
-    //       const contact = await this.sharedService.getContact(
-    //         userId,
-    //         user.phone
-    //       );
-    //       user.contactName = contact?.name || "";
-    //     }
-    //     if (user && user.socket_id) {
-    //       this.server?.sockets?.to(user.socket_id)?.emit("addedToChat", {
-    //         message: { ...data.chat, message: [message] },
-    //       });
-    //     }
-    //   });
-    // });
+    data?.invited.map((userId) => {
+      this.usersService.getUser(userId).then(async (user) => {
+        const message = { ...data.message.message };
+        message.text = await this.messagesServices.updTextSystemMessage(
+          userId,
+          data.message.message
+        );
+        for (let user of data.chat.chatUsers) {
+          const contact = await this.sharedService.getContact(
+            userId,
+            user.phone
+          );
+          user.contactName = contact?.name || "";
+        }
+        if (user && user.socket_id) {
+          this.server?.sockets?.to(user.socket_id)?.emit("addedToChat", {
+            message: { ...data.chat, message: [message] },
+          });
+        }
+      });
+    });
   }
 
   handleEmitDeleteFromChat(chat) {
