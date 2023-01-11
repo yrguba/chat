@@ -121,7 +121,7 @@ export class ContactsController {
     const userId = await this.usersService.getUserIdFromToken(req);
     const result = await this.contactsService.changeContactName(userId, body);
     if (result.status === 200) {
-      this.chatsGateway.handleUpdateChat(result.socketData);
+      //this.chatsGateway.handleUpdateChat(result.socketData);
     }
     res.status(result.status).json(result.data);
   }
