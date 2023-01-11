@@ -33,6 +33,7 @@ export class ChatsGateway
   handleEmitNewChat(chat) {
     chat?.users?.map((userId) => {
       this.usersService.getUser(userId).then(async (user) => {
+        console.log('handleEmitNewChat');
         // const message = { ...chat.message.message };
         // message.text = await this.messagesServices.updTextSystemMessage(
         //   userId,
@@ -45,17 +46,17 @@ export class ChatsGateway
         //   );
         //   user.contactName = contact?.name || "";
         // }
-        if (user && user.socket_id) {
-          this.server?.sockets?.to(user.socket_id)?.emit("receiveChat", {
-            message: { ...chat, message: [message] },
-          });
-        }
+        // if (user && user.socket_id) {
+        //   this.server?.sockets?.to(user.socket_id)?.emit("receiveChat", {
+        //     message: { ...chat, message: [message] },
+        //   });
+        // }
       });
     });
   }
 
   handleEmitAddToChat(data) {
-    console.log(data)
+    console.log('handleEmitAddToChat');
     // data?.invited.map((userId) => {
     //   this.usersService.getUser(userId).then(async (user) => {
     //     const message = { ...data.message.message };
