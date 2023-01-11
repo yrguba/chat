@@ -9,6 +9,12 @@ import { ContactsService } from "../contacts/contacts.service";
 import { SharedService } from "../shared/shared.service";
 import { ChatsEntity } from "../database/entities/chats.entity";
 import { MessageEntity } from "../database/entities/message.entity";
+import { ChatsService } from "../chats/chats.service";
+import { ReactionsEntity } from "../database/entities/reactions.entity";
+import { MessagesService } from "../messages/messages.service";
+import { FilesService } from "../files/files.service";
+import { NotificationsService } from "../notifications/notifications.service";
+import { AppEntity } from "../database/entities/app.entity";
 
 @Global()
 @Module({
@@ -18,10 +24,20 @@ import { MessageEntity } from "../database/entities/message.entity";
       ContactEntity,
       ChatsEntity,
       MessageEntity,
+      ReactionsEntity,
+      AppEntity,
     ]),
     JwtModule,
   ],
-  providers: [UsersService, ContactsService, SharedService],
+  providers: [
+    UsersService,
+    ContactsService,
+    SharedService,
+    ChatsService,
+    MessagesService,
+    FilesService,
+    NotificationsService,
+  ],
   controllers: [UsersController],
   exports: [UsersService],
 })
