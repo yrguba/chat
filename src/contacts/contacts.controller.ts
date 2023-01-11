@@ -107,8 +107,8 @@ export class ContactsController {
     @Req() req,
     @Body() body: DeleteContactsDtoV2
   ) {
-    const result = await this.contactsService.deleteContactByPhone(body.phone);
-    res.status(result.status).json(result.data);
+    //const result = await this.contactsService.deleteContactByPhone(body.phone);
+    res.status(200).json({});
   }
 
   @UseGuards(JwtAuthGuard)
