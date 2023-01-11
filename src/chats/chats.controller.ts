@@ -148,6 +148,7 @@ export class ChatsController {
     res.status(chat.status).json(chat.data);
   }
 
+  @Version("1")
   @UseGuards(JwtAuthGuard)
   @ApiParam({ name: "chat_id", required: true })
   @Patch("/:chat_id/avatar")

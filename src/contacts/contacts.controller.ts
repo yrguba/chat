@@ -51,6 +51,7 @@ export class ContactsController {
     res.status(contact.status).json(contact.data);
   }
 
+  @Version("1")
   @UseGuards(JwtAuthGuard)
   @Post("/")
   async saveContacts(@Res() res, @Req() req, @Body() body: CreateContactsDto) {
@@ -85,6 +86,7 @@ export class ContactsController {
     res.status(200).json({ data: body });
   }
 
+  @Version("1")
   @UseGuards(JwtAuthGuard)
   @Delete("/")
   async deleteContacts(
