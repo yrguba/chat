@@ -30,7 +30,7 @@ export class ContactsController {
     private contactsService: ContactsService,
     private usersService: UsersService,
     private readonly jwtService: JwtService,
-    private chatsGateway: ChatsGateway
+    //private chatsGateway: ChatsGateway
   ) {}
 
   @UseGuards(JwtAuthGuard)
