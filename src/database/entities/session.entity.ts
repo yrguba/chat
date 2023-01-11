@@ -5,7 +5,7 @@ import { UserEntity } from "./user.entity";
 export class SessionEntity {
   @PrimaryGeneratedColumn()
   id: number;
-  @Column({ nullable: false, unique: true })
+  @Column({ nullable: false, unique: false })
   identifier: string;
   @Column({ nullable: false, default: "" })
   device_type?: string;
