@@ -21,7 +21,6 @@ import {
 } from "./dto/deleteContacts.dto";
 import { UsersService } from "../users/users.service";
 import { CreateContactsDto } from "./dto/createContacts.dto";
-import { ChatsGateway } from "../chats/chats.gateway";
 
 @ApiTags("contacts")
 @Controller("contacts")
@@ -30,7 +29,6 @@ export class ContactsController {
     private contactsService: ContactsService,
     private usersService: UsersService,
     private readonly jwtService: JwtService,
-    private chatsGateway: ChatsGateway
   ) {}
 
   @UseGuards(JwtAuthGuard)
