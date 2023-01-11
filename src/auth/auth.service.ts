@@ -331,6 +331,7 @@ export class AuthService {
           return i;
         });
       } else {
+        console.log(sessionInfo);
         const newSession = await this.sessionRepository.save({
           ...sessionInfo,
           refresh_token: hashedRefreshToken,
