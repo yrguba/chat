@@ -32,6 +32,8 @@ import {
 import { NotificationsService } from "../notifications/notifications.service";
 import { messageContentTypes } from "./constants";
 import * as fs from "fs";
+import { badRequestResponse } from "../utils/response";
+import { UsersService } from "../users/users.service";
 
 @Injectable()
 export class MessagesService {
@@ -50,7 +52,8 @@ export class MessagesService {
     private chatService: ChatsService,
     private sharedService: SharedService,
     private fileService: FilesService,
-    private notificationsService: NotificationsService
+    private notificationsService: NotificationsService,
+    private usersService: UsersService
   ) {}
 
   public socket: Server = null;
@@ -62,14 +65,17 @@ export class MessagesService {
     });
   }
 
-  getMessageContent(message) {
-    if (message.message_type === "image") {
-      return "Изображение";
-    } else if (message.message_type === "file") {
-      return "Файл";
-    } else {
-      return message.text;
-    }
+  async getMessageContent(userId, message) {
+    const dictionary = {
+      images: "Изображение",
+      videos: "Видео",
+      audios: "Аудио",
+      voices: "Голосовое сообщение",
+      documents: "Документ",
+      system: await this.updTextSystemMessage(userId, message),
+      text: message.text,
+    };
+    return dictionary[message.message_type];
   }
 
   async getMessageWithUser(id: number): Promise<any> {
@@ -167,18 +173,32 @@ export class MessagesService {
         }
 
         if (message.forwarded_messages?.length) {
-          message.forwarded_messages = await this.updForwardedMessages(message);
+          message.forwarded_messages = await this.updForwardedMessages(
+            user_id,
+            message
+          );
         }
         if (message.reply_message_id) {
           const replyMessage = await this.getMessageWithUser(
             message.reply_message_id
           );
           if (replyMessage) {
+            if (replyMessage.forwarded_messages) {
+              replyMessage.forwarded_messages = await this.updForwardedMessages(
+                user_id,
+                replyMessage
+              );
+            }
             replyMessage.user = getUserSchema(replyMessage.user);
             message.replyMessage = getMessageSchema({
               ...replyMessage,
               content: this.updMessageContent(replyMessage),
             });
+            const contact = await this.sharedService.getContact(
+              user_id,
+              message.replyMessage.user.phone
+            );
+            message.replyMessage.user.contactName = contact?.name || "";
           }
         }
         message.content = this.updMessageContent(message);
@@ -212,16 +232,17 @@ export class MessagesService {
     }
   }
 
-  async updForwardedMessages(message) {
+  async updForwardedMessages(ownerId, message) {
     const messages = [];
     for (let msgId of message.forwarded_messages) {
       const foundMsg = await this.messageRepository.findOne({
         where: { id: msgId },
       });
       if (foundMsg) {
-        const user = await this.userRepository.findOne({
-          where: { id: foundMsg.initiator_id },
-        });
+        const user = await this.sharedService.getUserWithContactName(
+          ownerId,
+          foundMsg.initiator_id
+        );
         foundMsg.content = this.updMessageContent(foundMsg);
         foundMsg.user = getUserSchema(user);
         messages.push(getMessageSchema(foundMsg));
@@ -346,6 +367,10 @@ export class MessagesService {
       relations: ["message"],
     });
 
+    if (!chat.users.find((i) => i === user_id)) {
+      return badRequestResponse("you are not a member of the chat");
+    }
+
     const reactions = await this.reactionRepository.save({});
 
     const message = await this.messageRepository.save({
@@ -381,58 +406,62 @@ export class MessagesService {
       await this.chatsRepository.save(chat);
       userData = getUserSchema(initiator);
 
-      chat.users.forEach((user_id) => {
+      for (let user_id of chat.users) {
         if (user_id !== initiator.id) {
-          this.sharedService.getUser(user_id).then((user) => {
-            this.sharedService
-              .getContact(user.id, initiator.phone)
-              .then(async (contact) => {
-                if (user && user?.onesignal_player_id) {
-                  await this.notificationsService.newMessage(
-                    user.onesignal_player_id,
-                    chat,
-                    {
-                      ...message,
-                      text: await this.updTextSystemMessage(user.id, message),
-                    },
-                    initiator,
-                    contact
-                  );
-                }
-                if (user && user?.fb_tokens) {
-                  user?.fb_tokens.map((token) => {
-                    admin.messaging().sendToDevice(token, {
-                      notification: {
-                        title:
-                          message.message_type === "system"
-                            ? String(chat.name)
-                            : contact?.name
-                            ? String(contact?.name)
-                            : String(initiator.name),
-                        body: String(this.getMessageContent(message)),
-                        priority: "max",
-                      },
-                      data: {
-                        text: this.getMessageContent(message),
-                        msg_type: message.message_type,
-                        chat_id: String(chat.id),
-                        chat_name: String(chat.name),
-                        user_id: String(initiator.id),
-                        user_name: String(initiator.name),
-                        user_contact_name: contact?.name || "",
-                        user_nickname: String(initiator.nickname),
-                        user_avatar: String(initiator.avatar) || "",
-                        chat_avatar: String(chat.avatar),
-                        is_group: chat.is_group ? "true" : "false",
-                      },
-                    });
-                  });
-                }
-              });
+          const user = await this.usersService.getUser(user_id, {
+            sessions: true,
           });
+          const contact = await this.sharedService.getContact(
+            user.id,
+            initiator.phone
+          );
+          if (user?.sessions?.length) {
+            for (let session of user.sessions) {
+              if (session?.onesignal_player_id) {
+                await this.notificationsService.newMessage(
+                  session.onesignal_player_id,
+                  chat,
+                  {
+                    ...message,
+                    text: await this.getMessageContent(user_id, message),
+                  },
+                  initiator,
+                  contact
+                );
+              }
+              if (session?.firebase_token) {
+                await admin.messaging().sendToDevice(session.firebase_token, {
+                  notification: {
+                    title:
+                      message.message_type === "system"
+                        ? String(chat.name)
+                        : contact?.name
+                          ? String(contact?.name)
+                          : String(initiator.name),
+                    body: String(
+                      await this.getMessageContent(user_id, message)
+                    ),
+                    priority: "max",
+                  },
+                  data: {
+                    text: await this.getMessageContent(user_id, message),
+                    msg_type: message.message_type,
+                    chat_id: String(chat.id),
+                    chat_name: String(chat.name),
+                    user_id: String(initiator.id),
+                    user_name: String(initiator.name),
+                    user_contact_name: contact?.name || "",
+                    user_nickname: String(initiator.nickname),
+                    user_avatar: String(initiator.avatar) || "",
+                    chat_avatar: String(chat.avatar),
+                    is_group: chat.is_group ? "true" : "false",
+                  },
+                });
+              }
+            }
+          }
         }
-      });
-
+      }
       let replyMessage = null;
       if (message.reply_message_id) {
         replyMessage = await this.getMessageWithUser(message.reply_message_id);
@@ -440,6 +469,7 @@ export class MessagesService {
         replyMessage.content = this.updMessageContent(replyMessage);
         if (replyMessage.forwarded_messages?.length) {
           replyMessage.forwarded_messages = await this.updForwardedMessages(
+            user_id,
             replyMessage
           );
         }

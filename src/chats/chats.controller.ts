@@ -99,6 +99,13 @@ export class ChatsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get("/allReactions")
+  async getAllReactions(@Res() res) {
+    const result = await this.chatsService.getAllReactions();
+    res.status(result.status).json(result.data);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @ApiParam({ name: "chat_id", required: true })
   @Get("/:chat_id")
   async getChat(@Res() res, @Req() req, @Param() param) {
@@ -268,6 +275,7 @@ export class ChatsController {
     res.status(200).json(message.data);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(":chat_id/add-user/")
   @ApiParam({ name: "chat_id", required: true })
   async addUserToChat(
@@ -289,12 +297,25 @@ export class ChatsController {
         chat_id: params.chat_id,
         ...chat.data.message,
       });
-      this.chatsGateway.handleEmitAddToChat(chat?.data?.data || []);
-      this.chatsGateway.handleUpdateChat(chat.data.socketData);
+      // this.chatsGateway.handleEmitAddToChat(chat.data.socketData || []);
+      // this.chatsGateway.handleUpdateChat(chat.data.socketData);
     }
     res.status(chat.status).json(chat.data);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Patch(":chat_id/exit/")
+  @ApiParam({ name: "chat_id", required: true })
+  async exitFromChat(@Res() res, @Req() req, @Param() params) {
+    const userId = await this.usersService.getUserIdFromToken(req);
+    const exitChat = await this.chatsService.exitFromChat(
+      userId,
+      params.chat_id
+    );
+    res.status(exitChat.status).json(exitChat.data);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Patch(":chat_id/remove-user/")
   @ApiParam({ name: "chat_id", required: true })
   async removeUserFromChat(
@@ -337,13 +358,6 @@ export class ChatsController {
     if (result.status === 200) {
       this.chatsGateway.handleUpdateChat(result.socketData);
     }
-    res.status(result.status).json(result.data);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get("allReactions")
-  async getAllReactions(@Res() res, @Req() req) {
-    const result = await this.chatsService.getAllReactions();
     res.status(result.status).json(result.data);
   }
 
