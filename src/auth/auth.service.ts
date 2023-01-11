@@ -91,11 +91,14 @@ export class AuthService {
   }
 
   async loginV2(data, headers) {
+    console.log("login data", data);
     const sessionInfo = getIdentifier(headers);
     const user = await this.userService.getUserByPhone(data.phone, {
       sessions: true,
     });
-    if (!user) return badRequestResponse("Invalid fields");
+    console.log(user);
+    console.log("sessionInfo", sessionInfo);
+    if (!user) return badRequestResponse("number not registered");
     const checkCode = bcrypt.compareSync(data.code, user.code);
     if (!checkCode) return unAuthorizeResponse();
     const tokens = await this.updCurrentSession(sessionInfo, user, "login");
@@ -205,14 +208,14 @@ export class AuthService {
       method: "POST",
       headers: token
         ? {
-            Authorization: token,
-            "Content-Type": "application/json",
-            "Content-Length": dataString.length,
-          }
+          Authorization: token,
+          "Content-Type": "application/json",
+          "Content-Length": dataString.length,
+        }
         : {
-            "Content-Type": "application/json",
-            "Content-Length": dataString.length,
-          },
+          "Content-Type": "application/json",
+          "Content-Length": dataString.length,
+        },
       timeout: 5000,
     };
 
@@ -388,26 +391,6 @@ export class AuthService {
     };
   }
 
-  async addFirebaseToken(userId: number, token: string) {
-    let tokens = [];
-    const profile = await this.usersRepository
-      .createQueryBuilder("users")
-      .where("users.id = :id", { id: userId })
-      .getOne();
-
-    if (!Array.isArray(profile.fb_tokens)) {
-      tokens.push(token);
-    } else if (!profile?.fb_tokens?.includes(token)) {
-      tokens = profile.fb_tokens;
-      tokens.push(token);
-    }
-
-    const profileUpdated = { ...profile, fb_tokens: tokens };
-    await this.usersRepository.save(profileUpdated);
-
-    return successResponse(tokens);
-  }
-
   async deleteFirebaseToken(userId: number, token: string) {
     const profile = await this.usersRepository
       .createQueryBuilder("users")
@@ -425,15 +408,23 @@ export class AuthService {
     }
   }
 
-  async createOneSignalPlayerId(userId: number, playerId: string) {
+  async createNotificationToken(userId: number, body, headers) {
+    const sessionInfo = getIdentifier(headers);
+    const user = await this.userService.getUser(userId, {
+      sessions: true,
+    });
+    const currentSession = user.sessions.find(
+      (i) => i.identifier === sessionInfo.identifier
+    );
+    if (!currentSession) return badRequestResponse("session not found");
     try {
-      await this.usersRepository.update(
-        { id: userId },
-        { onesignal_player_id: playerId }
-      );
-      return successResponse({});
+      await this.sessionRepository.save({
+        ...currentSession,
+        ...body,
+      });
+      return successResponse(body);
     } catch (e) {
-      return badRequestResponse(e);
+      return badRequestResponse("failed to update session");
     }
   }
 
