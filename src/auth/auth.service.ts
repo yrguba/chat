@@ -92,13 +92,10 @@ export class AuthService {
   }
 
   async loginV2(data, headers) {
-    console.log("login data", data);
     const sessionInfo = getIdentifier(headers);
     const user = await this.userService.getUserByPhone(data.phone, {
       sessions: true,
     });
-    console.log(user);
-    console.log("sessionInfo", sessionInfo);
     if (!user) return badRequestResponse("number not registered");
     const checkCode = bcrypt.compareSync(data.code, user.code);
     if (!checkCode) return unAuthorizeResponse();
