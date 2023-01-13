@@ -32,7 +32,7 @@ export class AuthService {
   ) {}
 
   async login(user: any): Promise<Record<string, any>> {
-    console.log('LOGIN_V1')
+    console.log("LOGIN_V1");
     let isValid = false;
 
     const userData = new LoginDTO();
@@ -92,11 +92,11 @@ export class AuthService {
   }
 
   async loginV2(data, headers) {
-    const sessionInfo = getIdentifier(headers);
     const user = await this.userService.getUserByPhone(data.phone, {
       sessions: true,
     });
     if (!user) return badRequestResponse("number not registered");
+    const sessionInfo = getIdentifier(headers, user.id);
     const checkCode = bcrypt.compareSync(data.code, user.code);
     if (!checkCode) return unAuthorizeResponse();
     const tokens = await this.updCurrentSession(sessionInfo, user, "login");
@@ -109,7 +109,7 @@ export class AuthService {
   }
 
   async logout(userId, headers) {
-    const sessionInfo = getIdentifier(headers);
+    const sessionInfo = getIdentifier(headers, userId);
     const user = await this.userService.getUser(userId, {
       sessions: true,
     });
@@ -276,7 +276,7 @@ export class AuthService {
   }
 
   async refreshTokensV2(userId: number, refresh_token: string, headers) {
-    const sessionInfo = getIdentifier(headers);
+    const sessionInfo = getIdentifier(headers, userId);
     const user = await this.userService.getUser(userId, {
       sessions: true,
     });
@@ -411,7 +411,7 @@ export class AuthService {
   }
 
   async createNotificationToken(userId: number, body, headers) {
-    const sessionInfo = getIdentifier(headers);
+    const sessionInfo = getIdentifier(headers, userId);
     const user = await this.userService.getUser(userId, {
       sessions: true,
     });
