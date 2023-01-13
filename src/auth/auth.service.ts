@@ -290,7 +290,10 @@ export class AuthService {
       currenSession.refresh_token,
       refresh_token
     );
+
+    console.log(currenSession.refresh_token, refresh_token);
     if (!refreshTokenMatches) {
+      console.error("Refresh token invalid");
       return badRequestResponse("Refresh token invalid");
     }
     const tokens = await this.updCurrentSession(sessionInfo, user, "refresh");
