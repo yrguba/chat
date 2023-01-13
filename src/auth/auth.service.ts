@@ -280,9 +280,13 @@ export class AuthService {
     const user = await this.userService.getUser(userId, {
       sessions: true,
     });
+
     const currenSession = user.sessions.find(
       (i) => i.identifier === sessionInfo.identifier
     );
+    console.log(sessionInfo);
+    console.log(currenSession);
+    console.log(user.sessions);
     if (!currenSession || !currenSession.refresh_token) {
       return unAuthorizeResponse();
     }
