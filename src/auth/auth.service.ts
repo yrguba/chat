@@ -437,8 +437,7 @@ export class AuthService {
   }
 
   hashData(data: string) {
-    return data;
-    //return argon2.hash(data);
+    return argon2.hash(data);
   }
 
   async getSessions(userId) {
