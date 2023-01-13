@@ -10,7 +10,7 @@ export const getIdentifier = (headers, userId) => {
   return {
     identifier: `${userId}${device?.type || ""}${device?.brand || ""}${
       os?.name || ""
-    }${client.name} || ""`,
+    }${client.name || ""}`,
     os_name: os?.name || "",
     device_type: device?.type || "",
     browser: client.name,
