@@ -106,4 +106,16 @@ export class UsersService {
       return null;
     }
   }
+
+  async getUserIdFromRefreshToken(token): Promise<number> {
+    if (token) {
+      const json = this.jwtService.decode(token, {json: true}) as {
+        id: number;
+      };
+
+      return json.id;
+    } else {
+      return null;
+    }
+  }
 }

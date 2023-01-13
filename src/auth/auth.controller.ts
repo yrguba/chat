@@ -64,7 +64,7 @@ export class AuthController {
     @Body() body: RefreshDTO,
     @Headers() headers
   ) {
-    const userId = await this.usersService.getUserIdFromToken(req);
+    const userId = await this.usersService.getUserIdFromRefreshToken(body.refresh_token);
     const tokens = await this.authService.refreshTokensV2(
       userId,
       body.refresh_token,
