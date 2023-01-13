@@ -250,6 +250,7 @@ export class AuthService {
     id: number,
     refresh_token: string
   ): Promise<Record<string, any>> {
+    console.log("refreshTokens V1");
     const user = await this.usersRepository
       .createQueryBuilder("users")
       .where("users.id = :id", { id: id })
@@ -276,6 +277,7 @@ export class AuthService {
   }
 
   async refreshTokensV2(userId: number, refresh_token: string, headers) {
+    console.log(`User id - ${userId}`);
     const sessionInfo = getIdentifier(headers, userId);
     const user = await this.userService.getUser(userId, {
       sessions: true,
@@ -435,7 +437,8 @@ export class AuthService {
   }
 
   hashData(data: string) {
-    return argon2.hash(data);
+    return data;
+    //return argon2.hash(data);
   }
 
   async getSessions(userId) {
