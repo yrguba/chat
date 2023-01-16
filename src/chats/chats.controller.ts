@@ -394,3 +394,4 @@ export class ChatsController {
     res.status(result.status).json(result.data);
   }
 }
+

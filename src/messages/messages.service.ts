@@ -68,10 +68,14 @@ export class MessagesService {
   async getMessageContent(userId, message) {
     const dictionary = {
       images: "Изображение",
+      // TODO убрать после перехода на v2
+      image: "Изображение",
       videos: "Видео",
       audios: "Аудио",
       voices: "Голосовое сообщение",
       documents: "Документ",
+      // TODO убрать после перехода на v2
+      document: "Документ",
       system: await this.updTextSystemMessage(userId, message),
       text: message.text,
     };
