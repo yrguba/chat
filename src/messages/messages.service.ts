@@ -411,7 +411,7 @@ export class MessagesService {
       userData = getUserSchema(initiator);
 
       for (let user_id of chat.users) {
-        if (user_id !== initiator.id) {
+        if (user_id !== initiator.id && !chat.listeners.includes(user_id)) {
           const user = await this.usersService.getUser(user_id, {
             sessions: true,
           });
