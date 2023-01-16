@@ -34,6 +34,8 @@ export class ChatsGateway
     chat?.users?.map((userId) => {
       this.usersService.getUser(userId).then(async (user) => {
         const message = { ...chat.message.message };
+        console.log(chat);
+        console.log(message);
         message.text = await this.messagesServices.updTextSystemMessage(
           userId,
           chat.message.message
