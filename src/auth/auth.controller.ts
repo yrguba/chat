@@ -37,6 +37,18 @@ export class AuthController {
     res.status(response.status).json(response.data);
   }
 
+  @Version("1")
+  @Post("login")
+  async login(
+    @Req() req,
+    @Res() res,
+    @Body() body: LoginDTO,
+    @Headers() headers
+  ) {
+    const auth = await this.authService.loginV2(body, headers);
+    res.status(auth.status).json(auth.data);
+  }
+
   @Version("2")
   @Post("login")
   async loginV2(
