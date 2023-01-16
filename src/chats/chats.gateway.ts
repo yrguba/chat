@@ -128,6 +128,7 @@ export class ChatsGateway
 
   handleDisconnect(client: Socket) {
     const clientUserId = this.sharedService.getUserId(client);
+    const alreadyKnow = [];
     if (clientUserId) {
       this.usersService
         .updateUserStatus(clientUserId, false)
@@ -136,7 +137,11 @@ export class ChatsGateway
             if (chats) {
               chats.map((chat) => {
                 chat?.users.map((userId) => {
-                  if (userId !== clientUserId) {
+                  if (
+                    userId !== clientUserId &&
+                    !alreadyKnow.includes(userId)
+                  ) {
+                    alreadyKnow.push(userId);
                     this.usersService.getUser(userId).then((user) => {
                       if (user && user.socket_id) {
                         this.server?.sockets
@@ -154,12 +159,14 @@ export class ChatsGateway
           });
         });
     }
-
-    console.log("disconnect client");
+    this.usersService.setUserStatus(clientUserId, false).then((res) => {
+      console.log(res);
+    });
   }
 
   handleConnection(client: Socket, ...args: any[]) {
     const clientUserId = this.sharedService.getUserId(client);
+    const alreadyKnow = [];
     if (clientUserId) {
       this.usersService
         .updateUserSocket(clientUserId, client.id, true)
@@ -168,7 +175,11 @@ export class ChatsGateway
             if (chats) {
               chats.map((chat) => {
                 chat?.users.map((userId) => {
-                  if (userId !== clientUserId) {
+                  if (
+                    userId !== clientUserId &&
+                    !alreadyKnow.includes(userId)
+                  ) {
+                    alreadyKnow.push(userId);
                     this.usersService.getUser(userId).then((user) => {
                       if (user && user.socket_id) {
                         this.server?.sockets
@@ -186,5 +197,8 @@ export class ChatsGateway
           });
         });
     }
+    this.usersService.setUserStatus(clientUserId, true).then((res) => {
+      console.log(res);
+    });
   }
 }
