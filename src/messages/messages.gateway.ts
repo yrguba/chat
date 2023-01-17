@@ -26,7 +26,7 @@ export class MessagesGateway {
 
   handleEmitNewMessage(chat) {
     const { message } = chat;
-    let updMsg = null;
+    let updMsg = message.text;
     chat?.users.map((userId) => {
       this.usersService.getUser(userId).then(async (user) => {
         if (user && user.socket_id) {
