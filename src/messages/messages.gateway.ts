@@ -34,6 +34,11 @@ export class MessagesGateway {
             userId,
             chat.message.users_have_read
           );
+          const contact = await this.sharedService.getContact(
+            userId,
+            message.user.phone
+          );
+          message.user.contactName = contact?.name || "";
           if (message.replyMessage) {
             const contact = await this.sharedService.getContact(
               userId,
