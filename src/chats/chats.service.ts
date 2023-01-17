@@ -215,7 +215,8 @@ export class ChatsService {
         // Иначе
         let targetChat = currentChats.filter(
           (chat) =>
-            chat.users.sort().toString() === data.users.sort().toString()
+            chat.users.sort().toString() === data.users.sort().toString() &&
+            !chat.is_group
         );
         console.log("Check private chats");
         if (targetChat && targetChat.length === 0) {
@@ -236,7 +237,6 @@ export class ChatsService {
           isNewChat = false;
         }
       }
-
       if (chat?.users) {
         const users = await this.userRepository
           .createQueryBuilder("users")
