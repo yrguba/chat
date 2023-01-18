@@ -447,8 +447,8 @@ export class MessagesService {
                     ),
                     priority: "max",
                     sound: "default",
-                    "collapse-id": String(chat_id),
                     "thread-id": String(chat_id),
+                    collapseKey: String(chat_id),
                   },
                   data: {
                     text: await this.getMessageContent(user_id, message),
