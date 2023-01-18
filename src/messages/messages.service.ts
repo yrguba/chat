@@ -446,6 +446,7 @@ export class MessagesService {
                       await this.getMessageContent(user_id, message)
                     ),
                     priority: "max",
+                    "thread-id": String(chat_id),
                   },
                   data: {
                     text: await this.getMessageContent(user_id, message),
