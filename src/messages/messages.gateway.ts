@@ -178,6 +178,15 @@ export class MessagesGateway {
     if (!messages.length) return;
     const messagesReq = [];
     const clientUserId = this.sharedService.getUserId(client);
+    const checkPreviousUnreadMessages =
+      await this.sharedService.checkPreviousUnreadMessages(
+        clientUserId,
+        chat_id,
+        messages[0]
+      );
+    if (checkPreviousUnreadMessages) {
+      messages = [...checkPreviousUnreadMessages, ...messages];
+    }
     for (let messageId of messages) {
       const message = await this.sharedService.getMessage(chat_id, messageId);
       if (message?.users_have_read) {

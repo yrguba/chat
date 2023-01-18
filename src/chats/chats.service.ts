@@ -435,7 +435,7 @@ export class ChatsService {
     const updatedChat = { ...chat, name: name, updated_at: new Date() };
     await this.messagesService
       .createMessage(chat_id, user_id, {
-        text: `initiator:${user_id}/изменил название чата/`,
+        text: `initiator:${user_id}/изменил(а) название чата/`,
         message_type: "system",
       })
       .then((data) => {
@@ -467,7 +467,7 @@ export class ChatsService {
       .getOne();
     await this.messagesService
       .createMessage(chat_id, user_id, {
-        text: `initiator:${user_id}/изменил аватар чата/`,
+        text: `initiator:${user_id}/изменил(а) аватар чата/`,
         message_type: "system",
       })
       .then((data) => {
@@ -497,7 +497,7 @@ export class ChatsService {
       return badRequestResponse("нет прав доступа");
     if (!chat.is_group) return badRequestResponse("нельзя поменять аватар");
     const message = await this.messagesService.createMessage(chatId, userId, {
-      text: `initiator:${userId}/изменил аватар чата/`,
+      text: `initiator:${userId}/изменил(а) аватар чата/`,
       message_type: "system",
     });
     chat.avatar = avatar;
