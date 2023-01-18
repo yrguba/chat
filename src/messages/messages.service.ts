@@ -442,13 +442,26 @@ export class MessagesService {
                       ? String(contact?.name)
                       : String(initiator.name),
                     // message.message_type === "system" ? String(chat.name) : contact?.name ? String(contact?.name) : String(initiator.name),
-                    body: String(
-                      await this.getMessageContent(user_id, message)
-                    ),
+                    body: chat.is_group
+                      ? `${
+                          contact?.name
+                            ? String(contact?.name)
+                            : String(initiator.name)
+                        }: ${await this.getMessageContent(user_id, message)}`
+                      : await this.getMessageContent(user_id, message),
+                    apns: JSON.stringify({
+                      payload: {
+                        aps: {
+                          threadId: chat_id,
+                          sound: "default",
+                        },
+                      },
+                    }),
                     priority: "max",
                     sound: "default",
                     "thread-id": String(chat_id),
                     collapseKey: String(chat_id),
+                    threadId: String(chat_id),
                   },
                   data: {
                     text: await this.getMessageContent(user_id, message),
