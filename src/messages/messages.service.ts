@@ -447,6 +447,7 @@ export class MessagesService {
                     ),
                     priority: "max",
                     sound: "default",
+                    "collapse-id": String(chat_id),
                     "thread-id": String(chat_id),
                   },
                   data: {
