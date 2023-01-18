@@ -169,4 +169,18 @@ export class SharedService {
     const inviteId = arr.pop().split(":")[1];
     return { content, initiatorId, inviteId };
   }
+
+  async checkPreviousUnreadMessages(userId, chatId, messageId) {
+    const messages = await this.getMessages(chatId);
+    const prevUnreadMsg = [];
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (
+        messages[i].id < messageId &&
+        !messages[i].users_have_read.includes(userId)
+      ) {
+        prevUnreadMsg.push(messages[i].id);
+      }
+    }
+    return prevUnreadMsg.length ? prevUnreadMsg : null;
+  }
 }
