@@ -447,7 +447,7 @@ export class MessagesService {
                     ),
                     priority: "max",
                     sound: "default",
-                    "thread-id": String(chat_id),
+                    thread_id: String(chat_id),
                   },
                   data: {
                     text: await this.getMessageContent(user_id, message),
