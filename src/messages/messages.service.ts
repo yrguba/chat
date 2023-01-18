@@ -436,12 +436,12 @@ export class MessagesService {
               if (session?.firebase_token) {
                 await admin.messaging().sendToDevice(session.firebase_token, {
                   notification: {
-                    title:
-                      message.message_type === "system"
-                        ? String(chat.name)
-                        : contact?.name
-                        ? String(contact?.name)
-                        : String(initiator.name),
+                    title: chat.is_group
+                      ? String(chat.name)
+                      : contact?.name
+                      ? String(contact?.name)
+                      : String(initiator.name),
+                    // message.message_type === "system" ? String(chat.name) : contact?.name ? String(contact?.name) : String(initiator.name),
                     body: String(
                       await this.getMessageContent(user_id, message)
                     ),
