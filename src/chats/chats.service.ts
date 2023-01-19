@@ -182,6 +182,17 @@ export class ChatsService {
                       chat_avatar: String(chat.avatar),
                       is_group: chat.is_group ? "true" : "false",
                     },
+                  },{
+                    collapseKey: String(chat.id),
+                    apns: {
+                      payload: {
+                        aps: {
+                          threadId: String(chat.id),
+                          badge: 1,
+                          sound: 'default',
+                        },
+                      },
+                    },
                   });
                 }
               });
