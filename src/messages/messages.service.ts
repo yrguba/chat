@@ -79,7 +79,7 @@ export class MessagesService {
       system: await this.updTextSystemMessage(userId, message),
       text: message.text,
     };
-    return dictionary[message.message_type];
+    return dictionary[message.message_type] || '';
   }
 
   async getMessageWithUser(id: number): Promise<any> {
@@ -449,19 +449,8 @@ export class MessagesService {
                             : String(initiator.name)
                         }: ${await this.getMessageContent(user_id, message)}`
                       : await this.getMessageContent(user_id, message),
-                    apns: JSON.stringify({
-                      payload: {
-                        aps: {
-                          threadId: chat_id,
-                          sound: "default",
-                        },
-                      },
-                    }),
                     priority: "max",
                     sound: "default",
-                    "thread-id": String(chat_id),
-                    collapseKey: String(chat_id),
-                    threadId: String(chat_id),
                   },
                   data: {
                     text: await this.getMessageContent(user_id, message),
@@ -475,6 +464,18 @@ export class MessagesService {
                     user_avatar: String(initiator.avatar) || "",
                     chat_avatar: String(chat.avatar),
                     is_group: chat.is_group ? "true" : "false",
+                  },
+                },
+                {
+                  collapseKey: String(chat.id),
+                  apns: {
+                    payload: {
+                      aps: {
+                        threadId: String(chat.id),
+                        badge: 1,
+                        sound: 'default',
+                      },
+                    },
                   },
                 });
               }
@@ -854,8 +855,8 @@ export class MessagesService {
         }
         return updMessage.join(" ");
       }
-      return message.text;
+      return message?.text;
     }
-    return message.text;
+    return message?.text;
   }
 }
