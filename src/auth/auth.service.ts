@@ -11,7 +11,7 @@ import * as argon2 from "argon2";
 
 import {
   badRequestResponse,
-  internalErrorResponse,
+  internalErrorResponse, notFoundRequestResponse,
   successResponse,
   unAuthorizeResponse,
 } from "../utils/response";
@@ -413,6 +413,8 @@ export class AuthService {
       const profileUpdated = { ...profile, fb_tokens: tokens };
       await this.usersRepository.save(profileUpdated);
       return successResponse(tokens);
+    } else {
+      return notFoundRequestResponse('fb_token not found');
     }
   }
 

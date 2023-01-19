@@ -24,6 +24,20 @@ export const badRequestResponse = (errorContent) => {
   };
 };
 
+export const notFoundRequestResponse = (errorContent) => {
+  return {
+    status: 404,
+    socketData: null,
+    data: {
+      error: {
+        code: 404,
+        message: errorContent,
+      },
+    },
+  };
+};
+
+
 export const internalErrorResponse = (errorContent) => {
   return {
     status: 500,

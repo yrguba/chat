@@ -34,6 +34,7 @@ export class ChatsGateway
     chat?.users?.map((userId) => {
       this.usersService.getUser(userId).then(async (user) => {
         const message = { ...chat.message.message };
+
         message.text = await this.messagesServices.updTextSystemMessage(
           userId,
           chat.message.message
@@ -45,7 +46,7 @@ export class ChatsGateway
           );
           user.contactName = contact?.name || "";
         }
-        if (user && user.socket_id) {
+        if (user && user.socket_id && message.text) {
           this.server?.sockets?.to(user.socket_id)?.emit("receiveChat", {
             message: { ...chat, message: [message] },
           });

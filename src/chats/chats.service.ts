@@ -304,8 +304,10 @@ export class ChatsService {
     }
     if (unsub) {
       const unsubChat = await this.sharedService.getChat(unsub);
-      unsubChat.listeners = unsubChat?.listeners.filter((i) => i !== userId);
-      await this.chatsRepository.save(unsubChat);
+      if (unsubChat?.listeners) {
+        unsubChat.listeners = unsubChat?.listeners.filter((i) => i !== userId);
+        await this.chatsRepository.save(unsubChat);
+      }
     }
   }
 
