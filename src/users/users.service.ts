@@ -106,4 +106,25 @@ export class UsersService {
       return null;
     }
   }
+
+  async getUserIdFromRefreshToken(token): Promise<number> {
+    if (token) {
+      const json = this.jwtService.decode(token, { json: true }) as {
+        id: number;
+      };
+
+      return json.id;
+    } else {
+      return null;
+    }
+  }
+
+  async setUserStatus(userId, is_online) {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    if (user) {
+      user.is_online = is_online;
+      if (!is_online) user.last_active = new Date();
+      return `user id:${user.id} ${is_online ? "connected" : "disconnected"}`;
+    }
+  }
 }

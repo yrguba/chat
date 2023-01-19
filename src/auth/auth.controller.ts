@@ -37,12 +37,6 @@ export class AuthController {
     res.status(response.status).json(response.data);
   }
 
-  @Post("login")
-  async login(@Req() req, @Res() res, @Body() body: LoginDTO) {
-    const auth = await this.authService.login(body);
-    res.status(auth.status).json(auth.data);
-  }
-
   @Version("2")
   @Post("login")
   async loginV2(
@@ -62,18 +56,6 @@ export class AuthController {
     res.status(result.status).json(result.data);
   }
 
-  @Post("refresh")
-  async refreshTokens(@Res() res, @Req() req, @Body() body: RefreshDTO) {
-    const user = this.jwtService.decode(body.access_token, { json: true }) as {
-      id: number;
-    };
-    const tokens = await this.authService.refreshTokens(
-      user.id,
-      body.refresh_token
-    );
-    res.status(tokens.status).json(tokens.data);
-  }
-
   @Version("2")
   @Post("refresh")
   async refreshTokensV2(
@@ -82,7 +64,7 @@ export class AuthController {
     @Body() body: RefreshDTO,
     @Headers() headers
   ) {
-    const userId = await this.usersService.getUserIdFromToken(req);
+    const userId = await this.usersService.getUserIdFromRefreshToken(body.refresh_token);
     const tokens = await this.authService.refreshTokensV2(
       userId,
       body.refresh_token,
@@ -93,11 +75,17 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Post("firebase_token")
-  async createFirebaseToken(@Res() res, @Req() req, @Body() body: FirebaseDto) {
+  async createFirebaseToken(
+    @Res() res,
+    @Req() req,
+    @Body() body: FirebaseDto,
+    @Headers() headers
+  ) {
     const userId = await this.usersService.getUserIdFromToken(req);
-    const tokens = await this.authService.addFirebaseToken(
+    const tokens = await this.authService.createNotificationToken(
       userId,
-      body.firebase_token
+      body,
+      headers
     );
     res.status(tokens.status).json(tokens.data);
   }
@@ -119,12 +107,14 @@ export class AuthController {
   async createOneSignalPlayerId(
     @Res() res,
     @Req() req,
-    @Body() body: OnesignalDto
+    @Body() body: OnesignalDto,
+    @Headers() headers
   ) {
     const userId = await this.usersService.getUserIdFromToken(req);
-    const result = await this.authService.createOneSignalPlayerId(
+    const result = await this.authService.createNotificationToken(
       userId,
-      body.onesignal_player_id
+      body,
+      headers
     );
     res.status(result.status).json(result.data);
   }

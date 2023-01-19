@@ -21,7 +21,6 @@ import {
 } from "./dto/deleteContacts.dto";
 import { UsersService } from "../users/users.service";
 import { CreateContactsDto } from "./dto/createContacts.dto";
-import { ChatsGateway } from "../chats/chats.gateway";
 
 @ApiTags("contacts")
 @Controller("contacts")
@@ -30,7 +29,6 @@ export class ContactsController {
     private contactsService: ContactsService,
     private usersService: UsersService,
     private readonly jwtService: JwtService,
-    private chatsGateway: ChatsGateway
   ) {}
 
   @UseGuards(JwtAuthGuard)
@@ -51,6 +49,7 @@ export class ContactsController {
     res.status(contact.status).json(contact.data);
   }
 
+  @Version("1")
   @UseGuards(JwtAuthGuard)
   @Post("/")
   async saveContacts(@Res() res, @Req() req, @Body() body: CreateContactsDto) {
@@ -85,6 +84,7 @@ export class ContactsController {
     res.status(200).json({ data: body });
   }
 
+  @Version("1")
   @UseGuards(JwtAuthGuard)
   @Delete("/")
   async deleteContacts(
@@ -121,7 +121,7 @@ export class ContactsController {
     const userId = await this.usersService.getUserIdFromToken(req);
     const result = await this.contactsService.changeContactName(userId, body);
     if (result.status === 200) {
-      this.chatsGateway.handleUpdateChat(result.socketData);
+      //this.chatsGateway.handleUpdateChat(result.socketData);
     }
     res.status(result.status).json(result.data);
   }

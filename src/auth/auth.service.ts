@@ -32,6 +32,7 @@ export class AuthService {
   ) {}
 
   async login(user: any): Promise<Record<string, any>> {
+    console.log("LOGIN_V1");
     let isValid = false;
 
     const userData = new LoginDTO();
@@ -91,14 +92,15 @@ export class AuthService {
   }
 
   async loginV2(data, headers) {
-    const sessionInfo = getIdentifier(headers);
     const user = await this.userService.getUserByPhone(data.phone, {
       sessions: true,
     });
-    if (!user) return badRequestResponse("Invalid fields");
+    if (!user) return badRequestResponse("number not registered");
+    const sessionInfo = getIdentifier(headers, user.id);
     const checkCode = bcrypt.compareSync(data.code, user.code);
     if (!checkCode) return unAuthorizeResponse();
     const tokens = await this.updCurrentSession(sessionInfo, user, "login");
+    console.log(tokens);
     return successResponse({
       ...getUserSchema(user),
       access_token: tokens.access_token,
@@ -107,7 +109,7 @@ export class AuthService {
   }
 
   async logout(userId, headers) {
-    const sessionInfo = getIdentifier(headers);
+    const sessionInfo = getIdentifier(headers, userId);
     const user = await this.userService.getUser(userId, {
       sessions: true,
     });
@@ -248,6 +250,7 @@ export class AuthService {
     id: number,
     refresh_token: string
   ): Promise<Record<string, any>> {
+    console.log("refreshTokens V1");
     const user = await this.usersRepository
       .createQueryBuilder("users")
       .where("users.id = :id", { id: id })
@@ -274,13 +277,18 @@ export class AuthService {
   }
 
   async refreshTokensV2(userId: number, refresh_token: string, headers) {
-    const sessionInfo = getIdentifier(headers);
+    console.log(`User id - ${userId}`);
+    const sessionInfo = getIdentifier(headers, userId);
     const user = await this.userService.getUser(userId, {
       sessions: true,
     });
+
     const currenSession = user.sessions.find(
       (i) => i.identifier === sessionInfo.identifier
     );
+    console.log(sessionInfo);
+    console.log(currenSession);
+    console.log(user.sessions);
     if (!currenSession || !currenSession.refresh_token) {
       return unAuthorizeResponse();
     }
@@ -288,7 +296,10 @@ export class AuthService {
       currenSession.refresh_token,
       refresh_token
     );
+
+    console.log(currenSession.refresh_token, refresh_token);
     if (!refreshTokenMatches) {
+      console.error("Refresh token invalid");
       return badRequestResponse("Refresh token invalid");
     }
     const tokens = await this.updCurrentSession(sessionInfo, user, "refresh");
@@ -388,26 +399,6 @@ export class AuthService {
     };
   }
 
-  async addFirebaseToken(userId: number, token: string) {
-    let tokens = [];
-    const profile = await this.usersRepository
-      .createQueryBuilder("users")
-      .where("users.id = :id", { id: userId })
-      .getOne();
-
-    if (!Array.isArray(profile.fb_tokens)) {
-      tokens.push(token);
-    } else if (!profile?.fb_tokens?.includes(token)) {
-      tokens = profile.fb_tokens;
-      tokens.push(token);
-    }
-
-    const profileUpdated = { ...profile, fb_tokens: tokens };
-    await this.usersRepository.save(profileUpdated);
-
-    return successResponse(tokens);
-  }
-
   async deleteFirebaseToken(userId: number, token: string) {
     const profile = await this.usersRepository
       .createQueryBuilder("users")
@@ -425,15 +416,23 @@ export class AuthService {
     }
   }
 
-  async createOneSignalPlayerId(userId: number, playerId: string) {
+  async createNotificationToken(userId: number, body, headers) {
+    const sessionInfo = getIdentifier(headers, userId);
+    const user = await this.userService.getUser(userId, {
+      sessions: true,
+    });
+    const currentSession = user.sessions.find(
+      (i) => i.identifier === sessionInfo.identifier
+    );
+    if (!currentSession) return badRequestResponse("session not found");
     try {
-      await this.usersRepository.update(
-        { id: userId },
-        { onesignal_player_id: playerId }
-      );
-      return successResponse({ onesignal_player_id: playerId });
+      await this.sessionRepository.save({
+        ...currentSession,
+        ...body,
+      });
+      return successResponse(body);
     } catch (e) {
-      return badRequestResponse(e);
+      return badRequestResponse("failed to update session");
     }
   }
 

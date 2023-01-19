@@ -15,7 +15,6 @@ import { MessagesService } from "../messages/messages.service";
 import { FilesService } from "../files/files.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { AppEntity } from "../database/entities/app.entity";
-import { ChatsGateway } from "../chats/chats.gateway";
 
 @Global()
 @Module({
@@ -38,7 +37,6 @@ import { ChatsGateway } from "../chats/chats.gateway";
     MessagesService,
     FilesService,
     NotificationsService,
-    ChatsGateway,
   ],
   controllers: [ContactsController],
   exports: [ContactsService],

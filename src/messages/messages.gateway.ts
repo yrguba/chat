@@ -26,6 +26,7 @@ export class MessagesGateway {
 
   handleEmitNewMessage(chat) {
     const { message } = chat;
+    let updMsg = message.text;
     chat?.users.map((userId) => {
       this.usersService.getUser(userId).then(async (user) => {
         if (user && user.socket_id) {
@@ -33,12 +34,24 @@ export class MessagesGateway {
             userId,
             chat.message.users_have_read
           );
+          const contact = await this.sharedService.getContact(
+            userId,
+            message.user.phone
+          );
+          message.user.contactName = contact?.name || "";
+          if (message.replyMessage) {
+            const contact = await this.sharedService.getContact(
+              userId,
+              message.replyMessage.user.phone
+            );
+            message.replyMessage.user.contactName = contact?.name || "";
+          }
           const usersHaveRead = this.sharedService.getFilteredUsersHeavyRead(
             message.users_have_read,
             message.initiator_id
           );
           if (message.message_type === "system") {
-            message.text = await this.messagesService.updTextSystemMessage(
+            updMsg = await this.messagesService.updTextSystemMessage(
               user.id,
               message
             );
@@ -49,6 +62,7 @@ export class MessagesGateway {
               users_have_read: usersHaveRead,
               chat_id: chat.chat_id,
               message_status: status,
+              text: updMsg,
             },
           });
         }
@@ -65,6 +79,14 @@ export class MessagesGateway {
             userId,
             message.users_have_read
           );
+          if (message.forwarded_messages) {
+            for (let msg of message.forwarded_messages) {
+              msg.user = await this.sharedService.getUserWithContactName(
+                userId,
+                msg.user.id
+              );
+            }
+          }
           const usersHaveRead = this.sharedService.getFilteredUsersHeavyRead(
             message.users_have_read,
             message.initiator_id
@@ -156,6 +178,15 @@ export class MessagesGateway {
     if (!messages.length) return;
     const messagesReq = [];
     const clientUserId = this.sharedService.getUserId(client);
+    const checkPreviousUnreadMessages =
+      await this.sharedService.checkPreviousUnreadMessages(
+        clientUserId,
+        chat_id,
+        messages[0]
+      );
+    if (checkPreviousUnreadMessages) {
+      messages = [...checkPreviousUnreadMessages, ...messages];
+    }
     for (let messageId of messages) {
       const message = await this.sharedService.getMessage(chat_id, messageId);
       if (message?.users_have_read) {

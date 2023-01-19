@@ -1,6 +1,8 @@
 const DeviceDetector = require("node-device-detector");
 
-export const getIdentifier = (headers) => {
+export const getIdentifier = (headers, userId) => {
+  console.log('GET Identifier');
+  console.log(userId);
   const detector = new DeviceDetector({
     clientIndexes: true,
     deviceIndexes: true,
@@ -8,9 +10,9 @@ export const getIdentifier = (headers) => {
   });
   const { os, device, client } = detector.detect(headers["user-agent"]);
   return {
-    identifier: `${device?.type || ""}${device?.brand || ""}${os?.name || ""}${
-      client.name
-    }`,
+    identifier: `${userId}${device?.type || ""}${device?.brand || ""}${
+      os?.name || ""
+    }${client.name || ""}`,
     os_name: os?.name || "",
     device_type: device?.type || "",
     browser: client.name,

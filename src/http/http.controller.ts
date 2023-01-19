@@ -1,6 +1,34 @@
-import { Controller, Get, Param, Req, Res, Query } from "@nestjs/common";
-import { ApiParam, ApiTags } from "@nestjs/swagger";
+import {
+  Controller,
+  Get,
+  Param,
+  Req,
+  Res,
+  Query,
+  UseGuards,
+  Version,
+  Patch,
+  UseInterceptors,
+  UploadedFile,
+  Body,
+} from "@nestjs/common";
+import {
+  ApiConsumes,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from "@nestjs/swagger";
 import fetch from "node-fetch";
+import { JwtAuthGuard } from "../auth/strategy/jwt-auth.guard";
+import {
+  ChatAvatarDTOParam,
+  UpdateChatAvatarDTOResponse,
+} from "../chats/dto/chatAvatar.dto";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { imageFileFilter } from "../utils/file-upload.utils";
+import { FileDTO } from "../files/dto/file.dto";
+import { FilePathsDirective } from "../files/constanst/paths";
 
 @ApiTags("Http")
 @Controller("http")

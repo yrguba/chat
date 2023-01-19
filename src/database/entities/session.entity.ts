@@ -5,7 +5,7 @@ import { UserEntity } from "./user.entity";
 export class SessionEntity {
   @PrimaryGeneratedColumn()
   id: number;
-  @Column({ nullable: false, unique: true })
+  @Column({ nullable: false, unique: false })
   identifier: string;
   @Column({ nullable: false, default: "" })
   device_type?: string;
@@ -17,6 +17,10 @@ export class SessionEntity {
   location?: string;
   @Column({ nullable: false, default: "" })
   refresh_token?: string;
+  @Column({ nullable: true, default: "" })
+  firebase_token?: string;
+  @Column({ nullable: true, default: "" })
+  onesignal_player_id?: string;
   @ManyToOne(() => UserEntity, (user) => user.sessions)
   user: UserEntity;
 }

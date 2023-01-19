@@ -146,9 +146,9 @@ export class ChatsService {
           if (user && user?.fb_tokens) {
             this.sharedService
               .getContact(user.id, initiator.phone)
-              .then((contact) => {
-                user?.fb_tokens.map((token) => {
-                  admin.messaging().sendToDevice(token, {
+              .then(async (contact) => {
+                for (let token of user.fb_tokens) {
+                  await admin.messaging().sendToDevice(token, {
                     notification: {
                       title:
                         message.message_type === "system"
@@ -157,13 +157,19 @@ export class ChatsService {
                           ? contact?.name
                           : initiator.name,
                       body: String(
-                        this.messagesService.getMessageContent(message)
+                        await this.messagesService.getMessageContent(
+                          user_id,
+                          message
+                        )
                       ),
                       priority: "max",
                     },
                     data: {
                       text: String(
-                        this.messagesService.getMessageContent(message)
+                        await this.messagesService.getMessageContent(
+                          user_id,
+                          message
+                        )
                       ),
                       msg_type: String(message.message_type),
                       chat_id: String(chat.id),
@@ -177,7 +183,7 @@ export class ChatsService {
                       is_group: chat.is_group ? "true" : "false",
                     },
                   });
-                });
+                }
               });
           }
         });
@@ -209,7 +215,8 @@ export class ChatsService {
         // Иначе
         let targetChat = currentChats.filter(
           (chat) =>
-            chat.users.sort().toString() === data.users.sort().toString()
+            chat.users.sort().toString() === data.users.sort().toString() &&
+            !chat.is_group
         );
         console.log("Check private chats");
         if (targetChat && targetChat.length === 0) {
@@ -230,7 +237,6 @@ export class ChatsService {
           isNewChat = false;
         }
       }
-
       if (chat?.users) {
         const users = await this.userRepository
           .createQueryBuilder("users")
@@ -242,6 +248,11 @@ export class ChatsService {
         users.forEach((user) => {
           usersData.push(getUserSchema(user));
         });
+
+        if (chat && !chat.is_group) {
+          const chatData = await this.getChatName(user_id, chat);
+          chat.avatar = chatData.avatar;
+        }
 
         if (isNewChat) {
           await this.messagesService
@@ -424,7 +435,7 @@ export class ChatsService {
     const updatedChat = { ...chat, name: name, updated_at: new Date() };
     await this.messagesService
       .createMessage(chat_id, user_id, {
-        text: `initiator:${user_id}/изменил название чата/`,
+        text: `initiator:${user_id}/изменил(а) название чата/`,
         message_type: "system",
       })
       .then((data) => {
@@ -456,7 +467,7 @@ export class ChatsService {
       .getOne();
     await this.messagesService
       .createMessage(chat_id, user_id, {
-        text: `initiator:${user_id}/изменил аватар чата/`,
+        text: `initiator:${user_id}/изменил(а) аватар чата/`,
         message_type: "system",
       })
       .then((data) => {
@@ -486,7 +497,7 @@ export class ChatsService {
       return badRequestResponse("нет прав доступа");
     if (!chat.is_group) return badRequestResponse("нельзя поменять аватар");
     const message = await this.messagesService.createMessage(chatId, userId, {
-      text: `initiator:${userId}/изменил аватар чата/`,
+      text: `initiator:${userId}/изменил(а) аватар чата/`,
       message_type: "system",
     });
     chat.avatar = avatar;
@@ -671,6 +682,8 @@ export class ChatsService {
             ...message,
           },
           socketData: {
+            message: message,
+            invited: users,
             chat: { ...chat, chatUsers: chatUsers },
             updatedValues: { chatUsers: usersData, users: currentChatUsers },
           },

@@ -148,6 +148,7 @@ export class ChatsController {
     res.status(chat.status).json(chat.data);
   }
 
+  @Version("1")
   @UseGuards(JwtAuthGuard)
   @ApiParam({ name: "chat_id", required: true })
   @Patch("/:chat_id/avatar")
@@ -234,6 +235,13 @@ export class ChatsController {
   async createChat(@Res() res, @Req() req, @Body() body: ChatDTO) {
     const userId = await this.usersService.getUserIdFromToken(req);
     const chatUsers = body.users;
+    if (body.users.length === 0) {
+      res.status(403).json({data: {
+        error: {
+          message: "Can't create chat with empty users list",
+        }
+      }});
+    }
     if (!body.users.includes(userId)) chatUsers.push(userId);
     const chat = await this.chatsService.createChat(userId, body);
     if (chat?.status === 201) {
@@ -297,8 +305,8 @@ export class ChatsController {
         chat_id: params.chat_id,
         ...chat.data.message,
       });
-      this.chatsGateway.handleEmitAddToChat(chat?.data?.data || []);
-      this.chatsGateway.handleUpdateChat(chat.data.socketData);
+      // this.chatsGateway.handleEmitAddToChat(chat.data.socketData || []);
+      // this.chatsGateway.handleUpdateChat(chat.data.socketData);
     }
     res.status(chat.status).json(chat.data);
   }
@@ -386,3 +394,4 @@ export class ChatsController {
     res.status(result.status).json(result.data);
   }
 }
+

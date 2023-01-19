@@ -21,6 +21,7 @@ export const audioTypeCheck = (file) => {
 };
 
 export const documentTypeCheck = (file) => {
+  console.log(file.originalname);
   return file.originalname.match(
     /\.(txt|rtf|doc|docx|html|pdf|odt|ppt|pptx|xls|xlsx)$/
   );
@@ -36,6 +37,13 @@ export const messageFileFilter = (req, file, callback) => {
     return callback(null, true);
   }
   return callback(new Error("недопустимый формат"), false);
+};
+
+export const privacyPolicyFileFilter = (req, file, callback) => {
+  if (!file.originalname.match(/\.(html)$/)) {
+    return callback(new Error("Only html files are allowed!"), false);
+  }
+  callback(null, true);
 };
 
 export const appFileFilter = (req, file, callback) => {
