@@ -77,7 +77,7 @@ export class UsersService {
         },
       };
     }
-
+    console.log(user_id, initiator_id);
     if (user_id !== initiator_id) {
       return {
         status: 403,
