@@ -8,9 +8,23 @@ export class NotificationsService {
     process.env.ONE_SIGNAL_REST_API_KEY
   );
   async newMessage(playerId: string, chat, message, initiator, contact) {
+    console.log("os-app-id", process.env.ONE_SIGNAL_APP_ID);
+    console.log("os-api-key", process.env.ONE_SIGNAL_REST_API_KEY);
     const notification = {
-      headings: { en: chat.name || initiator?.contactName || initiator?.name },
-      contents: { en: message.text },
+      headings: {
+        en: chat.is_group
+          ? String(chat.name)
+          : contact?.name
+          ? String(contact?.name)
+          : String(initiator.name),
+      },
+      contents: {
+        en: chat.is_group
+          ? `${
+              contact?.name ? String(contact?.name) : String(initiator.name)
+            }: ${message.text}`
+          : message.text,
+      },
       data: {
         msg_text: message.text,
         msg_type: message.message_type,

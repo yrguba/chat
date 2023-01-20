@@ -6,20 +6,28 @@ import { ProfileEmptyDTO } from "./dto/profile.empty.dto";
 import { FilesService } from "../files/files.service";
 import { usersFilesAccessVerify } from "../utils/file-upload.utils";
 import { badRequestResponse, successResponse } from "../utils/response";
+import { UsersService } from "../users/users.service";
+import { AuthService } from "../auth/auth.service";
+import { getIdentifier } from "../utils/sessions.utils";
 
 @Injectable()
 export class ProfileService {
   constructor(
     @InjectRepository(UserEntity)
     private usersRepository: Repository<UserEntity>,
-    private filesService: FilesService
+    private filesService: FilesService,
+    private authService: AuthService,
+    private userService: UsersService
   ) {}
 
-  async getProfile(id: number) {
-    const profile = await this.usersRepository
-      .createQueryBuilder("users")
-      .where("users.id = :id", { id: id })
-      .getOne();
+  async getProfile(id: number, headers) {
+    const sessionInfo = getIdentifier(headers, id);
+    const profile = await this.userService.getUser(id, {
+      sessions: true,
+    });
+    const currentSession = profile.sessions.find(
+      (i) => i.identifier === sessionInfo.identifier
+    );
     if (!profile) {
       return {
         status: 404,
@@ -31,10 +39,13 @@ export class ProfileService {
         },
       };
     }
-
+    profile.onesignal_player_id = currentSession.onesignal_player_id || null;
+    profile.fb_tokens = currentSession.firebase_token || null;
+    delete profile.sessions;
     delete profile.code;
     delete profile.socket_id;
     delete profile.refresh_token;
+
     return {
       status: 200,
       data: {
