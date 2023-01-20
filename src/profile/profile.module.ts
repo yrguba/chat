@@ -11,6 +11,8 @@ import { ContactEntity } from "../database/entities/contact.entity";
 import { SharedService } from "../shared/shared.service";
 import { ChatsEntity } from "../database/entities/chats.entity";
 import { MessageEntity } from "../database/entities/message.entity";
+import { AuthService } from "../auth/auth.service";
+import { SessionEntity } from "../database/entities/session.entity";
 
 @Module({
   imports: [
@@ -20,10 +22,17 @@ import { MessageEntity } from "../database/entities/message.entity";
       ContactEntity,
       ChatsEntity,
       MessageEntity,
+      SessionEntity,
     ]),
     JwtModule,
   ],
-  providers: [ProfileService, FilesService, UsersService, SharedService],
+  providers: [
+    ProfileService,
+    FilesService,
+    UsersService,
+    SharedService,
+    AuthService,
+  ],
   controllers: [ProfileController],
   exports: [ProfileService],
 })
