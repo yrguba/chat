@@ -9,8 +9,20 @@ export class NotificationsService {
   );
   async newMessage(playerId: string, chat, message, initiator, contact) {
     const notification = {
-      headings: { en: chat.name || initiator?.contactName || initiator?.name },
-      contents: { en: message.text },
+      headings: {
+        en: chat.is_group
+          ? String(chat.name)
+          : contact?.name
+          ? String(contact?.name)
+          : String(initiator.name),
+      },
+      contents: {
+        en: chat.is_group
+          ? `${
+              contact?.name ? String(contact?.name) : String(initiator.name)
+            }: ${message.text}`
+          : message.text,
+      },
       data: {
         msg_text: message.text,
         msg_type: message.message_type,
