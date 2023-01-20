@@ -8,7 +8,6 @@ import {
   Delete,
   Param,
   Version,
-  Headers,
   Get,
 } from "@nestjs/common";
 import { AuthService } from "./auth.service";
@@ -43,16 +42,15 @@ export class AuthController {
     @Req() req,
     @Res() res,
     @Body() body: LoginDTO,
-    @Headers() headers
   ) {
     const auth = await this.authService.loginV2(body, req.headers);
     res.status(auth.status).json(auth.data);
   }
 
   @Post("logout")
-  async logout(@Req() req, @Res() res, @Headers() headers) {
+  async logout(@Req() req, @Res() res) {
     const userId = await this.usersService.getUserIdFromToken(req);
-    const result = await this.authService.logout(userId, headers);
+    const result = await this.authService.logout(userId, req.headers);
     res.status(result.status).json(result.data);
   }
 
@@ -62,13 +60,12 @@ export class AuthController {
     @Res() res,
     @Req() req,
     @Body() body: RefreshDTO,
-    @Headers() headers
   ) {
     const userId = await this.usersService.getUserIdFromRefreshToken(body.refresh_token);
     const tokens = await this.authService.refreshTokensV2(
       userId,
       body.refresh_token,
-      headers
+      req.headers
     );
     res.status(tokens.status).json(tokens.data);
   }
@@ -79,13 +76,12 @@ export class AuthController {
     @Res() res,
     @Req() req,
     @Body() body: FirebaseDto,
-    @Headers() headers
   ) {
     const userId = await this.usersService.getUserIdFromToken(req);
     const tokens = await this.authService.createNotificationToken(
       userId,
       body,
-      headers
+      req.headers
     );
     res.status(tokens.status).json(tokens.data);
   }
@@ -108,13 +104,12 @@ export class AuthController {
     @Res() res,
     @Req() req,
     @Body() body: OnesignalDto,
-    @Headers() headers
   ) {
     const userId = await this.usersService.getUserIdFromToken(req);
     const result = await this.authService.createNotificationToken(
       userId,
       body,
-      headers
+      req.headers
     );
     res.status(result.status).json(result.data);
   }
