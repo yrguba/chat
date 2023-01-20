@@ -467,12 +467,10 @@ export class MessagesService {
                   },
                 },
                 {
-                  collapseKey: String(chat.id),
                   apns: {
                     payload: {
                       aps: {
-                        threadId: String(chat.id),
-                        badge: 1,
+                        "thread-id": String(chat.id),
                         sound: 'default',
                       },
                     },
