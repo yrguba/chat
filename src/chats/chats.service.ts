@@ -187,8 +187,7 @@ export class ChatsService {
                     apns: {
                       payload: {
                         aps: {
-                          threadId: String(chat.id),
-                          badge: 1,
+                          "thread-id": String(chat.id),
                           sound: 'default',
                         },
                       },
