@@ -77,7 +77,7 @@ export class UsersService {
           },
         },
       };
-    } else if (user_id !== initiator_id) {
+    } else if (Number(user_id) !== Number(initiator_id)) {
       return {
         status: 403,
         data: {
