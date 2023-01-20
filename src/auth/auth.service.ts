@@ -11,7 +11,8 @@ import * as argon2 from "argon2";
 
 import {
   badRequestResponse,
-  internalErrorResponse, notFoundRequestResponse,
+  internalErrorResponse,
+  notFoundRequestResponse,
   successResponse,
   unAuthorizeResponse,
 } from "../utils/response";
@@ -97,6 +98,7 @@ export class AuthService {
     });
     if (!user) return badRequestResponse("number not registered");
     const sessionInfo = getIdentifier(headers, user.id);
+    console.log("login", sessionInfo);
     const checkCode = bcrypt.compareSync(data.code, user.code);
     if (!checkCode) return unAuthorizeResponse();
     const tokens = await this.updCurrentSession(sessionInfo, user, "login");
@@ -113,6 +115,7 @@ export class AuthService {
     const user = await this.userService.getUser(userId, {
       sessions: true,
     });
+    console.log("logout", sessionInfo);
     await this.updCurrentSession(sessionInfo, user, "logout");
     return successResponse({});
   }
@@ -414,7 +417,7 @@ export class AuthService {
       await this.usersRepository.save(profileUpdated);
       return successResponse(tokens);
     } else {
-      return notFoundRequestResponse('fb_token not found');
+      return notFoundRequestResponse("fb_token not found");
     }
   }
 
