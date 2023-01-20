@@ -467,7 +467,6 @@ export class MessagesService {
                   },
                 },
                 {
-                  collapseKey: String(chat.id),
                   apns: {
                     payload: {
                       aps: {

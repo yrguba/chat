@@ -183,7 +183,6 @@ export class ChatsService {
                       is_group: chat.is_group ? "true" : "false",
                     },
                   },{
-                    collapseKey: String(chat.id),
                     apns: {
                       payload: {
                         aps: {
