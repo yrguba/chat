@@ -34,7 +34,8 @@ export class UsersController {
   @ApiParam({ name: "user_id", required: true })
   @Delete("/:user_id")
   async deleteContacts(@Res() res, @Req() req, @Param() params) {
-    const result = this.usersService.deleteUser(params.user_id);
-    res.status(200).json({ data: result });
+    const initiatorId = await this.usersService.getUserIdFromToken(req);
+    const result = await this.usersService.deleteUser(params.user_id, initiatorId);
+    res.status(result.status).json(result.data);
   }
 }
