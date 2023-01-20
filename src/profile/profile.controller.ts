@@ -10,7 +10,6 @@ import {
   UploadedFile,
   Param,
   Delete,
-  Headers,
 } from "@nestjs/common";
 import { ProfileService } from "./profile.service";
 import {
@@ -46,10 +45,10 @@ export class ProfileController {
 
   @UseGuards(JwtAuthGuard)
   @Get("/")
-  async getUser(@Res() res, @Req() req, @Headers() headers) {
+  async getUser(@Res() res, @Req() req) {
     const jwt = req.headers.authorization.replace("Bearer ", "");
     const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
-    const profile = await this.profileService.getProfile(json.id, headers);
+    const profile = await this.profileService.getProfile(json.id, req.headers);
     res.status(profile.status).json(profile.data);
   }
 
