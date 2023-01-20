@@ -102,7 +102,6 @@ export class AuthService {
       const checkCode = bcrypt.compareSync(data.code, user.code);
       if (!checkCode) return unAuthorizeResponse();
     }
-
     const tokens = await this.updCurrentSession(sessionInfo, user, "login");
     return successResponse({
       ...getUserSchema(user),

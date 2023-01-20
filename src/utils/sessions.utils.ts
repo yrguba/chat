@@ -1,8 +1,6 @@
 const DeviceDetector = require("node-device-detector");
 
 export const getIdentifier = (headers, userId) => {
-  console.log('GET Identifier');
-  console.log(userId);
   const detector = new DeviceDetector({
     clientIndexes: true,
     deviceIndexes: true,
