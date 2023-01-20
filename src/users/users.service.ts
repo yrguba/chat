@@ -62,7 +62,7 @@ export class UsersService {
   }
 
   async deleteUser(user_id: number, initiator_id: number) {
-    console.log(user_id, initiator_id);
+    console.log(user_id === initiator_id);
     const user = await this.usersRepository
       .createQueryBuilder("users")
       .where("users.id = :id", { id: user_id })
