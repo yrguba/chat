@@ -76,9 +76,7 @@ export class UsersService {
           },
         },
       };
-    }
-    console.log(user_id, initiator_id);
-    if (user_id !== initiator_id) {
+    } else if (user_id !== initiator_id) {
       return {
         status: 403,
         data: {
@@ -87,18 +85,17 @@ export class UsersService {
           },
         },
       };
-    }
-
-    await this.usersRepository.delete(user_id);
-
-    return {
-      status: 200,
-      data: {
+    } else {
+      await this.usersRepository.delete(user_id);
+      return {
+        status: 200,
         data: {
-          message: "User delete successfully",
+          data: {
+            message: "User delete successfully",
+          },
         },
-      },
-    };
+      };
+    }
   }
 
   async updateUserSocket(id: number, socket_id: any, is_online = false) {
