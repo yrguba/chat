@@ -98,7 +98,7 @@ export class AuthService {
     });
     if (!user) return badRequestResponse("number not registered");
     const sessionInfo = getIdentifier(headers, user.id);
-    console.log("login", sessionInfo);
+    console.log("login v2", sessionInfo);
     const checkCode = bcrypt.compareSync(data.code, user.code);
     if (!checkCode) return unAuthorizeResponse();
     const tokens = await this.updCurrentSession(sessionInfo, user, "login");
@@ -115,7 +115,7 @@ export class AuthService {
     const user = await this.userService.getUser(userId, {
       sessions: true,
     });
-    console.log("logout", sessionInfo);
+    console.log("logout v2", sessionInfo);
     await this.updCurrentSession(sessionInfo, user, "logout");
     return successResponse({});
   }
