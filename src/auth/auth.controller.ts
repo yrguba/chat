@@ -45,7 +45,7 @@ export class AuthController {
     @Body() body: LoginDTO,
     @Headers() headers
   ) {
-    const auth = await this.authService.loginV2(body, headers);
+    const auth = await this.authService.loginV2(body, req.headers);
     res.status(auth.status).json(auth.data);
   }
 
