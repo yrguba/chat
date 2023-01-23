@@ -236,11 +236,13 @@ export class ChatsController {
     const userId = await this.usersService.getUserIdFromToken(req);
     const chatUsers = body.users;
     if (body.users.length === 0) {
-      res.status(403).json({data: {
-        error: {
-          message: "Can't create chat with empty users list",
-        }
-      }});
+      res.status(403).json({
+        data: {
+          error: {
+            message: "Can't create chat with empty users list",
+          },
+        },
+      });
     }
     if (!body.users.includes(userId)) chatUsers.push(userId);
     const chat = await this.chatsService.createChat(userId, body);
@@ -286,17 +288,11 @@ export class ChatsController {
   @UseGuards(JwtAuthGuard)
   @Patch(":chat_id/add-user/")
   @ApiParam({ name: "chat_id", required: true })
-  async addUserToChat(
-    @Res() res,
-    @Req() req,
-
-    @Param() params,
-    @Body() users: number[]
-  ) {
+  async addUserToChat(@Res() res, @Req() req, @Param() params, @Body() body) {
     const userId = await this.usersService.getUserIdFromToken(req);
     const chat = await this.chatsService.addUserToChat(
       userId,
-      users,
+      body.users,
       params.chat_id
     );
 
@@ -330,13 +326,13 @@ export class ChatsController {
     @Res() res,
     @Req() req,
     @Param() params,
-    @Body() users: number[]
+    @Body() body
   ) {
     const userId = await this.usersService.getUserIdFromToken(req);
 
     const chat = await this.chatsService.removeUserFromChat(
       userId,
-      users,
+      body.users,
       params.chat_id
     );
     if (chat?.status === 200) {
@@ -394,4 +390,3 @@ export class ChatsController {
     res.status(result.status).json(result.data);
   }
 }
-
