@@ -864,7 +864,7 @@ export class MessagesService {
         if (isIAmInitiator) {
           const firstWord = updMessage[1].split(" ")[0];
           const words = updMessage[1].split(" ");
-          words.splice(0, 1, `${firstWord}и`);
+          words.splice(0, 1, `${firstWord.split("(")[0]}и`);
           updMessage[1] = words.join(" ");
         }
         return updMessage.join(" ");
