@@ -291,19 +291,14 @@ export class ChatsController {
   @UseGuards(JwtAuthGuard)
   @Patch(":chat_id/add-user/")
   @ApiParam({ name: "chat_id", required: true })
-  async addUserToChat(
-    @Res() res,
-    @Req() req,
-
-    @Param() params,
-    @Body() users: number[]
-  ) {
+  async addUserToChat(@Res() res, @Req() req, @Param() params, @Body() body) {
     const userId = await this.usersService.getUserIdFromToken(req);
     const chat = await this.chatsService.addUserToChat(
       userId,
-      users,
+      body.users,
       params.chat_id,
       req.headers
+
     );
 
     if (chat?.status === 200) {
@@ -337,13 +332,13 @@ export class ChatsController {
     @Res() res,
     @Req() req,
     @Param() params,
-    @Body() users: number[]
+    @Body() body
   ) {
     const userId = await this.usersService.getUserIdFromToken(req);
 
     const chat = await this.chatsService.removeUserFromChat(
       userId,
-      users,
+      body.users,
       params.chat_id,
       req.headers
     );
