@@ -136,7 +136,8 @@ export class ChatsController {
     const chat = await this.chatsService.updateChatName(
       userId,
       param.chat_id,
-      body.name
+      body.name,
+      req.headers
     );
     if (chat.status === 200) {
       this.messagesGateway.handleEmitNewMessage({
@@ -162,7 +163,8 @@ export class ChatsController {
     const chat = await this.chatsService.updateChatAvatar(
       userId,
       param.chat_id,
-      body.avatar
+      body.avatar,
+      req.headers
     );
     if (chat.status === 200) {
       this.messagesGateway.handleEmitNewMessage({
@@ -197,7 +199,8 @@ export class ChatsController {
     const result = await this.chatsService.updateAvatar(
       userId,
       Number(param.chat_id),
-      fileName
+      fileName,
+      req.headers
     );
     if (result.status === 200) {
       if (result?.message) {
@@ -236,14 +239,16 @@ export class ChatsController {
     const userId = await this.usersService.getUserIdFromToken(req);
     const chatUsers = body.users;
     if (body.users.length === 0) {
-      res.status(403).json({data: {
-        error: {
-          message: "Can't create chat with empty users list",
-        }
-      }});
+      res.status(403).json({
+        data: {
+          error: {
+            message: "Can't create chat with empty users list",
+          },
+        },
+      });
     }
     if (!body.users.includes(userId)) chatUsers.push(userId);
-    const chat = await this.chatsService.createChat(userId, body);
+    const chat = await this.chatsService.createChat(userId, body, req.headers);
     if (chat?.status === 201) {
       if (chat.data.data.message.length > 0) {
         this.messagesGateway.handleEmitNewMessage({
@@ -297,7 +302,8 @@ export class ChatsController {
     const chat = await this.chatsService.addUserToChat(
       userId,
       users,
-      params.chat_id
+      params.chat_id,
+      req.headers
     );
 
     if (chat?.status === 200) {
@@ -318,7 +324,8 @@ export class ChatsController {
     const userId = await this.usersService.getUserIdFromToken(req);
     const exitChat = await this.chatsService.exitFromChat(
       userId,
-      params.chat_id
+      params.chat_id,
+      req.headers
     );
     res.status(exitChat.status).json(exitChat.data);
   }
@@ -337,7 +344,8 @@ export class ChatsController {
     const chat = await this.chatsService.removeUserFromChat(
       userId,
       users,
-      params.chat_id
+      params.chat_id,
+      req.headers
     );
     if (chat?.status === 200) {
       this.messagesGateway.handleEmitNewMessage({
@@ -394,4 +402,3 @@ export class ChatsController {
     res.status(result.status).json(result.data);
   }
 }
-

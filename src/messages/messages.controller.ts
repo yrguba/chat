@@ -95,7 +95,10 @@ export class MessagesController {
     const message = await this.messagesService.createMessage(
       param.chat_id,
       Number(userId),
-      body
+      body,
+      null,
+      null,
+      req.headers
     );
 
     if (message?.status === 201) {
@@ -142,7 +145,8 @@ export class MessagesController {
       Number(userId),
       messageData,
       null,
-      filesName
+      filesName,
+      req.headers
     );
 
     if (message?.status === 201) {
@@ -194,7 +198,8 @@ export class MessagesController {
       param.chat_id,
       param.message_id,
       Number(userId),
-      body
+      body,
+      req.headers
     );
     if (message?.status === 201) {
       this.messagesGateway.handleEmitNewMessage({

@@ -44,6 +44,8 @@ export class MessageEntity {
   users_have_read: number[];
   @Column("varchar", { array: true, default: [] })
   content: string[];
+  @Column({ nullable: false, default: "" })
+  session_id: string;
   @ManyToOne(() => ChatsEntity, (chat) => chat.message, {
     onDelete: "CASCADE",
   })
