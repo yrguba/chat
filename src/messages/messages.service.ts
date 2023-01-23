@@ -34,6 +34,7 @@ import { messageContentTypes } from "./constants";
 import * as fs from "fs";
 import { badRequestResponse } from "../utils/response";
 import { UsersService } from "../users/users.service";
+import { getIdentifier } from "../utils/sessions.utils";
 
 @Injectable()
 export class MessagesService {
@@ -362,7 +363,8 @@ export class MessagesService {
     user_id: number,
     data: any,
     replyMessageId: any = null,
-    filesName?: string[]
+    filesName: string[] | null,
+    headers: any
   ): Promise<any> {
     data.initiator_id = Number(user_id);
 
@@ -375,6 +377,8 @@ export class MessagesService {
       return badRequestResponse("you are not a member of the chat");
     }
 
+    const sessionInfo = getIdentifier(headers, user_id);
+
     const reactions = await this.reactionRepository.save({});
 
     const message = await this.messageRepository.save({
@@ -385,6 +389,7 @@ export class MessagesService {
       users_have_read: chat.listeners,
       reactions: reactions,
       content: filesName || [],
+      session_id: sessionInfo.identifier || "",
     });
     message.reactions = this.getFilterReactions(
       message.reactions,
@@ -642,9 +647,17 @@ export class MessagesService {
     chat_id: number,
     message_id: number,
     user_id: number,
-    data: any
+    data: any,
+    headers
   ): Promise<any> {
-    return await this.createMessage(chat_id, user_id, data, message_id);
+    return await this.createMessage(
+      chat_id,
+      user_id,
+      data,
+      message_id,
+      null,
+      headers
+    );
   }
 
   async updateMessage(

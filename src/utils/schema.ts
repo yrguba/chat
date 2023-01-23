@@ -32,6 +32,7 @@ export const getMessageSchema = (messageData) => {
     users_have_read: messageData?.users_have_read,
     reactions: messageData?.reactions,
     content: messageData?.content,
+    session_id: messageData.session_id,
   };
 };
 
