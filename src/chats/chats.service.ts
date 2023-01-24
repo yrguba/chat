@@ -116,6 +116,9 @@ export class ChatsService {
         user_id,
         message[0]
       );
+      if (message[0].content?.length) {
+        message[0].content = this.messagesService.updMessageContent(message[0]);
+      }
     }
 
     if (targetMessage && targetMessage.user) {
