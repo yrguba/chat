@@ -110,10 +110,12 @@ export class AuthService {
   }
 
   async logout(userId, headers) {
+    if (!userId) return badRequestResponse("неверный токен");
     const sessionInfo = getIdentifier(headers, userId);
     const user = await this.userService.getUser(userId, {
       sessions: true,
     });
+    if (!user) return badRequestResponse("юзер не найден в бд");
     await this.updCurrentSession(sessionInfo, user, "logout");
     return successResponse({});
   }
