@@ -419,71 +419,73 @@ export class MessagesService {
           const user = await this.usersService.getUser(user_id, {
             sessions: true,
           });
-          const contact = await this.sharedService.getContact(
-            user.id,
-            initiator.phone
-          );
-          console.log("user", user);
-          if (user?.sessions?.length) {
-            for (let session of user.sessions) {
-              if (session?.onesignal_player_id) {
-                await this.notificationsService.newMessage(
-                  session.onesignal_player_id,
-                  chat,
-                  {
-                    ...message,
-                    text: await this.getMessageContent(user_id, message),
-                  },
-                  initiator,
-                  contact
-                );
-              }
-              if (session?.firebase_token) {
-                await admin.messaging().sendToDevice(
-                  session.firebase_token,
-                  {
-                    notification: {
-                      title: chat.is_group
-                        ? String(chat.name)
-                        : contact?.name
-                        ? String(contact?.name)
-                        : String(initiator.name),
-                      // message.message_type === "system" ? String(chat.name) : contact?.name ? String(contact?.name) : String(initiator.name),
-                      body: chat.is_group
-                        ? `${
+
+          if (user?.id) {
+            const contact = await this.sharedService.getContact(
+              user.id,
+              initiator.phone
+            );
+            if (user?.sessions?.length) {
+              for (let session of user.sessions) {
+                if (session?.onesignal_player_id) {
+                  await this.notificationsService.newMessage(
+                    session.onesignal_player_id,
+                    chat,
+                    {
+                      ...message,
+                      text: await this.getMessageContent(user_id, message),
+                    },
+                    initiator,
+                    contact
+                  );
+                }
+                if (session?.firebase_token) {
+                  await admin.messaging().sendToDevice(
+                    session.firebase_token,
+                    {
+                      notification: {
+                        title: chat.is_group
+                          ? String(chat.name)
+                          : contact?.name
+                            ? String(contact?.name)
+                            : String(initiator.name),
+                        // message.message_type === "system" ? String(chat.name) : contact?.name ? String(contact?.name) : String(initiator.name),
+                        body: chat.is_group
+                          ? `${
                             contact?.name
                               ? String(contact?.name)
                               : String(initiator.name)
                           }: ${await this.getMessageContent(user_id, message)}`
-                        : await this.getMessageContent(user_id, message),
-                      priority: "max",
-                      sound: "default",
-                    },
-                    data: {
-                      text: await this.getMessageContent(user_id, message),
-                      msg_type: message.message_type,
-                      chat_id: String(chat.id),
-                      chat_name: String(chat.name),
-                      user_id: String(initiator.id),
-                      user_name: String(initiator.name),
-                      user_contact_name: contact?.name || "",
-                      user_nickname: String(initiator.nickname),
-                      user_avatar: String(initiator.avatar) || "",
-                      chat_avatar: String(chat.avatar),
-                      is_group: chat.is_group ? "true" : "false",
-                    },
-                  },
-                  {
-                    apns: {
-                      payload: {
-                        aps: {
-                          "thread-id": String(chat.id),
-                          sound: "default",
-                        },
+                          : await this.getMessageContent(user_id, message),
+                        priority: "max",
+                        sound: "default",
+                      },
+                      data: {
+                        text: await this.getMessageContent(user_id, message),
+                        msg_type: message.message_type,
+                        chat_id: String(chat.id),
+                        chat_name: String(chat.name),
+                        user_id: String(initiator.id),
+                        user_name: String(initiator.name),
+                        user_contact_name: contact?.name || "",
+                        user_nickname: String(initiator.nickname),
+                        user_avatar: String(initiator.avatar) || "",
+                        chat_avatar: String(chat.avatar),
+                        is_group: chat.is_group ? "true" : "false",
                       },
                     },
-                  }
-                );
+                    {
+                      apns: {
+                        payload: {
+                          aps: {
+                            "thread-id": String(chat.id),
+                            sound: "default",
+                          },
+                        },
+                      },
+                    }
+                  );
+                }
               }
             }
           }
