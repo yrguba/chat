@@ -975,4 +975,17 @@ export class ChatsService {
     };
     return this.filesService.getFiles(pathDictionary[fileType], chatId);
   }
+
+  async getTotalPendingMessages(userId) {
+    const chats = await this.getUserChats(userId);
+    let counter = 0;
+    for (let chat of chats) {
+      const { pending, total } = await this.sharedService.getCountMessages(
+        userId,
+        chat.id
+      );
+      counter += pending;
+    }
+    return successResponse({ total_pending: counter });
+  }
 }

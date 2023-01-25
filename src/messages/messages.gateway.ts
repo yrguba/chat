@@ -65,6 +65,7 @@ export class MessagesGateway {
               text: updMsg,
             },
           });
+          await this.handleTotalPendingMessages(user);
         }
       });
     });
@@ -219,6 +220,18 @@ export class MessagesGateway {
         chat_id: chat.id,
         messages: messagesReq,
       });
+      if (user.id === clientUserId) {
+        await this.handleTotalPendingMessages(user);
+      }
     }
+  }
+
+  async handleTotalPendingMessages(user) {
+    const data = await this.chatsService.getTotalPendingMessages(user.id);
+    this.server?.sockets
+      ?.to(user.socket_id)
+      ?.emit("receiveTotalPendingMessages", {
+        total_pending: data.data?.data?.total_pending || 0,
+      });
   }
 }
