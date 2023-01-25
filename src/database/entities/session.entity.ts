@@ -21,6 +21,8 @@ export class SessionEntity {
   firebase_token?: string;
   @Column({ nullable: true, default: "" })
   onesignal_player_id?: string;
-  @ManyToOne(() => UserEntity, (user) => user.sessions)
+  @ManyToOne(() => UserEntity, (user) => user.sessions, {
+    onDelete: "CASCADE",
+  })
   user: UserEntity;
 }

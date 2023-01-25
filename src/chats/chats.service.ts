@@ -108,6 +108,10 @@ export class ChatsService {
         user_id,
         targetMessage?.users_have_read
       );
+      message[0].message_status = this.sharedService.checkMessageStatus(
+        user_id,
+        message[0].users_have_read
+      );
       message[0].users_have_read = this.sharedService.getFilteredUsersHeavyRead(
         message[0].users_have_read,
         user_id
@@ -116,6 +120,9 @@ export class ChatsService {
         user_id,
         message[0]
       );
+      if (message[0].content?.length) {
+        message[0].content = this.messagesService.updMessageContent(message[0]);
+      }
     }
 
     if (targetMessage && targetMessage.user) {
@@ -148,50 +155,54 @@ export class ChatsService {
               .getContact(user.id, initiator.phone)
               .then(async (contact) => {
                 for (let token of user.fb_tokens) {
-                  await admin.messaging().sendToDevice(token, {
-                    notification: {
-                      title:
-                        message.message_type === "system"
-                          ? chat.name
-                          : contact?.name
-                          ? contact?.name
-                          : initiator.name,
-                      body: String(
-                        await this.messagesService.getMessageContent(
-                          user_id,
-                          message
-                        )
-                      ),
-                      priority: "max",
-                    },
-                    data: {
-                      text: String(
-                        await this.messagesService.getMessageContent(
-                          user_id,
-                          message
-                        )
-                      ),
-                      msg_type: String(message.message_type),
-                      chat_id: String(chat.id),
-                      chat_name: String(chat.name),
-                      user_id: String(initiator.id),
-                      user_name: String(initiator.name),
-                      user_contact_name: String(contact?.name) || "",
-                      user_nickname: String(initiator.nickname),
-                      user_avatar: String(initiator.avatar) || "",
-                      chat_avatar: String(chat.avatar),
-                      is_group: chat.is_group ? "true" : "false",
-                    },
-                  },{
-                    apns: {
-                      payload: {
-                        aps: {
-                          "thread-id": String(chat.id),
-                          sound: 'default',
-                        },
+                  await admin.messaging().sendToDevice(
+                    token,
+                    {
+                      notification: {
+                        title:
+                          message.message_type === "system"
+                            ? chat.name
+                            : contact?.name
+                            ? contact?.name
+                            : initiator.name,
+                        body: String(
+                          await this.messagesService.getMessageContent(
+                            user_id,
+                            message
+                          )
+                        ),
+                        priority: "max",
+                      },
+                      data: {
+                        text: String(
+                          await this.messagesService.getMessageContent(
+                            user_id,
+                            message
+                          )
+                        ),
+                        msg_type: String(message.message_type),
+                        chat_id: String(chat.id),
+                        chat_name: String(chat.name),
+                        user_id: String(initiator.id),
+                        user_name: String(initiator.name),
+                        user_contact_name: String(contact?.name) || "",
+                        user_nickname: String(initiator.nickname),
+                        user_avatar: String(initiator.avatar) || "",
+                        chat_avatar: String(chat.avatar),
+                        is_group: chat.is_group ? "true" : "false",
                       },
                     },
-                  });
+                    {
+                      apns: {
+                        payload: {
+                          aps: {
+                            "thread-id": String(chat.id),
+                            sound: "default",
+                          },
+                        },
+                      },
+                    }
+                  );
                 }
               });
           }
@@ -200,7 +211,7 @@ export class ChatsService {
     });
   }
 
-  async createChat(user_id: number, data: ChatDTO) {
+  async createChat(user_id: number, data: ChatDTO, headers) {
     let message = [];
     let chat;
     let isNewChat = true;
@@ -265,10 +276,17 @@ export class ChatsService {
 
         if (isNewChat) {
           await this.messagesService
-            .createMessage(chat.id, user_id, {
-              text: `initiator:${user_id}/создал чат/`,
-              message_type: "system",
-            })
+            .createMessage(
+              chat.id,
+              user_id,
+              {
+                text: `initiator:${user_id}/создал(а) чат/`,
+                message_type: "system",
+              },
+              null,
+              null,
+              headers
+            )
             .then(async (data) => {
               data.data.data.message.text =
                 await this.messagesService.updTextSystemMessage(
@@ -437,7 +455,12 @@ export class ChatsService {
     }
   }
 
-  async updateChatName(user_id: number, chat_id: number, name: string) {
+  async updateChatName(
+    user_id: number,
+    chat_id: number,
+    name: string,
+    headers
+  ) {
     let message = [];
     const chat = await this.chatsRepository
       .createQueryBuilder("chat")
@@ -445,10 +468,17 @@ export class ChatsService {
       .getOne();
     const updatedChat = { ...chat, name: name, updated_at: new Date() };
     await this.messagesService
-      .createMessage(chat_id, user_id, {
-        text: `initiator:${user_id}/изменил(а) название чата/`,
-        message_type: "system",
-      })
+      .createMessage(
+        chat_id,
+        user_id,
+        {
+          text: `initiator:${user_id}/изменил(а) название чата/`,
+          message_type: "system",
+        },
+        null,
+        null,
+        headers
+      )
       .then((data) => {
         message = data;
       });
@@ -470,17 +500,29 @@ export class ChatsService {
     };
   }
 
-  async updateChatAvatar(user_id: number, chat_id: number, avatar: string) {
+  async updateChatAvatar(
+    user_id: number,
+    chat_id: number,
+    avatar: string,
+    headers
+  ) {
     let message = [];
     const chat = await this.chatsRepository
       .createQueryBuilder("chat")
       .where("chat.id = :id", { id: chat_id })
       .getOne();
     await this.messagesService
-      .createMessage(chat_id, user_id, {
-        text: `initiator:${user_id}/изменил(а) аватар чата/`,
-        message_type: "system",
-      })
+      .createMessage(
+        chat_id,
+        user_id,
+        {
+          text: `initiator:${user_id}/изменил(а) аватар чата/`,
+          message_type: "system",
+        },
+        null,
+        null,
+        headers
+      )
       .then((data) => {
         message = data;
       });
@@ -499,7 +541,8 @@ export class ChatsService {
   async updateAvatar(
     userId: number,
     chatId: number,
-    avatar: string
+    avatar: string,
+    headers
   ): Promise<any> {
     const chat = await this.sharedService.getChatWithChatUsers(chatId);
     if (!chat) return badRequestResponse("нет такова чата");
@@ -507,10 +550,17 @@ export class ChatsService {
     if (!checkUser || !chat.is_group)
       return badRequestResponse("нет прав доступа");
     if (!chat.is_group) return badRequestResponse("нельзя поменять аватар");
-    const message = await this.messagesService.createMessage(chatId, userId, {
-      text: `initiator:${userId}/изменил(а) аватар чата/`,
-      message_type: "system",
-    });
+    const message = await this.messagesService.createMessage(
+      chatId,
+      userId,
+      {
+        text: `initiator:${userId}/изменил(а) аватар чата/`,
+        message_type: "system",
+      },
+      null,
+      null,
+      headers
+    );
     chat.avatar = avatar;
     const updChat = await this.chatsRepository.save(chat);
     return successResponse(
@@ -529,8 +579,10 @@ export class ChatsService {
     return this.filesService.getFiles(FilePathsDirective.CHAT_AVATAR, chat_id);
   }
 
-  async deleteChat(id: number, chat_id: number): Promise<DeleteResult> {
-    return await this.chatsRepository.delete(chat_id);
+  async deleteChat(id: number, chat_id: number) {
+    const chat = await this.sharedService.getChat(chat_id);
+    await this.chatsRepository.delete(chat_id);
+    return chat;
   }
 
   async getUserChats(user_id): Promise<any> {
@@ -624,7 +676,12 @@ export class ChatsService {
     }
   }
 
-  async addUserToChat(user_id: number, users: number[], chat_id: number) {
+  async addUserToChat(
+    user_id: number,
+    users: number[],
+    chat_id: number,
+    headers
+  ) {
     let message = [];
     const chat = await this.chatsRepository
       .createQueryBuilder("chat")
@@ -653,10 +710,17 @@ export class ChatsService {
           const invitedUser = await this.sharedService.getUser(user);
           if (invitedUser && initiator) {
             await this.messagesService
-              .createMessage(chat_id, user_id, {
-                text: `initiator:${initiator.id}/пригласил/invited:${invitedUser.id}`,
-                message_type: "system",
-              })
+              .createMessage(
+                chat_id,
+                user_id,
+                {
+                  text: `initiator:${initiator.id}/пригласил(а)/invited:${invitedUser.id}`,
+                  message_type: "system",
+                },
+                null,
+                null,
+                headers
+              )
               .then((data) => {
                 message = data;
               });
@@ -704,7 +768,7 @@ export class ChatsService {
     }
   }
 
-  async exitFromChat(user_id: number, chat_id: number) {
+  async exitFromChat(user_id: number, chat_id: number, headers) {
     const chat = await this.chatsRepository
       .createQueryBuilder("chat")
       .where("chat.id = :id", { id: chat_id })
@@ -737,9 +801,12 @@ export class ChatsService {
         chat_id,
         user_id,
         {
-          text: `initiator:${user_id}/покинул чат`,
+          text: `initiator:${user_id}/покинул(а) чат`,
           message_type: "system",
-        }
+        },
+        null,
+        null,
+        headers
       );
 
       if (message) {
@@ -753,7 +820,12 @@ export class ChatsService {
     }
   }
 
-  async removeUserFromChat(user_id: number, users: number[], chat_id: number) {
+  async removeUserFromChat(
+    user_id: number,
+    users: number[],
+    chat_id: number,
+    headers
+  ) {
     let message = [];
     const chat = await this.chatsRepository
       .createQueryBuilder("chat")
@@ -791,10 +863,17 @@ export class ChatsService {
         const invitedUser = await this.sharedService.getUser(user);
         if (invitedUser && initiator) {
           await this.messagesService
-            .createMessage(chat_id, user_id, {
-              text: `initiator:${initiator.id}/удалил из чата/invited:${invitedUser.id}`,
-              message_type: "system",
-            })
+            .createMessage(
+              chat_id,
+              user_id,
+              {
+                text: `initiator:${initiator.id}/удалил(а) из чата/invited:${invitedUser.id}`,
+                message_type: "system",
+              },
+              null,
+              null,
+              headers
+            )
             .then((data) => {
               message = data;
             });
@@ -895,5 +974,18 @@ export class ChatsService {
       [FileTypes.VOICES]: FilePathsDirective.CHAT_MESSAGES_VOICES,
     };
     return this.filesService.getFiles(pathDictionary[fileType], chatId);
+  }
+
+  async getTotalPendingMessages(userId) {
+    const chats = await this.getUserChats(userId);
+    let counter = 0;
+    for (let chat of chats) {
+      const { pending, total } = await this.sharedService.getCountMessages(
+        userId,
+        chat.id
+      );
+      counter += pending;
+    }
+    return successResponse({ total_pending: counter });
   }
 }

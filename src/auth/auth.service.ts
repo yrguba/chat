@@ -97,8 +97,7 @@ export class AuthService {
     });
     if (!user) return badRequestResponse("number not registered");
     const sessionInfo = getIdentifier(headers, user.id);
-    if (user.phone !== '+79999999999') {
-      console.log("login v2", sessionInfo);
+    if (user.phone !== "+79999999999") {
       const checkCode = bcrypt.compareSync(data.code, user.code);
       if (!checkCode) return unAuthorizeResponse();
     }
@@ -111,11 +110,12 @@ export class AuthService {
   }
 
   async logout(userId, headers) {
+    if (!userId) return badRequestResponse("неверный токен");
     const sessionInfo = getIdentifier(headers, userId);
     const user = await this.userService.getUser(userId, {
       sessions: true,
     });
-    console.log("logout v2", sessionInfo);
+    if (!user) return badRequestResponse("юзер не найден в бд");
     await this.updCurrentSession(sessionInfo, user, "logout");
     return successResponse({});
   }

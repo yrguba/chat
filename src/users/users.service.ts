@@ -61,8 +61,42 @@ export class UsersService {
     });
   }
 
-  async deleteUser(user_id: number): Promise<DeleteResult> {
-    return await this.usersRepository.delete(user_id);
+  async deleteUser(user_id: number, initiator_id: number) {
+    console.log(user_id === initiator_id);
+    const user = await this.usersRepository
+      .createQueryBuilder("users")
+      .where("users.id = :id", { id: user_id })
+      .getOne();
+
+    if (!user) {
+      return {
+        status: 404,
+        data: {
+          data: {
+            message: "User not found",
+          },
+        },
+      };
+    } else if (Number(user_id) !== Number(initiator_id)) {
+      return {
+        status: 403,
+        data: {
+          data: {
+            message: "Operation forbidden",
+          },
+        },
+      };
+    } else {
+      await this.usersRepository.delete(user_id);
+      return {
+        status: 200,
+        data: {
+          data: {
+            message: "User delete successfully",
+          },
+        },
+      };
+    }
   }
 
   async updateUserSocket(id: number, socket_id: any, is_online = false) {

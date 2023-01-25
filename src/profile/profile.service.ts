@@ -49,7 +49,7 @@ export class ProfileService {
     return {
       status: 200,
       data: {
-        data: profile,
+        data: { ...profile, session_id: currentSession.identifier },
       },
     };
   }
