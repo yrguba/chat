@@ -202,4 +202,16 @@ export class ChatsGateway
       console.log(res);
     });
   }
+
+  handleDeleteChat(chat_id, users) {
+    users.map((userId) => {
+      this.usersService.getUser(userId).then((user) => {
+        if (user && user.socket_id) {
+          this.server?.sockets?.to(user.socket_id)?.emit("deleteChat", {
+            data: { chat_id: Number(chat_id) },
+          });
+        }
+      });
+    });
+  }
 }
