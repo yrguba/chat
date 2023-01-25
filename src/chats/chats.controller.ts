@@ -106,6 +106,14 @@ export class ChatsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get("/total_pending_messages")
+  async getTotalPendingMessages(@Res() res, @Req() req) {
+    const userId = await this.usersService.getUserIdFromToken(req);
+    const result = await this.chatsService.getTotalPendingMessages(userId);
+    res.status(200).json(result.data);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @ApiParam({ name: "chat_id", required: true })
   @Get("/:chat_id")
   async getChat(@Res() res, @Req() req, @Param() param) {
