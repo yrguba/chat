@@ -269,6 +269,7 @@ export class ChatsController {
   async deleteChat(@Res() res, @Req() req, @Param() params) {
     const userId = await this.usersService.getUserIdFromToken(req);
     const result = await this.chatsService.deleteChat(userId, params.chat_id);
+    this.chatsGateway.handleDeleteChat(result.id, result.users);
     res.status(200).json({ data: result });
   }
 
@@ -298,7 +299,6 @@ export class ChatsController {
       body.users,
       params.chat_id,
       req.headers
-
     );
 
     if (chat?.status === 200) {
@@ -349,6 +349,7 @@ export class ChatsController {
       });
       this.chatsGateway.handleEmitDeleteFromChat(chat?.data?.data || []);
       this.chatsGateway.handleUpdateChat(chat.data.socketData);
+      this.chatsGateway.handleDeleteChat(params.chat_id, body.users);
     }
     res.status(chat.status).json(chat.data);
   }

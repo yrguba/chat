@@ -108,6 +108,10 @@ export class ChatsService {
         user_id,
         targetMessage?.users_have_read
       );
+      message[0].message_status = this.sharedService.checkMessageStatus(
+        user_id,
+        message[0].users_have_read
+      );
       message[0].users_have_read = this.sharedService.getFilteredUsersHeavyRead(
         message[0].users_have_read,
         user_id
@@ -575,8 +579,10 @@ export class ChatsService {
     return this.filesService.getFiles(FilePathsDirective.CHAT_AVATAR, chat_id);
   }
 
-  async deleteChat(id: number, chat_id: number): Promise<DeleteResult> {
-    return await this.chatsRepository.delete(chat_id);
+  async deleteChat(id: number, chat_id: number) {
+    const chat = await this.sharedService.getChat(chat_id);
+    await this.chatsRepository.delete(chat_id);
+    return chat;
   }
 
   async getUserChats(user_id): Promise<any> {
