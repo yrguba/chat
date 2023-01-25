@@ -315,7 +315,7 @@ export class ChatsController {
         ...chat.data.message,
       });
       // this.chatsGateway.handleEmitAddToChat(chat.data.socketData || []);
-      // this.chatsGateway.handleUpdateChat(chat.data.socketData);
+      this.chatsGateway.handleUpdateChat(chat.data.socketData);
     }
     res.status(chat.status).json(chat.data);
   }
