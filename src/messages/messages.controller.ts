@@ -134,6 +134,9 @@ export class MessagesController {
     @Body() body: FileDTO,
     @Param() param
   ) {
+    console.log('CONTROLLER FILEs');
+    console.log(files);
+
     const userId = await this.usersService.getUserIdFromToken(req);
     const { filesName, type } = this.messagesService.saveMessageContent(
       param.chat_id,
