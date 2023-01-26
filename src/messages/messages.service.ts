@@ -447,15 +447,18 @@ export class MessagesService {
                         title: chat.is_group
                           ? String(chat.name)
                           : contact?.name
-                            ? String(contact?.name)
-                            : String(initiator.name),
+                          ? String(contact?.name)
+                          : String(initiator.name),
                         // message.message_type === "system" ? String(chat.name) : contact?.name ? String(contact?.name) : String(initiator.name),
                         body: chat.is_group
                           ? `${
-                            contact?.name
-                              ? String(contact?.name)
-                              : String(initiator.name)
-                          }: ${await this.getMessageContent(user_id, message)}`
+                              contact?.name
+                                ? String(contact?.name)
+                                : String(initiator.name)
+                            }: ${await this.getMessageContent(
+                              user_id,
+                              message
+                            )}`
                           : await this.getMessageContent(user_id, message),
                         priority: "max",
                         sound: "default",
@@ -702,6 +705,19 @@ export class MessagesService {
       is_edited: true,
     });
 
+    let replyMessage = null;
+    if (updatedMessage.reply_message_id) {
+      replyMessage = await this.getMessageWithUser(message.reply_message_id);
+      replyMessage.user = getUserSchema(replyMessage.user);
+      replyMessage.content = this.updMessageContent(replyMessage);
+      if (replyMessage.forwarded_messages?.length) {
+        replyMessage.forwarded_messages = await this.updForwardedMessages(
+          user_id,
+          replyMessage
+        );
+      }
+    }
+
     const chat = await this.chatsRepository.findOne({
       where: { id: chat_id },
       relations: ["message"],
@@ -723,10 +739,20 @@ export class MessagesService {
         status: 200,
         data: {
           data: {
-            message: { ...getMessageSchema(updatedMessage), user: userData },
+            message: {
+              ...getMessageSchema(updatedMessage),
+              user: userData,
+              replyMessage: replyMessage
+                ? getMessageSchema(replyMessage)
+                : null,
+            },
           },
         },
-        message: { ...updatedMessage, user: userData },
+        message: {
+          ...updatedMessage,
+          user: userData,
+          replyMessage: replyMessage ? getMessageSchema(replyMessage) : null,
+        },
         users: chat.users,
       };
     } else {
