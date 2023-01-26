@@ -323,7 +323,10 @@ export class MessagesService {
   saveMessageContent(chatId, files) {
     const arr = [];
     let type = "";
+    console.log("FILES");
+    console.log(files);
     Object.keys(files).forEach((key) => {
+      console.log(key);
       type = key;
       const pathDictionary = {
         [FileTypes.IMAGES]: FilePathsDirective.CHAT_MESSAGES_IMAGES,

@@ -139,6 +139,9 @@ export class MessagesController {
       param.chat_id,
       files
     );
+
+    console.log("CONTROLLER FILE NAME");
+    console.log(filesName);
     const messageData = { text: "", message_type: type };
     const message = await this.messagesService.createMessage(
       param.chat_id,
