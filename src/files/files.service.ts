@@ -6,6 +6,7 @@ import { editFileName, getPathToFile } from "../utils/file-upload.utils";
 import * as fs from "fs";
 import * as path from "path";
 import { successResponse } from "../utils/response";
+import {log} from "util";
 
 @Injectable()
 export class FilesService {
@@ -57,6 +58,7 @@ export class FilesService {
       fs.writeFileSync(path.resolve(serverPathToFile, fileName), file.buffer);
       return `${clientPatchToFile}/${fileName}`;
     } catch (e) {
+      
       throw new HttpException(
         "ошибка загрузки файла",
         HttpStatus.INTERNAL_SERVER_ERROR

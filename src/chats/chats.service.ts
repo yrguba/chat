@@ -545,7 +545,7 @@ export class ChatsService {
     headers
   ): Promise<any> {
     const chat = await this.sharedService.getChatWithChatUsers(chatId);
-    if (!chat) return badRequestResponse("нет такова чата");
+    if (!chat) return badRequestResponse("нет такого чата");
     const checkUser = chat.users.includes(userId);
     if (!checkUser || !chat.is_group)
       return badRequestResponse("нет прав доступа");

@@ -57,6 +57,18 @@ const snakeCase = (action: "encode" | "decode", str: string) => {
   return str.split("_").join(" ");
 };
 
+function makeRandomStr(length) {
+  let result = '';
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const charactersLength = characters.length;
+  let counter = 0;
+  while (counter < length) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    counter += 1;
+  }
+  return result;
+}
+
 export const getFileInfo = (filePath: string) => {
   const name = filePath.includes("&$&") ? filePath.split("&$&").pop() : "";
   const size = (fs.statSync(`.${filePath}`).size / (1024 * 1024)).toFixed(2);
@@ -75,7 +87,7 @@ export const checkFileInDb = (filePath: string) => {
 export const editFileName = (req, file, callback) => {
   const originalName = snakeCase(
     "encode",
-    Buffer.from(file.originalname, "latin1").toString("utf8")
+    Buffer.from(file?.originalname || makeRandomStr(10), "latin1").toString("utf8")
   );
   callback(null, `${Date.now()}&$&${originalName}`);
   return `${Date.now()}&$&${originalName}`;
