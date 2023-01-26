@@ -58,7 +58,7 @@ export class FilesService {
       fs.writeFileSync(path.resolve(serverPathToFile, fileName), file.buffer);
       return `${clientPatchToFile}/${fileName}`;
     } catch (e) {
-      
+      console.log(e);
       throw new HttpException(
         "ошибка загрузки файла",
         HttpStatus.INTERNAL_SERVER_ERROR
