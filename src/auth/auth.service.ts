@@ -95,9 +95,9 @@ export class AuthService {
     const user = await this.userService.getUserByPhone(data.phone, {
       sessions: true,
     });
-    if (!user) return badRequestResponse("number not registered");
+    if (!user && user?.phone !== "+79999999999") return badRequestResponse("number not registered");
     const sessionInfo = getIdentifier(headers, user.id);
-    if (user.phone !== "+79999999999") {
+    if (user?.phone !== "+79999999999") {
       const checkCode = bcrypt.compareSync(data.code, user.code);
       if (!checkCode) return unAuthorizeResponse();
     }

@@ -34,13 +34,14 @@
     "@nestjs/serve-static": "^3.0.0",
     "@nestjs/swagger": "^5.2.1",
     "@nestjs/typeorm": "^8.1.4",
-    "@nestjs/websockets": "^9.0.3",
+    "@nestjs/websockets": "^9.2.1",
     "argon2": "^0.28.7",
     "bcrypt": "^5.0.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.13.2",
     "firebase-admin": "^11.0.1",
     "hbs": "^4.2.0",
+    "nestjs-uws": "^1.0.11",
     "node-device-detector": "^2.0.9",
     "node-fetch": "^2.6.7",
     "nodemailer": "^6.7.7",
@@ -53,7 +54,8 @@
     "rimraf": "^3.0.2",
     "rxjs": "^7.2.0",
     "swagger-ui-express": "^4.4.0",
-    "typeorm": "^0.3.7"
+    "typeorm": "^0.3.7",
+    "uws": "^200.0.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^8.0.0",
