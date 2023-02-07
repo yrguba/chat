@@ -3,6 +3,8 @@ import { ValidationPipe, VersioningType } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { AppModule } from "./app.module";
 import { AuthModule } from "./auth/auth.module";
+import { AuthorizationModule } from "./api_v3/authorization/authorization.module";
+import { EmployeeModule } from "./api_v3/employee/employee.module";
 import { ProfileModule } from "./profile/profile.module";
 import { ChatsModule } from "./chats/chats.module";
 import { UsersModule } from "./users/users.module";
@@ -51,14 +53,16 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config, {
     include: [
-      AuthModule,
-      ProfileModule,
-      ChatsModule,
-      MessagesModule,
-      UsersModule,
-      ContactsModule,
-      FilesModule,
-      HttpModule,
+      //AuthModule,
+      AuthorizationModule,
+      EmployeeModule,
+      // ProfileModule,
+      // ChatsModule,
+      // MessagesModule,
+      // UsersModule,
+      // ContactsModule,
+      // FilesModule,
+      // HttpModule,
     ],
   });
   SwaggerModule.setup("swagger/v1", app, document);

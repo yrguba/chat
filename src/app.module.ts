@@ -5,10 +5,13 @@ import { ConfigModule } from "@nestjs/config";
 import configuration from "./config/configuration";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { AuthModule } from "./auth/auth.module";
+import { AuthorizationModule } from "./api_v3/authorization/authorization.module";
+import { EmployeeModule } from "./api_v3/employee/employee.module";
 import { ProfileModule } from "./profile/profile.module";
 import { ChatsModule } from "./chats/chats.module";
 import { UsersModule } from "./users/users.module";
 import { UserEntity } from "./database/entities/user.entity";
+import { EmployeeEntity } from "./database/entities/employee.entity";
 import { ChatsEntity } from "./database/entities/chats.entity";
 import { MessageEntity } from "./database/entities/message.entity";
 import { ContactEntity } from "./database/entities/contact.entity";
@@ -46,6 +49,7 @@ import { NotificationsModule } from "./notifications/notifications.module";
       type: "postgres",
       url: process.env.DATABASE_URI,
       entities: [
+        EmployeeEntity,
         UserEntity,
         ChatsEntity,
         MessageEntity,
@@ -57,6 +61,8 @@ import { NotificationsModule } from "./notifications/notifications.module";
       synchronize: true,
     }),
     AuthModule,
+    AuthorizationModule,
+    EmployeeModule,
     ProfileModule,
     ChatsModule,
     UsersModule,
