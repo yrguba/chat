@@ -9,7 +9,7 @@ export const imageFileFilter = (req, file, callback) => {
 };
 
 export const imageTypeCheck = (file) => {
-  return file.originalname.match(/\.(jpg|jpeg|png|gif)$/);
+  return file.originalname.match(/\.(jpg|jpeg|png|PNG|gif)$/);
 };
 
 export const videoTypeCheck = (file) => {
