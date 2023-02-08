@@ -168,6 +168,8 @@ export class MessagesService {
           chat.permittedReactions
         );
 
+        message.reactions = await this.updateReactions(message.reactions);
+
         message.users_have_read = this.sharedService.getFilteredUsersHeavyRead(
           message.users_have_read,
           message.initiator_id
@@ -854,7 +856,7 @@ export class MessagesService {
       data: {
         chatId: Number(chat_id),
         messageId: message.id,
-        reactions: filtered,
+        reactions: await this.updateReactions(filtered),
       },
     };
   }
@@ -900,5 +902,21 @@ export class MessagesService {
       return message?.text;
     }
     return message?.text;
+  }
+
+  async updateReactions(reactions) {
+    const obj = {};
+    for (let key of Object.keys(reactions)) {
+      obj[key] = [];
+      if (reactions[key]?.length) {
+        for (let i of reactions[key]) {
+          const user = await this.usersService.getUser(i);
+          if (user) {
+            obj[key].push(getUserSchema(user));
+          }
+        }
+      }
+    }
+    return obj;
   }
 }
