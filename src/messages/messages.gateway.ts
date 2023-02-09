@@ -179,49 +179,52 @@ export class MessagesGateway {
     if (!messages.length) return;
     const messagesReq = [];
     const clientUserId = this.sharedService.getUserId(client);
-    const checkPreviousUnreadMessages =
-      await this.sharedService.checkPreviousUnreadMessages(
-        clientUserId,
-        chat_id,
-        messages[0]
-      );
-    if (checkPreviousUnreadMessages) {
-      messages = [...checkPreviousUnreadMessages, ...messages];
-    }
-    for (let messageId of messages) {
-      const message = await this.sharedService.getMessage(chat_id, messageId);
-      if (message?.users_have_read) {
-        if (!message?.users_have_read.includes(clientUserId)) {
-          message?.users_have_read.push(clientUserId);
-          await this.sharedService.saveMessage(message);
+    if (clientUserId) {
+      const checkPreviousUnreadMessages =
+        await this.sharedService.checkPreviousUnreadMessages(
+          clientUserId,
+          chat_id,
+          messages[0]
+        );
+      if (checkPreviousUnreadMessages) {
+        messages = [...checkPreviousUnreadMessages, ...messages];
+      }
+      for (let messageId of messages) {
+        const message = await this.sharedService.getMessage(chat_id, messageId);
+        if (message?.users_have_read) {
+          if (!message?.users_have_read.includes(clientUserId)) {
+            message?.users_have_read.push(clientUserId);
+            await this.sharedService.saveMessage(message);
+          }
+          message.users_have_read =
+            this.sharedService.getFilteredUsersHeavyRead(
+              message.users_have_read,
+              message.initiator_id
+            );
         }
-        message.users_have_read = this.sharedService.getFilteredUsersHeavyRead(
-          message.users_have_read,
-          message.initiator_id
-        );
+        messagesReq.push(message);
       }
-      messagesReq.push(message);
-    }
-    const chat = await this.sharedService.getChatWithChatUsers(chat_id);
-    for (let user of chat.chatUsers) {
-      const { pending } = await this.sharedService.getCountMessages(
-        user.id,
-        chat.id
-      );
-      for (let message of messagesReq) {
-        const ids = [...message.users_have_read, message.initiator_id];
-        message.message_status = this.sharedService.checkMessageStatus(
+      const chat = await this.sharedService.getChatWithChatUsers(chat_id);
+      for (let user of chat.chatUsers) {
+        const { pending } = await this.sharedService.getCountMessages(
           user.id,
-          ids
+          chat.id
         );
-      }
-      this.server?.sockets?.to(user.socket_id)?.emit("receiveMessageStatus", {
-        pending_messages: pending,
-        chat_id: chat.id,
-        messages: messagesReq,
-      });
-      if (user.id === clientUserId) {
-        await this.handleTotalPendingMessages(user);
+        for (let message of messagesReq) {
+          const ids = [...message.users_have_read, message.initiator_id];
+          message.message_status = this.sharedService.checkMessageStatus(
+            user.id,
+            ids
+          );
+        }
+        this.server?.sockets?.to(user.socket_id)?.emit("receiveMessageStatus", {
+          pending_messages: pending,
+          chat_id: chat.id,
+          messages: messagesReq,
+        });
+        if (user.id === clientUserId) {
+          await this.handleTotalPendingMessages(user);
+        }
       }
     }
   }

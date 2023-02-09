@@ -388,7 +388,7 @@ export class MessagesService {
       access: chat.users,
       accessChats: [chat_id],
       reply_message_id: replyMessageId,
-      users_have_read: chat.listeners,
+      users_have_read: chat.listeners.filter((i) => Number.isInteger(i)),
       reactions: reactions,
       content: filesName || [],
       session_id: sessionInfo.identifier || "",
@@ -573,6 +573,7 @@ export class MessagesService {
           where: { id: messageId },
         });
         message.content = this.updMessageContent(message);
+        console.log(message);
         if (chat && message) {
           if (message.forwarded_messages?.length) {
             for (let messageId of message.forwarded_messages) {
