@@ -511,7 +511,7 @@ export class MessagesService {
       if (message.message_type === "system") {
         message.text = await this.updTextSystemMessage(user_id, message);
       }
-      console.log(message);
+
       return {
         status: 201,
         data: {
