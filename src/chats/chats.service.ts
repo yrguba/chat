@@ -972,6 +972,7 @@ export class ChatsService {
       [FileTypes.AUDIOS]: FilePathsDirective.CHAT_MESSAGES_AUDIOS,
       [FileTypes.VIDEOS]: FilePathsDirective.CHAT_MESSAGES_VIDEOS,
       [FileTypes.VOICES]: FilePathsDirective.CHAT_MESSAGES_VOICES,
+      [FileTypes.DOCUMENTS]: FilePathsDirective.CHAT_MESSAGES_DOCUMENTS,
     };
     return this.filesService.getFiles(pathDictionary[fileType], chatId);
   }

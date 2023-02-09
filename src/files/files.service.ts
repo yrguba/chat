@@ -2,10 +2,15 @@ import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { AppEntity } from "../database/entities/app.entity";
-import { editFileName, getPathToFile } from "../utils/file-upload.utils";
+import {
+  editFileName,
+  getFileInfo,
+  getPathToFile,
+} from "../utils/file-upload.utils";
 import * as fs from "fs";
 import * as path from "path";
 import { successResponse } from "../utils/response";
+import { log } from "util";
 
 @Injectable()
 export class FilesService {
@@ -76,7 +81,8 @@ export class FilesService {
           files.push(`${clientPatchToFile}/${file}`);
         });
       }
-      return successResponse({ files });
+      const updFiles = files.map((file) => getFileInfo(file));
+      return successResponse({ files: updFiles });
     } catch (e) {
       throw new HttpException(
         "ошибка поиска файлов",
