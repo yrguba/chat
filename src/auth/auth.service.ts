@@ -290,6 +290,7 @@ export class AuthService {
     const currenSession = user.sessions.find(
       (i) => i.identifier === sessionInfo.identifier
     );
+    console.log("refresh-currenSession", currenSession);
     if (!currenSession || !currenSession.refresh_token) {
       return unAuthorizeResponse();
     }
