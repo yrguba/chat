@@ -6,11 +6,11 @@ import {
   editFileName,
   getFileInfo,
   getPathToFile,
+  desktopReleaseTypeCheck
 } from "../utils/file-upload.utils";
 import * as fs from "fs";
 import * as path from "path";
 import { successResponse } from "../utils/response";
-import { log } from "util";
 
 @Injectable()
 export class FilesService {
@@ -55,6 +55,7 @@ export class FilesService {
         directive,
         id
       );
+      console.log('serverPathToFile', serverPathToFile)
       const fileName = editFileName(null, file, () => "");
       if (!fs.existsSync(serverPathToFile)) {
         fs.mkdirSync(serverPathToFile, { recursive: true });
@@ -128,6 +129,62 @@ export class FilesService {
         "неудалось удалить файл",
         HttpStatus.INTERNAL_SERVER_ERROR
       );
+    }
+  }
+
+  async uploadTauriRelease(files, body) {
+    const desktopReleasesDir = path.resolve('storage', 'desktop_releases')
+    if (!fs.existsSync(desktopReleasesDir)) {
+      fs.mkdirSync(desktopReleasesDir, {recursive: true});
+    }
+    try {
+      const currentVersionDir = path.resolve(desktopReleasesDir, body.tag_name)
+      fs.mkdirSync(currentVersionDir, {recursive: true});
+      fs.writeFileSync(path.resolve(currentVersionDir, 'data.json'), JSON.stringify(body));
+      files.file.forEach(file => {
+        if (!desktopReleaseTypeCheck(file.originalname)) throw Error
+        fs.writeFileSync(path.resolve(currentVersionDir, file.originalname), Buffer.from(file.path));
+      })
+      return 200
+    } catch (e) {
+      return 415;
+    }
+  }
+
+  async getLatestDesktopRelease(params) {
+    const desktopReleasesDir = path.resolve('storage', 'desktop_releases')
+    try {
+      if (!fs.existsSync(desktopReleasesDir)) throw Error
+      const lastReleaseName = fs.readdirSync(desktopReleasesDir).pop()
+      const lastVersionDir = path.resolve(desktopReleasesDir, lastReleaseName)
+      const filesNames = fs.readdirSync(lastVersionDir)
+      const data_file = fs.readFileSync(path.resolve(lastVersionDir, 'data.json'), {encoding: 'utf8'})
+      const json = JSON.parse(data_file)
+      if (json.tag_name === params.version) throw  Error
+      const winApp = path.resolve(lastVersionDir, filesNames.find(i => /msi.zip/.test(i)))
+      const macosApp = path.resolve(lastVersionDir, filesNames.find(i => /tar.gz/.test(i)))
+      const data = {
+        "version": json.tag_name,
+        "notes": "update",
+        "pub_date": json.published_at,
+        "platforms": {
+          "darwin-x86_64": {
+            "signature": json.tar_file_sig,
+            "url": macosApp
+          },
+          "darwin-aarch64": {
+            "signature": json.tar_file_sig,
+            "url": macosApp
+          },
+          "windows-x86_64": {
+            "signature": json.msi_file_sig,
+            "url": winApp
+          }
+        }
+      }
+      return {status: 200, data: data}
+    } catch (e) {
+      return {status: 204, data: {}}
     }
   }
 }
