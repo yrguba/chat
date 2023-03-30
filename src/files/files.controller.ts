@@ -145,7 +145,7 @@ export class FilesController {
 
   @Get("get_latest_desktop_release/:platform/:version")
   async getLatestDesktopRelease(@Res() res, @Req() req, @Body() body, @Param() param) {
-    const result = await this.filesService.getLatestDesktopRelease(param)
+    const result = await this.filesService.getLatestDesktopRelease(param, req)
     res.status(result.status).json(result.data)
   }
 }
