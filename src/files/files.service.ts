@@ -11,7 +11,6 @@ import {
 import * as fs from "fs";
 import * as path from "path";
 import { successResponse } from "../utils/response";
-import * as url from "url";
 
 @Injectable()
 export class FilesService {
@@ -155,7 +154,7 @@ export class FilesService {
     }
   }
 
-  async getLatestDesktopRelease(params) {
+  async getLatestDesktopRelease(params, req) {
     const desktopReleasesDir = path.join('storage', 'desktop_releases')
     try {
       if (!fs.existsSync(desktopReleasesDir)) throw Error
@@ -165,8 +164,9 @@ export class FilesService {
       const data_file = fs.readFileSync(path.resolve(lastVersionDir, 'data.json'), {encoding: 'utf8'})
       const json = JSON.parse(data_file)
       if (json.tag_name === params.version) throw  Error
-      const winApp =  url.pathToFileURL(path.join(lastVersionDir, filesNames.find(i => /msi.zip/.test(i))))
-      const macosApp = url.pathToFileURL(path.join(lastVersionDir, filesNames.find(i => /tar.gz/.test(i))))
+
+      const winApp =  path.join(`https//${req.headers.host}/`, lastVersionDir, filesNames.find(i => /msi.zip/.test(i)))
+      const macosApp = path.join(`https//${req.headers.host}/`, lastVersionDir, filesNames.find(i => /tar.gz/.test(i)))
 
       const data = {
         "version": json.tag_name,
