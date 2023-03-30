@@ -20,6 +20,10 @@ export const audioTypeCheck = (file) => {
   return file.originalname.match(/\.(ogg|vorbis|wav|mp3|webm)$/);
 };
 
+export const desktopReleaseTypeCheck = (fileName) => {
+  return (/tar.gz/.test(fileName) || /msi.zip/.test(fileName)) && fileName.split('.').pop() !== 'sig'
+}
+
 export const documentTypeCheck = (file) => {
   return file.originalname.match(
     /\.(txt|rtf|doc|docx|html|pdf|odt|ppt|pptx|xls|xlsx)$/

@@ -8,8 +8,10 @@ import {
   Res,
   Req,
   Param,
+  Body,
+  UploadedFiles
 } from "@nestjs/common";
-import { FileInterceptor } from "@nestjs/platform-express";
+import { FileInterceptor,FileFieldsInterceptor } from "@nestjs/platform-express";
 import { diskStorage } from "multer";
 import {
   appFileFilter,
@@ -132,5 +134,18 @@ export class FilesController {
   )
   async privacyPolicy(@UploadedFile() file, @Res() res) {
     res.status(200).json("success");
+  }
+
+  @UseInterceptors(FileFieldsInterceptor([{name: "file", maxCount: 10}], {}))
+  @Post("upload_desktop_release")
+  async uploadTauriRelease(@Res() res, @Req() req, @Body() body, @UploadedFiles() files) {
+    const result = await this.filesService.uploadTauriRelease(files, body)
+    res.status(result).json()
+  }
+
+  @Get("get_latest_desktop_release/:platform/:version")
+  async getLatestDesktopRelease(@Res() res, @Req() req, @Body() body, @Param() param) {
+    const result = await this.filesService.getLatestDesktopRelease(param)
+    res.status(result.status).json(result.data)
   }
 }
