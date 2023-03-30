@@ -165,8 +165,8 @@ export class FilesService {
       const json = JSON.parse(data_file)
       if (json.tag_name === params.version) throw  Error
 
-      const winApp =  path.join(`https//${req.headers.host}/`, lastVersionDir, filesNames.find(i => /msi.zip/.test(i)))
-      const macosApp = path.join(`https//${req.headers.host}/`, lastVersionDir, filesNames.find(i => /tar.gz/.test(i)))
+      const winApp = `https://${req.headers.host}/` +  path.join( lastVersionDir, filesNames.find(i => /msi.zip/.test(i)))
+      const macosApp =`https://${req.headers.host}/` + path.join( lastVersionDir, filesNames.find(i => /tar.gz/.test(i)))
 
       const data = {
         "version": json.tag_name,
