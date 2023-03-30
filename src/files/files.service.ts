@@ -11,6 +11,7 @@ import {
 import * as fs from "fs";
 import * as path from "path";
 import { successResponse } from "../utils/response";
+import * as url from "url";
 
 @Injectable()
 export class FilesService {
@@ -133,6 +134,9 @@ export class FilesService {
   }
 
   async uploadTauriRelease(files, body) {
+    if(body.tag_name === 'main'){
+      body.tag_name = body.release_name.split(' ')[1]
+    }
     const desktopReleasesDir = path.resolve('storage', 'desktop_releases')
     if (!fs.existsSync(desktopReleasesDir)) {
       fs.mkdirSync(desktopReleasesDir, {recursive: true});
@@ -152,17 +156,18 @@ export class FilesService {
   }
 
   async getLatestDesktopRelease(params) {
-    const desktopReleasesDir = path.resolve('storage', 'desktop_releases')
+    const desktopReleasesDir = path.join('storage', 'desktop_releases')
     try {
       if (!fs.existsSync(desktopReleasesDir)) throw Error
       const lastReleaseName = fs.readdirSync(desktopReleasesDir).pop()
-      const lastVersionDir = path.resolve(desktopReleasesDir, lastReleaseName)
+      const lastVersionDir = path.join(desktopReleasesDir, lastReleaseName)
       const filesNames = fs.readdirSync(lastVersionDir)
       const data_file = fs.readFileSync(path.resolve(lastVersionDir, 'data.json'), {encoding: 'utf8'})
       const json = JSON.parse(data_file)
       if (json.tag_name === params.version) throw  Error
-      const winApp = path.resolve(lastVersionDir, filesNames.find(i => /msi.zip/.test(i)))
-      const macosApp = path.resolve(lastVersionDir, filesNames.find(i => /tar.gz/.test(i)))
+      const winApp =  url.pathToFileURL(path.join(lastVersionDir, filesNames.find(i => /msi.zip/.test(i))))
+      const macosApp = url.pathToFileURL(path.join(lastVersionDir, filesNames.find(i => /tar.gz/.test(i))))
+
       const data = {
         "version": json.tag_name,
         "notes": "update",
