@@ -9,7 +9,8 @@ import {
   Req,
   Param,
   Body,
-  UploadedFiles
+  UploadedFiles,
+  Delete
 } from "@nestjs/common";
 import { FileInterceptor,FileFieldsInterceptor } from "@nestjs/platform-express";
 import { diskStorage } from "multer";
@@ -147,5 +148,11 @@ export class FilesController {
   async getLatestDesktopRelease(@Res() res, @Req() req, @Body() body, @Param() param) {
     const result = await this.filesService.getLatestDesktopRelease(param, req)
     res.status(result.status).json(result.data)
+  }
+
+  @Delete("delete_desktop_releases")
+  async deleteDesktopRelease(@Res() res, @Req() req, @Body() body, @Param() param) {
+    const result = await this.filesService.deleteDesktopRelease()
+    res.status(result.status).json({})
   }
 }

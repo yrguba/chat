@@ -136,7 +136,6 @@ export class FilesService {
     if(body.tag_name === 'main'){
       body.tag_name = body.release_name.split(' ')[1]
     }
-    console.log(body)
     const desktopReleasesDir = path.resolve('storage', 'desktop_releases')
     if (!fs.existsSync(desktopReleasesDir)) {
       fs.mkdirSync(desktopReleasesDir, {recursive: true});
@@ -191,5 +190,11 @@ export class FilesService {
     } catch (e) {
       return {status: 204, data: {}}
     }
+  }
+
+  async deleteDesktopRelease(){
+    const desktopReleasesDir = path.join('storage', 'desktop_releases')
+    fs.rmSync(desktopReleasesDir, { recursive: true, force: true });
+    return {status: 200}
   }
 }
