@@ -136,6 +136,7 @@ export class FilesService {
     if(body.tag_name === 'main'){
       body.tag_name = body.release_name.split(' ')[1]
     }
+    console.log(body)
     const desktopReleasesDir = path.resolve('storage', 'desktop_releases')
     if (!fs.existsSync(desktopReleasesDir)) {
       fs.mkdirSync(desktopReleasesDir, {recursive: true});
@@ -174,15 +175,15 @@ export class FilesService {
         "platforms": {
           "darwin-x86_64": {
             "signature": json.tar_file_sig,
-            "url": macosApp
+            "url": json.tar_github_url
           },
           "darwin-aarch64": {
             "signature": json.tar_file_sig,
-            "url": macosApp
+            "url": json.tar_github_url
           },
           "windows-x86_64": {
             "signature": json.msi_file_sig,
-            "url": winApp
+            "url": json.msi_github_url
           }
         }
       }
