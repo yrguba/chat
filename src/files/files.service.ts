@@ -158,13 +158,12 @@ export class FilesService {
     const desktopReleasesDir = path.join('storage', 'desktop_releases')
     try {
       if (!fs.existsSync(desktopReleasesDir)) throw Error
-      const lastReleaseName = fs.readdirSync(desktopReleasesDir).pop()
+      const lastReleaseName = fs.readdirSync(desktopReleasesDir).find(i => i.split('v').length === 2)
       const lastVersionDir = path.join(desktopReleasesDir, lastReleaseName)
       const filesNames = fs.readdirSync(lastVersionDir)
       const data_file = fs.readFileSync(path.resolve(lastVersionDir, 'data.json'), {encoding: 'utf8'})
       const json = JSON.parse(data_file)
       if (json.tag_name === params.version) throw  Error
-
       const winApp = `https://${req.headers.host}/` +  path.join( lastVersionDir, filesNames.find(i => /msi.zip/.test(i)))
       const macosApp =`https://${req.headers.host}/` + path.join( lastVersionDir, filesNames.find(i => /tar.gz/.test(i)))
 
