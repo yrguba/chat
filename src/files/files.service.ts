@@ -158,8 +158,8 @@ export class FilesService {
     const desktopReleasesDir = path.join('storage', 'desktop_releases')
     try {
       if (!fs.existsSync(desktopReleasesDir)) throw Error
-      const lastReleaseName = fs.readdirSync(desktopReleasesDir).find(i => i.split('v').length === 2)
-      const lastVersionDir = path.join(desktopReleasesDir, lastReleaseName)
+      const lastReleaseName = fs.readdirSync(desktopReleasesDir).filter(i => i.split('v').length === 2)
+      const lastVersionDir = path.join(desktopReleasesDir, lastReleaseName.pop())
       const filesNames = fs.readdirSync(lastVersionDir)
       const data_file = fs.readFileSync(path.resolve(lastVersionDir, 'data.json'), {encoding: 'utf8'})
       const json = JSON.parse(data_file)
