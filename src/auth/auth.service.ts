@@ -95,13 +95,16 @@ export class AuthService {
     const user = await this.userService.getUserByPhone(data.phone, {
       sessions: true,
     });
+
     if (!user) return badRequestResponse("number not registered");
     const sessionInfo = getIdentifier(headers, user.id);
-    if (user.phone !== "+79999999999") {
+    console.log("login-session-info", sessionInfo);
+    if (user?.phone !== "+79999999999") {
       const checkCode = bcrypt.compareSync(data.code, user.code);
       if (!checkCode) return unAuthorizeResponse();
     }
     const tokens = await this.updCurrentSession(sessionInfo, user, "login");
+    console.log("login-tokens", tokens);
     return successResponse({
       ...getUserSchema(user),
       access_token: tokens.access_token,
@@ -283,10 +286,11 @@ export class AuthService {
     const user = await this.userService.getUser(userId, {
       sessions: true,
     });
-
+    console.log("refresh-session-info", sessionInfo);
     const currenSession = user.sessions.find(
       (i) => i.identifier === sessionInfo.identifier
     );
+    console.log("refresh-currenSession", currenSession);
     if (!currenSession || !currenSession.refresh_token) {
       return unAuthorizeResponse();
     }
@@ -294,13 +298,13 @@ export class AuthService {
       currenSession.refresh_token,
       refresh_token
     );
-
-    console.log(currenSession.refresh_token, refresh_token);
+    console.log("refresh-refreshTokenMatches", refreshTokenMatches);
     if (!refreshTokenMatches) {
       console.error("Refresh token invalid");
       return badRequestResponse("Refresh token invalid");
     }
     const tokens = await this.updCurrentSession(sessionInfo, user, "refresh");
+    console.log("tokens", tokens);
     return successResponse({
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,

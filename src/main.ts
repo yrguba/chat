@@ -11,7 +11,7 @@ import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import { ContactsModule } from "./contacts/contacts.module";
 import { FilesModule } from "./files/files.module";
 import { MessagesModule } from "./messages/messages.module";
-
+import { urlencoded, json } from "express";
 import * as admin from "firebase-admin";
 import { ServiceAccount } from "firebase-admin";
 import { HttpModule } from "./http/http.module";
@@ -35,7 +35,8 @@ async function bootstrap() {
   });
 
   app.useGlobalPipes(new ValidationPipe());
-
+  app.use(json({ limit: "50mb" }));
+  app.use(urlencoded({ extended: true, limit: "50mb" }));
   const config = new DocumentBuilder()
     .setTitle("Hoolichat")
     .setDescription("v API description")

@@ -2,7 +2,12 @@ import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { AppEntity } from "../database/entities/app.entity";
-import { editFileName, getPathToFile } from "../utils/file-upload.utils";
+import {
+  editFileName,
+  getFileInfo,
+  getPathToFile,
+  desktopReleaseTypeCheck
+} from "../utils/file-upload.utils";
 import * as fs from "fs";
 import * as path from "path";
 import { successResponse } from "../utils/response";
@@ -50,6 +55,7 @@ export class FilesService {
         directive,
         id
       );
+      console.log('serverPathToFile', serverPathToFile)
       const fileName = editFileName(null, file, () => "");
       if (!fs.existsSync(serverPathToFile)) {
         fs.mkdirSync(serverPathToFile, { recursive: true });
@@ -76,7 +82,8 @@ export class FilesService {
           files.push(`${clientPatchToFile}/${file}`);
         });
       }
-      return successResponse({ files });
+      const updFiles = files.map((file) => getFileInfo(file));
+      return successResponse({ files: updFiles });
     } catch (e) {
       throw new HttpException(
         "ошибка поиска файлов",
@@ -123,5 +130,71 @@ export class FilesService {
         HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
+  }
+
+  async uploadTauriRelease(files, body) {
+    if(body.tag_name === 'main'){
+      body.tag_name = body.release_name.split(' ')[1]
+    }
+    const desktopReleasesDir = path.resolve('storage', 'desktop_releases')
+    if (!fs.existsSync(desktopReleasesDir)) {
+      fs.mkdirSync(desktopReleasesDir, {recursive: true});
+    }
+    try {
+      const currentVersionDir = path.resolve(desktopReleasesDir, body.tag_name)
+      fs.mkdirSync(currentVersionDir, {recursive: true});
+      fs.writeFileSync(path.resolve(currentVersionDir, 'data.json'), JSON.stringify(body));
+      files.file.forEach(file => {
+        if (!desktopReleaseTypeCheck(file.originalname)) throw Error
+        fs.writeFileSync(path.resolve(currentVersionDir, file.originalname), Buffer.from(file.path));
+      })
+      return 200
+    } catch (e) {
+      return 415;
+    }
+  }
+
+  async getLatestDesktopRelease(params, req) {
+    const desktopReleasesDir = path.join('storage', 'desktop_releases')
+    try {
+      if (!fs.existsSync(desktopReleasesDir)) throw Error
+      const lastReleaseName = fs.readdirSync(desktopReleasesDir).find(i => i.split('v').length === 2)
+      const lastVersionDir = path.join(desktopReleasesDir, lastReleaseName)
+      const filesNames = fs.readdirSync(lastVersionDir)
+      const data_file = fs.readFileSync(path.resolve(lastVersionDir, 'data.json'), {encoding: 'utf8'})
+      const json = JSON.parse(data_file)
+      if (json.tag_name === params.version) throw  Error
+      const winApp = `https://${req.headers.host}/` +  path.join( lastVersionDir, filesNames.find(i => /msi.zip/.test(i)))
+      const macosApp =`https://${req.headers.host}/` + path.join( lastVersionDir, filesNames.find(i => /tar.gz/.test(i)))
+
+      const data = {
+        "version": json.tag_name,
+        "notes": "update",
+        "pub_date": json.published_at,
+        "platforms": {
+          "darwin-x86_64": {
+            "signature": json.tar_file_sig,
+            "url": json.tar_github_url
+          },
+          "darwin-aarch64": {
+            "signature": json.tar_file_sig,
+            "url": json.tar_github_url
+          },
+          "windows-x86_64": {
+            "signature": json.msi_file_sig,
+            "url": json.msi_github_url
+          }
+        }
+      }
+      return {status: 200, data: data}
+    } catch (e) {
+      return {status: 204, data: {}}
+    }
+  }
+
+  async deleteDesktopRelease(){
+    const desktopReleasesDir = path.join('storage', 'desktop_releases')
+    fs.rmSync(desktopReleasesDir, { recursive: true, force: true });
+    return {status: 200}
   }
 }

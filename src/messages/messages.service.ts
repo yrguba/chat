@@ -168,6 +168,8 @@ export class MessagesService {
           chat.permittedReactions
         );
 
+        message.reactions = await this.updateReactions(message.reactions);
+
         message.users_have_read = this.sharedService.getFilteredUsersHeavyRead(
           message.users_have_read,
           message.initiator_id
@@ -386,7 +388,7 @@ export class MessagesService {
       access: chat.users,
       accessChats: [chat_id],
       reply_message_id: replyMessageId,
-      users_have_read: chat.listeners,
+      users_have_read: chat.listeners.filter((i) => Number.isInteger(i)),
       reactions: reactions,
       content: filesName || [],
       session_id: sessionInfo.identifier || "",
@@ -447,15 +449,18 @@ export class MessagesService {
                         title: chat.is_group
                           ? String(chat.name)
                           : contact?.name
-                            ? String(contact?.name)
-                            : String(initiator.name),
+                          ? String(contact?.name)
+                          : String(initiator.name),
                         // message.message_type === "system" ? String(chat.name) : contact?.name ? String(contact?.name) : String(initiator.name),
                         body: chat.is_group
                           ? `${
-                            contact?.name
-                              ? String(contact?.name)
-                              : String(initiator.name)
-                          }: ${await this.getMessageContent(user_id, message)}`
+                              contact?.name
+                                ? String(contact?.name)
+                                : String(initiator.name)
+                            }: ${await this.getMessageContent(
+                              user_id,
+                              message
+                            )}`
                           : await this.getMessageContent(user_id, message),
                         priority: "max",
                         sound: "default",
@@ -502,6 +507,9 @@ export class MessagesService {
             replyMessage
           );
         }
+      }
+      if (message.message_type === "system") {
+        message.text = await this.updTextSystemMessage(user_id, message);
       }
 
       return {
@@ -565,6 +573,7 @@ export class MessagesService {
           where: { id: messageId },
         });
         message.content = this.updMessageContent(message);
+        console.log(message);
         if (chat && message) {
           if (message.forwarded_messages?.length) {
             for (let messageId of message.forwarded_messages) {
@@ -702,6 +711,19 @@ export class MessagesService {
       is_edited: true,
     });
 
+    let replyMessage = null;
+    if (updatedMessage.reply_message_id) {
+      replyMessage = await this.getMessageWithUser(message.reply_message_id);
+      replyMessage.user = getUserSchema(replyMessage.user);
+      replyMessage.content = this.updMessageContent(replyMessage);
+      if (replyMessage.forwarded_messages?.length) {
+        replyMessage.forwarded_messages = await this.updForwardedMessages(
+          user_id,
+          replyMessage
+        );
+      }
+    }
+
     const chat = await this.chatsRepository.findOne({
       where: { id: chat_id },
       relations: ["message"],
@@ -723,10 +745,20 @@ export class MessagesService {
         status: 200,
         data: {
           data: {
-            message: { ...getMessageSchema(updatedMessage), user: userData },
+            message: {
+              ...getMessageSchema(updatedMessage),
+              user: userData,
+              replyMessage: replyMessage
+                ? getMessageSchema(replyMessage)
+                : null,
+            },
           },
         },
-        message: { ...updatedMessage, user: userData },
+        message: {
+          ...updatedMessage,
+          user: userData,
+          replyMessage: replyMessage ? getMessageSchema(replyMessage) : null,
+        },
         users: chat.users,
       };
     } else {
@@ -828,7 +860,7 @@ export class MessagesService {
       data: {
         chatId: Number(chat_id),
         messageId: message.id,
-        reactions: filtered,
+        reactions: await this.updateReactions(filtered),
       },
     };
   }
@@ -874,5 +906,21 @@ export class MessagesService {
       return message?.text;
     }
     return message?.text;
+  }
+
+  async updateReactions(reactions) {
+    const obj = {};
+    for (let key of Object.keys(reactions)) {
+      obj[key] = [];
+      if (reactions[key]?.length) {
+        for (let i of reactions[key]) {
+          const user = await this.usersService.getUser(i);
+          if (user) {
+            obj[key].push(getUserSchema(user));
+          }
+        }
+      }
+    }
+    return obj;
   }
 }

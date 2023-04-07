@@ -9,7 +9,7 @@ export const imageFileFilter = (req, file, callback) => {
 };
 
 export const imageTypeCheck = (file) => {
-  return file.originalname.match(/\.(jpg|jpeg|png|gif)$/);
+  return file.originalname.match(/\.(jpg|jpeg|png|PNG|gif)$/);
 };
 
 export const videoTypeCheck = (file) => {
@@ -19,6 +19,10 @@ export const videoTypeCheck = (file) => {
 export const audioTypeCheck = (file) => {
   return file.originalname.match(/\.(ogg|vorbis|wav|mp3|webm)$/);
 };
+
+export const desktopReleaseTypeCheck = (fileName) => {
+  return (/tar.gz/.test(fileName) || /msi.zip/.test(fileName)) && fileName.split('.').pop() !== 'sig'
+}
 
 export const documentTypeCheck = (file) => {
   return file.originalname.match(

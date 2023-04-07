@@ -7,10 +7,13 @@ export const getIdentifier = (headers, userId) => {
     deviceAliasCode: false,
   });
   const { os, device, client } = detector.detect(headers["user-agent"]);
+  const xSessionId = headers["x-session-id"];
   return {
-    identifier: `${userId}${device?.type || ""}${device?.brand || ""}${
-      os?.name || ""
-    }${client.name || ""}`,
+    identifier:
+      xSessionId ||
+      `${userId}${device?.type || ""}${device?.brand || ""}${os?.name || ""}${
+        client.name || ""
+      }`,
     os_name: os?.name || "",
     device_type: device?.type || "",
     browser: client.name,

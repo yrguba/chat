@@ -383,12 +383,13 @@ export class ChatsController {
 
   @UseGuards(JwtAuthGuard)
   @ApiOperation({
-    summary: "получить файлы чата (images | videos | voices | audios)",
+    summary:
+      "получить файлы чата (images | videos | voices | audios | documents)",
   })
   @ApiParam({ name: "chat_id", required: true })
   @ApiParam({
     name: "file_type",
-    enum: ["images", "videos", "voices", "audios"],
+    enum: ["images", "videos", "voices", "audios", "documents"],
     required: true,
   })
   @ApiResponse({

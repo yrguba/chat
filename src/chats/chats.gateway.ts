@@ -112,7 +112,9 @@ export class ChatsGateway
   @SubscribeMessage("chatListeners")
   async handleChatListeners(client: any, payload: any) {
     const clientUserId = this.sharedService.getUserId(client);
-    await this.chatsService.setChatListeners(clientUserId, payload);
+    if (clientUserId) {
+      await this.chatsService.setChatListeners(clientUserId, payload);
+    }
   }
 
   @SubscribeMessage("ping")
