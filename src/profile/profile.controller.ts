@@ -47,6 +47,8 @@ export class ProfileController {
   @Get("/")
   async getUser(@Res() res, @Req() req) {
     const jwt = req.headers.authorization.replace("Bearer ", "");
+    console.log('req', req)
+    console.log('req.hostname', req.hostname)
     const json = this.jwtService.decode(jwt, { json: true }) as { id: number };
     const profile = await this.profileService.getProfile(json.id, req.headers);
     res.status(profile.status).json(profile.data);

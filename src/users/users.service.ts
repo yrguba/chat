@@ -130,6 +130,7 @@ export class UsersService {
 
   async getUserIdFromToken(req): Promise<number> {
     if (req.headers && req.headers.authorization) {
+      console.log('wdad')
       const jwt = req.headers.authorization.replace("Bearer ", "");
       const json = this.jwtService.decode(jwt, { json: true }) as {
         id: number;

@@ -92,10 +92,11 @@ export class AuthService {
   }
 
   async loginV2(data, headers) {
+    console.log(data)
     const user = await this.userService.getUserByPhone(data.phone, {
       sessions: true,
     });
-
+    console.log(user)
     if (!user) return badRequestResponse("number not registered");
     const sessionInfo = getIdentifier(headers, user.id);
     console.log("login-session-info", sessionInfo);
