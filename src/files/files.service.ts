@@ -158,14 +158,24 @@ export class FilesService {
     const desktopReleasesDir = path.join('storage', 'desktop_releases')
     try {
       if (!fs.existsSync(desktopReleasesDir)) throw Error
-      const lastReleaseName = fs.readdirSync(desktopReleasesDir).filter(i => i.split('v').length === 2)
-      const lastVersionDir = path.join(desktopReleasesDir, lastReleaseName.pop())
-      const filesNames = fs.readdirSync(lastVersionDir)
+
+      const pathTimestamps = []
+
+      fs.readdirSync(desktopReleasesDir).forEach(i => {
+        const sync = fs.statSync(path.join(desktopReleasesDir, i))
+        pathTimestamps.push({ path: i, createdTimestamp: sync.birthtimeMs })
+      })
+
+      const sortReleases = pathTimestamps.sort((a, b) => {
+       return  b.createdTimestamp - a.createdTimestamp
+      })
+
+      const lastVersionDir = path.join(desktopReleasesDir, sortReleases.shift().path)
+
       const data_file = fs.readFileSync(path.resolve(lastVersionDir, 'data.json'), {encoding: 'utf8'})
       const json = JSON.parse(data_file)
       if (json.tag_name === params.version) throw  Error
-      const winApp = `https://${req.headers.host}/` +  path.join( lastVersionDir, filesNames.find(i => /msi.zip/.test(i)))
-      const macosApp =`https://${req.headers.host}/` + path.join( lastVersionDir, filesNames.find(i => /tar.gz/.test(i)))
+
 
       const data = {
         "version": json.tag_name,
