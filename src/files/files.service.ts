@@ -168,7 +168,7 @@ export class FilesService {
 
       const sortReleases = pathTimestamps.sort((a, b) => {
        return  b.createdTimestamp - a.createdTimestamp
-      })
+      })  
 
       const lastVersionDir = path.join(desktopReleasesDir, sortReleases.shift().path)
 
