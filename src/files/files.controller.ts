@@ -141,6 +141,7 @@ export class FilesController {
   @Post("upload_desktop_release")
   async uploadTauriRelease(@Res() res, @Req() req, @Body() body, @UploadedFiles() files) {
     const result = await this.filesService.uploadTauriRelease(files, body)
+    console.log(body)
     res.status(result).json()
   }
 
