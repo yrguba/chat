@@ -24,6 +24,8 @@ import {
   imageFileFilter,
   privacyPolicyFileFilter,
   portableVersionFileFilter,
+  windowsAppFileFilter,
+  macAppFileFilter,
 } from "../utils/file-upload.utils";
 import { ApiBody, ApiConsumes, ApiParam, ApiTags } from "@nestjs/swagger";
 import { JwtAuthGuard } from "../auth/strategy/jwt-auth.guard";
@@ -141,15 +143,50 @@ export class FilesController {
     res.status(200).json("success");
   }
 
-  @UseInterceptors(FileFieldsInterceptor([{ name: "file", maxCount: 10 }], {}))
-  @Post("upload_desktop_release")
+  @Post("upload_desktop_release_windows")
+  @UseInterceptors(
+    FileInterceptor("file", {
+      storage: diskStorage({
+        destination: "./files",
+        filename: (req, file, callback) => {
+          callback(null, "win_app.msi.zip");
+        },
+      }),
+      fileFilter: windowsAppFileFilter,
+    })
+  )
   async uploadTauriRelease(
     @Res() res,
     @Req() req,
     @Body() body,
-    @UploadedFiles() files
+    @UploadedFile() file
   ) {
-    const result = await this.filesService.uploadTauriRelease(files, body);
+    const result = await this.filesService.uploadTauriReleaseWindows(
+      file,
+      body
+    );
+    res.status(result).json();
+  }
+
+  @Post("upload_desktop_release_mac")
+  @UseInterceptors(
+    FileInterceptor("file", {
+      storage: diskStorage({
+        destination: "./files",
+        filename: (req, file, callback) => {
+          callback(null, "mac_app.tar.gz");
+        },
+      }),
+      fileFilter: macAppFileFilter,
+    })
+  )
+  async uploadTauriReleaseMac(
+    @Res() res,
+    @Req() req,
+    @Body() body,
+    @UploadedFile() file
+  ) {
+    const result = await this.filesService.uploadTauriReleaseMac(file, body);
     res.status(result).json();
   }
 

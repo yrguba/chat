@@ -59,6 +59,20 @@ export const portableVersionFileFilter = (req, file, callback) => {
   callback(null, true);
 };
 
+export const windowsAppFileFilter = (req, file, callback) => {
+  if (!file.originalname.match(/\.(zip)$/)) {
+    return callback(new Error("Only zip files are allowed!"), false);
+  }
+  callback(null, true);
+};
+
+export const macAppFileFilter = (req, file, callback) => {
+  if (!file.originalname.match(/\.(gz)$/)) {
+    return callback(new Error("Only gz files are allowed!"), false);
+  }
+  callback(null, true);
+};
+
 export const appFileFilter = (req, file, callback) => {
   if (!file.originalname.match(/\.(apk)$/)) {
     return callback(new Error("Only apk files are allowed!"), false);

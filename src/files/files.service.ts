@@ -133,28 +133,32 @@ export class FilesService {
     }
   }
 
-  async uploadTauriRelease(files, body) {
-    if (body.tag_name === "main") {
-      body.tag_name = body.release_name.split(" ")[1];
-    }
+  async uploadTauriReleaseWindows(file, body) {
     const desktopReleasesDir = path.resolve("storage", "desktop_releases");
     if (!fs.existsSync(desktopReleasesDir)) {
       fs.mkdirSync(desktopReleasesDir, { recursive: true });
     }
     try {
-      const currentVersionDir = path.resolve(desktopReleasesDir, body.tag_name);
-      fs.mkdirSync(currentVersionDir, { recursive: true });
       fs.writeFileSync(
-        path.resolve(currentVersionDir, "data.json"),
+        path.resolve(desktopReleasesDir, "win_data.json"),
         JSON.stringify(body)
       );
-      files.file.forEach((file) => {
-        if (!desktopReleaseTypeCheck(file.originalname)) throw Error;
-        fs.writeFileSync(
-          path.resolve(currentVersionDir, file.originalname),
-          Buffer.from(file.path)
-        );
-      });
+      return 200;
+    } catch (e) {
+      return 415;
+    }
+  }
+
+  async uploadTauriReleaseMac(file, body) {
+    const desktopReleasesDir = path.resolve("storage", "desktop_releases");
+    if (!fs.existsSync(desktopReleasesDir)) {
+      fs.mkdirSync(desktopReleasesDir, { recursive: true });
+    }
+    try {
+      fs.writeFileSync(
+        path.resolve(desktopReleasesDir, "mac_data.json"),
+        JSON.stringify(body)
+      );
       return 200;
     } catch (e) {
       return 415;
@@ -165,54 +169,43 @@ export class FilesService {
     return 200;
   }
 
-  async getLastReleasesDir() {
-    const desktopReleasesDir = path.join("storage", "desktop_releases");
-    const pathTimestamps = [];
-
-    fs.readdirSync(desktopReleasesDir).forEach((i) => {
-      const sync = fs.statSync(path.join(desktopReleasesDir, i));
-      pathTimestamps.push({ path: i, createdTimestamp: sync.birthtimeMs });
-    });
-
-    const sortReleases = pathTimestamps.sort((a, b) => {
-      return b.createdTimestamp - a.createdTimestamp;
-    });
-
-    const lastVersionDir = path.join(
-      desktopReleasesDir,
-      sortReleases.shift().path
-    );
-    return lastVersionDir;
-  }
-
   async getLatestDesktopRelease(params, req) {
-    const lastReleaseDir = await this.getLastReleasesDir();
+    const desktopReleasesDir = path.resolve("storage", "desktop_releases");
     try {
-      if (!fs.existsSync(lastReleaseDir)) throw Error;
+      if (!fs.existsSync(desktopReleasesDir)) throw Error;
 
-      const data_file = fs.readFileSync(
-        path.resolve(lastReleaseDir, "data.json"),
+      const mac_data = fs.readFileSync(
+        path.resolve(desktopReleasesDir, "win_data.json"),
         { encoding: "utf8" }
       );
-      const json = JSON.parse(data_file);
-      if (json.tag_name === params.version) throw Error;
+
+      const win_data = fs.readFileSync(
+        path.resolve(desktopReleasesDir, "mac_data.json"),
+        { encoding: "utf8" }
+      );
+
+      const win_json = JSON.parse(win_data);
+      const mac_json = JSON.parse(mac_data);
+      console.log(win_json, mac_json);
+      if (win_json.version !== mac_json.version) throw Error;
+      const host = "https://dev.api.confee.ru/";
 
       const data = {
-        version: json.tag_name,
+        version: win_json.version,
         notes: "update",
-        pub_date: json.published_at,
+        pub_date: "",
         platforms: {
           "darwin-x86_64": {
-            signature: json.tar_file_sig,
-            url: json.tar_github_url,
+            signature: mac_json.signature,
+            url: `${host}files/mac_app.tar.gz`,
           },
           "darwin-aarch64": {
-            signature: json.tar_file_sig,
-            url: json.tar_github_url,
+            signature: mac_json.signature,
+            url: `${host}files/mac_app.tar.gz`,
           },
           "windows-x86_64": {
-            signature: json.msi_file_sig,
-            url: json.msi_github_url,
+            signature: win_json.signature,
+            url: `${host}files/win_app.msi.zip`,
           },
         },
       };
