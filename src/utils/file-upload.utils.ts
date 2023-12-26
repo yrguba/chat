@@ -21,8 +21,11 @@ export const audioTypeCheck = (file) => {
 };
 
 export const desktopReleaseTypeCheck = (fileName) => {
-  return (/tar.gz/.test(fileName) || /msi.zip/.test(fileName)) && fileName.split('.').pop() !== 'sig'
-}
+  return (
+    (/tar.gz/.test(fileName) || /msi.zip/.test(fileName)) &&
+    fileName.split(".").pop() !== "sig"
+  );
+};
 
 export const documentTypeCheck = (file) => {
   return file.originalname.match(
@@ -45,6 +48,13 @@ export const messageFileFilter = (req, file, callback) => {
 export const privacyPolicyFileFilter = (req, file, callback) => {
   if (!file.originalname.match(/\.(html)$/)) {
     return callback(new Error("Only html files are allowed!"), false);
+  }
+  callback(null, true);
+};
+
+export const portableVersionFileFilter = (req, file, callback) => {
+  if (!file.originalname.match(/\.(exe)$/)) {
+    return callback(new Error("Only exe files are allowed!"), false);
   }
   callback(null, true);
 };

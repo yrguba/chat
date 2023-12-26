@@ -6,11 +6,12 @@ import {
   editFileName,
   getFileInfo,
   getPathToFile,
-  desktopReleaseTypeCheck
+  desktopReleaseTypeCheck,
 } from "../utils/file-upload.utils";
 import * as fs from "fs";
 import * as path from "path";
 import { successResponse } from "../utils/response";
+import { json } from "express";
 
 @Injectable()
 export class FilesService {
@@ -55,7 +56,7 @@ export class FilesService {
         directive,
         id
       );
-      console.log('serverPathToFile', serverPathToFile)
+      console.log("serverPathToFile", serverPathToFile);
       const fileName = editFileName(null, file, () => "");
       if (!fs.existsSync(serverPathToFile)) {
         fs.mkdirSync(serverPathToFile, { recursive: true });
@@ -133,78 +134,106 @@ export class FilesService {
   }
 
   async uploadTauriRelease(files, body) {
-    if(body.tag_name === 'main'){
-      body.tag_name = body.release_name.split(' ')[1]
+    if (body.tag_name === "main") {
+      body.tag_name = body.release_name.split(" ")[1];
     }
-    const desktopReleasesDir = path.resolve('storage', 'desktop_releases')
+    const desktopReleasesDir = path.resolve("storage", "desktop_releases");
     if (!fs.existsSync(desktopReleasesDir)) {
-      fs.mkdirSync(desktopReleasesDir, {recursive: true});
+      fs.mkdirSync(desktopReleasesDir, { recursive: true });
     }
     try {
-      const currentVersionDir = path.resolve(desktopReleasesDir, body.tag_name)
-      fs.mkdirSync(currentVersionDir, {recursive: true});
-      fs.writeFileSync(path.resolve(currentVersionDir, 'data.json'), JSON.stringify(body));
-      files.file.forEach(file => {
-        if (!desktopReleaseTypeCheck(file.originalname)) throw Error
-        fs.writeFileSync(path.resolve(currentVersionDir, file.originalname), Buffer.from(file.path));
-      })
-      return 200
+      const currentVersionDir = path.resolve(desktopReleasesDir, body.tag_name);
+      fs.mkdirSync(currentVersionDir, { recursive: true });
+      fs.writeFileSync(
+        path.resolve(currentVersionDir, "data.json"),
+        JSON.stringify(body)
+      );
+      files.file.forEach((file) => {
+        if (!desktopReleaseTypeCheck(file.originalname)) throw Error;
+        fs.writeFileSync(
+          path.resolve(currentVersionDir, file.originalname),
+          Buffer.from(file.path)
+        );
+      });
+      return 200;
     } catch (e) {
       return 415;
     }
   }
 
+  async uploadPortableVersion() {
+    return 200;
+  }
+
+  async getLastReleasesDir() {
+    const desktopReleasesDir = path.join("storage", "desktop_releases");
+    const pathTimestamps = [];
+
+    fs.readdirSync(desktopReleasesDir).forEach((i) => {
+      const sync = fs.statSync(path.join(desktopReleasesDir, i));
+      pathTimestamps.push({ path: i, createdTimestamp: sync.birthtimeMs });
+    });
+
+    const sortReleases = pathTimestamps.sort((a, b) => {
+      return b.createdTimestamp - a.createdTimestamp;
+    });
+
+    const lastVersionDir = path.join(
+      desktopReleasesDir,
+      sortReleases.shift().path
+    );
+    return lastVersionDir;
+  }
+
   async getLatestDesktopRelease(params, req) {
-    const desktopReleasesDir = path.join('storage', 'desktop_releases')
+    const lastReleaseDir = await this.getLastReleasesDir();
     try {
-      if (!fs.existsSync(desktopReleasesDir)) throw Error
+      if (!fs.existsSync(lastReleaseDir)) throw Error;
 
-      const pathTimestamps = []
-
-      fs.readdirSync(desktopReleasesDir).forEach(i => {
-        const sync = fs.statSync(path.join(desktopReleasesDir, i))
-        pathTimestamps.push({ path: i, createdTimestamp: sync.birthtimeMs })
-      })
-
-      const sortReleases = pathTimestamps.sort((a, b) => {
-       return  b.createdTimestamp - a.createdTimestamp
-      })  
-
-      const lastVersionDir = path.join(desktopReleasesDir, sortReleases.shift().path)
-
-      const data_file = fs.readFileSync(path.resolve(lastVersionDir, 'data.json'), {encoding: 'utf8'})
-      const json = JSON.parse(data_file)
-      if (json.tag_name === params.version) throw  Error
-
+      const data_file = fs.readFileSync(
+        path.resolve(lastReleaseDir, "data.json"),
+        { encoding: "utf8" }
+      );
+      const json = JSON.parse(data_file);
+      if (json.tag_name === params.version) throw Error;
 
       const data = {
-        "version": json.tag_name,
-        "notes": "update",
-        "pub_date": json.published_at,
-        "platforms": {
+        version: json.tag_name,
+        notes: "update",
+        pub_date: json.published_at,
+        platforms: {
           "darwin-x86_64": {
-            "signature": json.tar_file_sig,
-            "url": json.tar_github_url
+            signature: json.tar_file_sig,
+            url: json.tar_github_url,
           },
           "darwin-aarch64": {
-            "signature": json.tar_file_sig,
-            "url": json.tar_github_url
+            signature: json.tar_file_sig,
+            url: json.tar_github_url,
           },
           "windows-x86_64": {
-            "signature": json.msi_file_sig,
-            "url": json.msi_github_url
-          }
-        }
-      }
-      return {status: 200, data: data}
+            signature: json.msi_file_sig,
+            url: json.msi_github_url,
+          },
+        },
+      };
+      return { status: 200, data: data };
     } catch (e) {
-      return {status: 204, data: {}}
+      return { status: 204, data: {} };
     }
   }
 
-  async deleteDesktopRelease(){
-    const desktopReleasesDir = path.join('storage', 'desktop_releases')
+  async getPortableVersion() {
+    return {
+      status: 200,
+      data: {
+        url: `/files/confee_portable.exe`,
+      },
+    };
+  }
+
+  async deleteDesktopRelease() {
+    const desktopReleasesDir = path.join("storage", "desktop_releases");
     fs.rmSync(desktopReleasesDir, { recursive: true, force: true });
-    return {status: 200}
+    return { status: 200 };
   }
 }

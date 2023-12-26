@@ -38,6 +38,11 @@ import { NotificationsModule } from "./notifications/notifications.module";
       exclude: ["/api*"],
     }),
     ServeStaticModule.forRoot({
+      serveRoot: "/files",
+      rootPath: join(__dirname, "..", "files"),
+      exclude: ["/api*"],
+    }),
+    ServeStaticModule.forRoot({
       serveRoot: "/storage",
       rootPath: join(__dirname, "..", "storage"),
       exclude: ["/api*"],

@@ -10,9 +10,12 @@ import {
   Param,
   Body,
   UploadedFiles,
-  Delete
+  Delete,
 } from "@nestjs/common";
-import { FileInterceptor,FileFieldsInterceptor } from "@nestjs/platform-express";
+import {
+  FileInterceptor,
+  FileFieldsInterceptor,
+} from "@nestjs/platform-express";
 import { diskStorage } from "multer";
 import {
   appFileFilter,
@@ -20,6 +23,7 @@ import {
   editFileName,
   imageFileFilter,
   privacyPolicyFileFilter,
+  portableVersionFileFilter,
 } from "../utils/file-upload.utils";
 import { ApiBody, ApiConsumes, ApiParam, ApiTags } from "@nestjs/swagger";
 import { JwtAuthGuard } from "../auth/strategy/jwt-auth.guard";
@@ -137,23 +141,70 @@ export class FilesController {
     res.status(200).json("success");
   }
 
-  @UseInterceptors(FileFieldsInterceptor([{name: "file", maxCount: 10}], {}))
+  @UseInterceptors(FileFieldsInterceptor([{ name: "file", maxCount: 10 }], {}))
   @Post("upload_desktop_release")
-  async uploadTauriRelease(@Res() res, @Req() req, @Body() body, @UploadedFiles() files) {
-    const result = await this.filesService.uploadTauriRelease(files, body)
-    console.log(body)
-    res.status(result).json()
+  async uploadTauriRelease(
+    @Res() res,
+    @Req() req,
+    @Body() body,
+    @UploadedFiles() files
+  ) {
+    const result = await this.filesService.uploadTauriRelease(files, body);
+    res.status(result).json();
+  }
+
+  @Post("upload_portable_version")
+  @UseInterceptors(
+    FileInterceptor("file", {
+      storage: diskStorage({
+        destination: "./files",
+        filename: (req, file, callback) => {
+          callback(null, "confee_portable.exe");
+        },
+      }),
+      fileFilter: portableVersionFileFilter,
+    })
+  )
+  async uploadPortableVersion(
+    @Res() res,
+    @Req() req,
+    @Body() body,
+    @UploadedFile() file
+  ) {
+    const result = await this.filesService.uploadPortableVersion();
+    res.status(result).json();
   }
 
   @Get("get_latest_desktop_release/:platform/:version")
-  async getLatestDesktopRelease(@Res() res, @Req() req, @Body() body, @Param() param) {
-    const result = await this.filesService.getLatestDesktopRelease(param, req)
-    res.status(result.status).json(result.data)
+  async getLatestDesktopRelease(
+    @Res() res,
+    @Req() req,
+    @Body() body,
+    @Param() param
+  ) {
+    const result = await this.filesService.getLatestDesktopRelease(param, req);
+    res.status(result.status).json(result.data);
+  }
+
+  @Get("portable_version")
+  async getPortableVersion(
+    @Res() res,
+    @Req() req,
+    @Body() body,
+    @Param() param
+  ) {
+    const result = await this.filesService.getPortableVersion();
+    res.status(result.status).json(result.data);
   }
 
   @Delete("delete_desktop_releases")
-  async deleteDesktopRelease(@Res() res, @Req() req, @Body() body, @Param() param) {
-    const result = await this.filesService.deleteDesktopRelease()
-    res.status(result.status).json({})
+  async deleteDesktopRelease(
+    @Res() res,
+    @Req() req,
+    @Body() body,
+    @Param() param
+  ) {
+    const result = await this.filesService.deleteDesktopRelease();
+    res.status(result.status).json({});
   }
 }
