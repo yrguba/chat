@@ -191,7 +191,7 @@ export class FilesService {
       const host = "https://dev.api.confee.ru/";
 
       const data = {
-        version: win_json.version,
+        version: `v${win_json.version}`,
         notes: "update",
         pub_date: "",
         platforms: {
