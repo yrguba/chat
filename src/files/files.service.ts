@@ -138,10 +138,11 @@ export class FilesService {
     if (!fs.existsSync(desktopReleasesDir)) {
       fs.mkdirSync(desktopReleasesDir, { recursive: true });
     }
+    const data = { ...body, fileName: file.originalname };
     try {
       fs.writeFileSync(
         path.resolve(desktopReleasesDir, "win_data.json"),
-        JSON.stringify(body)
+        JSON.stringify(data)
       );
       return 200;
     } catch (e) {
@@ -154,10 +155,11 @@ export class FilesService {
     if (!fs.existsSync(desktopReleasesDir)) {
       fs.mkdirSync(desktopReleasesDir, { recursive: true });
     }
+    const data = { ...body, fileName: file.originalname };
     try {
       fs.writeFileSync(
         path.resolve(desktopReleasesDir, "mac_data.json"),
-        JSON.stringify(body)
+        JSON.stringify(data)
       );
       return 200;
     } catch (e) {
@@ -186,7 +188,7 @@ export class FilesService {
 
       const win_json = JSON.parse(win_data);
       const mac_json = JSON.parse(mac_data);
-      console.log(win_json, mac_json);
+
       if (win_json.version !== mac_json.version) throw Error;
       const host = "https://dev.chat.softworks.ru/";
 
@@ -197,15 +199,15 @@ export class FilesService {
         platforms: {
           "darwin-x86_64": {
             signature: mac_json.signature,
-            url: `${host}files/mac_app.tar.gz`,
+            url: `${host}files/${mac_json.fileName}`,
           },
           "darwin-aarch64": {
             signature: mac_json.signature,
-            url: `${host}files/mac_app.tar.gz`,
+            url: `${host}files/${mac_json.fileName}`,
           },
           "windows-x86_64": {
             signature: win_json.signature,
-            url: `${host}files/win_app.msi.zip`,
+            url: `${host}files/${win_json.fileName}`,
           },
         },
       };

@@ -149,7 +149,7 @@ export class FilesController {
       storage: diskStorage({
         destination: "./files",
         filename: (req, file, callback) => {
-          callback(null, "win_app.msi.zip");
+          callback(null, file.originalname);
         },
       }),
       fileFilter: windowsAppFileFilter,
@@ -174,7 +174,7 @@ export class FilesController {
       storage: diskStorage({
         destination: "./files",
         filename: (req, file, callback) => {
-          callback(null, "mac_app.tar.gz");
+          callback(null, file.originalname);
         },
       }),
       fileFilter: macAppFileFilter,
