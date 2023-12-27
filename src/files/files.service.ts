@@ -193,7 +193,7 @@ export class FilesService {
       const data = {
         version: `v${win_json.version}`,
         notes: "update",
-        pub_date: "",
+        pub_date: new Date().toISOString(),
         platforms: {
           "darwin-x86_64": {
             signature: mac_json.signature,
