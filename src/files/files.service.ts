@@ -188,7 +188,7 @@ export class FilesService {
       const mac_json = JSON.parse(mac_data);
       console.log(win_json, mac_json);
       if (win_json.version !== mac_json.version) throw Error;
-      const host = "https://dev.api.confee.ru/";
+      const host = "https://dev.chat.softworks.ru/";
 
       const data = {
         version: `v${win_json.version}`,
