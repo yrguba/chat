@@ -176,12 +176,12 @@ export class FilesService {
     try {
       if (!fs.existsSync(desktopReleasesDir)) throw Error;
 
-      const mac_data = fs.readFileSync(
+      const win_data = fs.readFileSync(
         path.resolve(desktopReleasesDir, "win_data.json"),
         { encoding: "utf8" }
       );
 
-      const win_data = fs.readFileSync(
+      const mac_data = fs.readFileSync(
         path.resolve(desktopReleasesDir, "mac_data.json"),
         { encoding: "utf8" }
       );
