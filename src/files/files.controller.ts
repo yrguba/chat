@@ -212,6 +212,48 @@ export class FilesController {
     res.status(result).json();
   }
 
+  @Post("upload_debug_windows")
+  @UseInterceptors(
+    FileInterceptor("file", {
+      storage: diskStorage({
+        destination: "./files",
+        filename: (req, file, callback) => {
+          callback(null, "debug_windows.zip");
+        },
+      }),
+      fileFilter: windowsAppFileFilter,
+    })
+  )
+  async uploadDebugWindows(
+    @Res() res,
+    @Req() req,
+    @Body() body,
+    @UploadedFile() file
+  ) {
+    res.status(200).json();
+  }
+
+  @Post("upload_debug_mac")
+  @UseInterceptors(
+    FileInterceptor("file", {
+      storage: diskStorage({
+        destination: "./files",
+        filename: (req, file, callback) => {
+          callback(null, "debug_mac.dmg");
+        },
+      }),
+      fileFilter: macAppFileFilter,
+    })
+  )
+  async uploadDebugMac(
+    @Res() res,
+    @Req() req,
+    @Body() body,
+    @UploadedFile() file
+  ) {
+    res.status(200).json();
+  }
+
   @Get("get_latest_desktop_release/:platform/:version")
   async getLatestDesktopRelease(
     @Res() res,
