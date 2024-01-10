@@ -20,6 +20,7 @@ import { diskStorage } from "multer";
 import {
   appFileFilter,
   documentTypeCheck,
+  macDebugFileFilter,
   editFileName,
   imageFileFilter,
   privacyPolicyFileFilter,
@@ -242,7 +243,7 @@ export class FilesController {
           callback(null, "debug_mac.dmg");
         },
       }),
-      fileFilter: macAppFileFilter,
+      fileFilter: macDebugFileFilter,
     })
   )
   async uploadDebugMac(

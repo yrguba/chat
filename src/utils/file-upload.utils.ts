@@ -73,6 +73,13 @@ export const macAppFileFilter = (req, file, callback) => {
   callback(null, true);
 };
 
+export const macDebugFileFilter = (req, file, callback) => {
+  if (!file.originalname.match(/\.(dmg)$/)) {
+    return callback(new Error("Only dmg files are allowed!"), false);
+  }
+  callback(null, true);
+};
+
 export const appFileFilter = (req, file, callback) => {
   if (!file.originalname.match(/\.(apk)$/)) {
     return callback(new Error("Only apk files are allowed!"), false);
