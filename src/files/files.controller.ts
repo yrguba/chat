@@ -150,7 +150,7 @@ export class FilesController {
       storage: diskStorage({
         destination: "./files",
         filename: (req, file, callback) => {
-          callback(null, file.originalname);
+          callback(null, "Confee.msi.zip");
         },
       }),
       fileFilter: windowsAppFileFilter,
@@ -175,7 +175,7 @@ export class FilesController {
       storage: diskStorage({
         destination: "./files",
         filename: (req, file, callback) => {
-          callback(null, file.originalname);
+          callback(null, "Confee.app.tar.gz");
         },
       }),
       fileFilter: macAppFileFilter,

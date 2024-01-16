@@ -138,7 +138,7 @@ export class FilesService {
     if (!fs.existsSync(desktopReleasesDir)) {
       fs.mkdirSync(desktopReleasesDir, { recursive: true });
     }
-    const data = { ...body, fileName: file.originalname };
+    const data = { ...body, fileName: "Confee.msi.zip" };
     try {
       fs.writeFileSync(
         path.resolve(desktopReleasesDir, "win_data.json"),
@@ -155,7 +155,7 @@ export class FilesService {
     if (!fs.existsSync(desktopReleasesDir)) {
       fs.mkdirSync(desktopReleasesDir, { recursive: true });
     }
-    const data = { ...body, fileName: file.originalname };
+    const data = { ...body, fileName: "Confee.app.tar.gz" };
     try {
       fs.writeFileSync(
         path.resolve(desktopReleasesDir, "mac_data.json"),
