@@ -62,7 +62,7 @@ export class HttpController {
           responseType: "arraybuffer",
         });
 
-        faviconBuffer = new Uint8Array(res.data as any);
+        faviconBuffer = res.data as any;
       }
 
       res.status(200).json({ ...meta, faviconBuffer });
