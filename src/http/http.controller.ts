@@ -59,10 +59,19 @@ export class HttpController {
         includeResponseBody: true,
       });
 
-      const favicon =
-        metadata?.favicons?.pop()?.href ||
-        metadata["image primaryImageOfPage"] ||
-        {};
+      const lastFavicon = metadata?.favicons?.pop()?.href || "";
+
+      const favicon = () => {
+        if (lastFavicon) {
+          if (lastFavicon.includes("http")) {
+            return lastFavicon;
+          } else {
+            return `${metadata.canonical}${lastFavicon}`;
+          }
+        }
+
+        return metadata["og:image"] || "";
+      };
 
       const ogObj: any = {};
 
@@ -73,11 +82,11 @@ export class HttpController {
           }
         });
       }
-
+      console.log(metadata);
       const data = {
         url: query.link || "",
         title: metadata.title || "",
-        favicon: favicon,
+        favicon: favicon(),
         description: metadata.description || "",
         keywords: metadata.keywords || "",
         previewImg: metadata["twitter:image"],
