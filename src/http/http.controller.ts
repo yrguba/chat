@@ -31,7 +31,7 @@ import { FileDTO } from "../files/dto/file.dto";
 import { FilePathsDirective } from "../files/constanst/paths";
 import * as urlMetadata from "url-metadata";
 import axios from "axios";
-
+import { getLinkPreview, getPreviewFromContent } from "link-preview-js";
 @ApiTags("Http")
 @Controller("http")
 export class HttpController {
@@ -54,46 +54,9 @@ export class HttpController {
   @Get("link-preview?")
   async getLinkPreview(@Res() res, @Req() req, @Param() param, @Query() query) {
     try {
-      const metadata: any = await urlMetadata(query.link, {
-        mode: "same-origin",
-        includeResponseBody: true,
-      });
+      const meta = await getLinkPreview(query.link);
 
-      const lastFavicon = metadata?.favicons?.pop()?.href || "";
-
-      const favicon = () => {
-        if (lastFavicon) {
-          if (lastFavicon.includes("http")) {
-            return lastFavicon;
-          } else {
-            return `${metadata.canonical}${lastFavicon}`;
-          }
-        }
-
-        return metadata["og:image"] || "";
-      };
-
-      const ogObj: any = {};
-
-      if (metadata) {
-        Object.entries(metadata).forEach(([key, value]) => {
-          if (key.split(":")[0] === "og") {
-            ogObj[`${key}`] = value;
-          }
-        });
-      }
-      console.log(metadata);
-      const data = {
-        url: query.link || "",
-        title: metadata.title || "",
-        favicon: favicon(),
-        description: metadata.description || "",
-        keywords: metadata.keywords || "",
-        previewImg: metadata["twitter:image"],
-        og: ogObj,
-      };
-
-      res.status(200).json(data);
+      res.status(200).json(meta);
     } catch (e) {
       res.status(500).json("no meta");
     }
