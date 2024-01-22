@@ -29,7 +29,7 @@ import { FileInterceptor } from "@nestjs/platform-express";
 import { imageFileFilter } from "../utils/file-upload.utils";
 import { FileDTO } from "../files/dto/file.dto";
 import { FilePathsDirective } from "../files/constanst/paths";
-
+import * as urlMetadata from "url-metadata";
 @ApiTags("Http")
 @Controller("http")
 export class HttpController {
@@ -47,5 +47,24 @@ export class HttpController {
     );
     const data = await response.json();
     res.status(response.status).json(data);
+  }
+
+  @Get("link-preview?")
+  async getLinkPreview(@Res() res, @Req() req, @Param() param, @Query() query) {
+    const metadata: any = await urlMetadata(query.link, {
+      mode: "same-origin",
+      includeResponseBody: true,
+    });
+    const data = {
+      url: query.link || "",
+      title: metadata.title || "",
+      favicon: metadata?.favicons?.pop() || "",
+      description: metadata.description || "",
+      keywords: metadata.keywords || "",
+      previewImg: metadata["twitter:image"],
+    };
+    console.log(metadata?.favicons);
+    console.log(data);
+    res.status(200).json(data);
   }
 }
