@@ -62,7 +62,7 @@ export class HttpController {
       const favicon = metadata?.favicons?.pop() || {};
 
       const ogObj: any = {};
-      let binaryFavicon: any = null;
+      let bufferFavicon: any = null;
 
       if (metadata) {
         Object.entries(metadata).forEach(([key, value]) => {
@@ -71,8 +71,10 @@ export class HttpController {
           }
         });
         if (favicon.href) {
-          const faviconRes = await axios.get(favicon.href);
-          binaryFavicon = faviconRes.data;
+          const faviconRes = await axios.get(favicon.href, {
+            responseType: "arraybuffer",
+          });
+          bufferFavicon = faviconRes.data;
         }
       }
 
@@ -83,7 +85,7 @@ export class HttpController {
         description: metadata.description || "",
         keywords: metadata.keywords || "",
         previewImg: metadata["twitter:image"],
-        binaryFavicon,
+        bufferFavicon,
         og: ogObj,
       };
 
