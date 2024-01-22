@@ -59,7 +59,10 @@ export class HttpController {
         includeResponseBody: true,
       });
 
-      const favicon = metadata?.favicons?.pop() || {};
+      const favicon =
+        metadata?.favicons?.pop()?.href ||
+        metadata["image primaryImageOfPage"] ||
+        {};
 
       const ogObj: any = {};
 
