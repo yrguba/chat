@@ -62,7 +62,6 @@ export class HttpController {
       const favicon = metadata?.favicons?.pop() || {};
 
       const ogObj: any = {};
-      let bufferFavicon: any = null;
 
       if (metadata) {
         Object.entries(metadata).forEach(([key, value]) => {
@@ -70,12 +69,6 @@ export class HttpController {
             ogObj[`${key}`] = value;
           }
         });
-        if (favicon.href) {
-          const faviconRes = await axios.get(favicon.href, {
-            responseType: "arraybuffer",
-          });
-          bufferFavicon = faviconRes.data;
-        }
       }
 
       const data = {
@@ -85,7 +78,6 @@ export class HttpController {
         description: metadata.description || "",
         keywords: metadata.keywords || "",
         previewImg: metadata["twitter:image"],
-        bufferFavicon,
         og: ogObj,
       };
 
