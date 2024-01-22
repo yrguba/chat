@@ -54,18 +54,31 @@ export class HttpController {
   @Get("link-preview?")
   async getLinkPreview(@Res() res, @Req() req, @Param() param, @Query() query) {
     try {
-      const meta = await getLinkPreview(query.link);
+      const meta: any = await getLinkPreview(query.link);
       let faviconBuffer = null;
+      let previewBuffer = null;
 
-      if (meta.favicons.length) {
-        const res = await axios.get(meta.favicons.pop(), {
-          responseType: "arraybuffer",
-        });
-
-        faviconBuffer = res.data as any;
+      if (query.buffer) {
+        if (meta.favicons.length) {
+          const res = await axios.get(
+            meta.favicons.filter((i) => i.includes("png"))?.pop(),
+            {
+              responseType: "arraybuffer",
+            }
+          );
+          faviconBuffer = res.data as any;
+        }
+        console.log(meta);
+        if (meta.images.length && meta.siteName === "YouTube") {
+          const res = await axios.get(meta.images[0], {
+            responseType: "arraybuffer",
+          });
+          console.log(res);
+          previewBuffer = res.data as any;
+        }
       }
 
-      res.status(200).json({ ...meta, faviconBuffer });
+      res.status(200).json({ ...meta, faviconBuffer, previewBuffer });
     } catch (e) {
       res.status(500).json("no meta");
     }
