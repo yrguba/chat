@@ -30,6 +30,7 @@ import { imageFileFilter } from "../utils/file-upload.utils";
 import { FileDTO } from "../files/dto/file.dto";
 import { FilePathsDirective } from "../files/constanst/paths";
 import * as urlMetadata from "url-metadata";
+
 @ApiTags("Http")
 @Controller("http")
 export class HttpController {
@@ -55,6 +56,17 @@ export class HttpController {
       mode: "same-origin",
       includeResponseBody: true,
     });
+
+    const ogObj: any = {};
+
+    if (metadata) {
+      Object.entries(metadata).forEach(([key, value]) => {
+        if (key.split(":")[0] === "og") {
+          ogObj[`${key}`] = value;
+        }
+      });
+    }
+
     const data = {
       url: query.link || "",
       title: metadata.title || "",
@@ -62,9 +74,9 @@ export class HttpController {
       description: metadata.description || "",
       keywords: metadata.keywords || "",
       previewImg: metadata["twitter:image"],
+      og: ogObj,
     };
-    console.log(metadata?.favicons);
-    console.log(data);
+
     res.status(200).json(data);
   }
 }
