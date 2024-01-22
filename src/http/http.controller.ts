@@ -30,6 +30,7 @@ import { imageFileFilter } from "../utils/file-upload.utils";
 import { FileDTO } from "../files/dto/file.dto";
 import { FilePathsDirective } from "../files/constanst/paths";
 import * as urlMetadata from "url-metadata";
+import axios from "axios";
 
 @ApiTags("Http")
 @Controller("http")
@@ -52,31 +53,43 @@ export class HttpController {
 
   @Get("link-preview?")
   async getLinkPreview(@Res() res, @Req() req, @Param() param, @Query() query) {
-    const metadata: any = await urlMetadata(query.link, {
-      mode: "same-origin",
-      includeResponseBody: true,
-    });
-
-    const ogObj: any = {};
-
-    if (metadata) {
-      Object.entries(metadata).forEach(([key, value]) => {
-        if (key.split(":")[0] === "og") {
-          ogObj[`${key}`] = value;
-        }
+    try {
+      const metadata: any = await urlMetadata(query.link, {
+        mode: "same-origin",
+        includeResponseBody: true,
       });
+
+      const favicon = metadata?.favicons?.pop() || {};
+
+      const ogObj: any = {};
+      let binaryFavicon: any = null;
+
+      if (metadata) {
+        Object.entries(metadata).forEach(([key, value]) => {
+          if (key.split(":")[0] === "og") {
+            ogObj[`${key}`] = value;
+          }
+        });
+        if (favicon.href) {
+          const faviconRes = await axios.get(favicon.href);
+          binaryFavicon = faviconRes.data;
+        }
+      }
+
+      const data = {
+        url: query.link || "",
+        title: metadata.title || "",
+        favicon: favicon,
+        description: metadata.description || "",
+        keywords: metadata.keywords || "",
+        previewImg: metadata["twitter:image"],
+        binaryFavicon,
+        og: ogObj,
+      };
+
+      res.status(200).json(data);
+    } catch (e) {
+      res.status(500).json("no meta");
     }
-
-    const data = {
-      url: query.link || "",
-      title: metadata.title || "",
-      favicon: metadata?.favicons?.pop() || "",
-      description: metadata.description || "",
-      keywords: metadata.keywords || "",
-      previewImg: metadata["twitter:image"],
-      og: ogObj,
-    };
-
-    res.status(200).json(data);
   }
 }
