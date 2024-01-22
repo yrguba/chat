@@ -55,8 +55,17 @@ export class HttpController {
   async getLinkPreview(@Res() res, @Req() req, @Param() param, @Query() query) {
     try {
       const meta = await getLinkPreview(query.link);
+      let faviconBuffer = null;
 
-      res.status(200).json(meta);
+      if (meta.favicons.length) {
+        const res = await axios.get(meta.favicons.pop(), {
+          responseType: "arraybuffer",
+        });
+
+        faviconBuffer = new Uint8Array(res.data as any);
+      }
+
+      res.status(200).json({ ...meta, faviconBuffer });
     } catch (e) {
       res.status(500).json("no meta");
     }
