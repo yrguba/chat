@@ -144,6 +144,12 @@ export class FilesController {
     res.status(200).json("success");
   }
 
+  @Post("upload_releases_from_github")
+  async uploadReleasesFromGithub(@Res() res, @Req() req, @Body() body) {
+    const result = await this.filesService.uploadReleasesFromGithub(body);
+    res.status(result).json();
+  }
+
   @Post("upload_desktop_release_windows")
   @UseInterceptors(
     FileInterceptor("file", {
@@ -263,6 +269,17 @@ export class FilesController {
     @Param() param
   ) {
     const result = await this.filesService.getLatestDesktopRelease(param, req);
+    res.status(result.status).json(result.data);
+  }
+
+  @Get("get_latest_desktop_release_from_github/:platform/:version")
+  async getLatestDesktopReleaseFromGithub(
+    @Res() res,
+    @Req() req,
+    @Body() body,
+    @Param() param
+  ) {
+    const result = await this.filesService.getLatestDesktopReleaseFromGithub();
     res.status(result.status).json(result.data);
   }
 

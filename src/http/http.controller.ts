@@ -68,7 +68,6 @@ export class HttpController {
           );
           faviconBuffer = res.data as any;
         }
-        console.log(meta);
         if (meta.images.length && meta.siteName === "YouTube") {
           const res = await axios.get(meta.images[0], {
             responseType: "arraybuffer",

@@ -133,6 +133,21 @@ export class FilesService {
     }
   }
 
+  async uploadReleasesFromGithub(body) {
+    const desktopReleasesDir = path.resolve(
+      "storage",
+      "desktop_releases_from_github"
+    );
+    if (!fs.existsSync(desktopReleasesDir)) {
+      fs.mkdirSync(desktopReleasesDir, { recursive: true });
+    }
+    fs.writeFileSync(
+      path.resolve(desktopReleasesDir, "latest.json"),
+      JSON.stringify(body)
+    );
+    return 200;
+  }
+
   async uploadTauriReleaseWindows(file, body) {
     const desktopReleasesDir = path.resolve("storage", "desktop_releases");
     if (!fs.existsSync(desktopReleasesDir)) {
@@ -208,6 +223,46 @@ export class FilesService {
           "windows-x86_64": {
             signature: win_json.signature,
             url: `${host}files/${win_json.fileName}`,
+          },
+        },
+      };
+      return { status: 200, data: data };
+    } catch (e) {
+      return { status: 204, data: {} };
+    }
+  }
+
+  async getLatestDesktopReleaseFromGithub() {
+    const desktopReleasesDir = path.resolve(
+      "storage",
+      "desktop_releases_from_github"
+    );
+    try {
+      if (!fs.existsSync(desktopReleasesDir)) throw Error;
+
+      const json = fs.readFileSync(
+        path.resolve(desktopReleasesDir, "latest.json"),
+        { encoding: "utf8" }
+      );
+
+      const json_parse = JSON.parse(json);
+
+      const data = {
+        version: json_parse.version,
+        notes: "update",
+        pub_date: json_parse.pub_date,
+        platforms: {
+          "darwin-x86_64": {
+            signature: json_parse.mac_sig,
+            url: json_parse.mac_url,
+          },
+          "darwin-aarch64": {
+            signature: json_parse.mac_sig,
+            url: json_parse.mac_url,
+          },
+          "windows-x86_64": {
+            signature: json_parse.win_sig,
+            url: json_parse.win_url,
           },
         },
       };
